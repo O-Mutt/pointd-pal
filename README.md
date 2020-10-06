@@ -21,7 +21,7 @@ export SLACK_SIGNING_SECRET=<your-signing-secret>
 
 ```zsh
 # Clone this project onto your machine
-git clone https://github.com/mwbrooks/bolt-js-getting-started-app.git
+git clone https://github.com/slackapi/bolt-js-getting-started-app.git
 
 # Change into the project
 cd bolt-js-getting-started-app/
