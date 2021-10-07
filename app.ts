@@ -22,7 +22,7 @@ app.action('button_click', async ({ body, ack, say }) => {
 
 (async () => {
   // Start your app
-  let port = 3000;
+  let port = 5000;
   if (process.env.PORT) {
     port = parseInt(process.env.PORT, 10);
   }
