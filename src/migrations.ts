@@ -19,8 +19,8 @@ app.message( /try to map @.* to db users/, mapSingleUserToDb);
 app.message(/unmap all users/, unmapUsersToDb);
 app.message(/map all slackIds to slackEmail/, mapSlackIdToEmail);
 
-async function mapUsersToDb({ message, context, client, logger, say }: SlackEventMiddlewareArgs<"message"> & AllMiddlewareArgs) {
-  if (context.user.id !== 'UD46NSKSM' && context.user.id !== 'U0231VDAB1B') {
+async function mapUsersToDb({ message, context, client, logger, say }) {
+  if (message.user !== 'UD46NSKSM' && message.user !== 'U0231VDAB1B') {
     await say('Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif');
     return;
   }
