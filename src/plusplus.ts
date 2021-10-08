@@ -29,7 +29,7 @@
 
 import axios from 'axios';
 import { EventEmitter } from 'events';
-import { tokenBuddy } from 'token-buddy';
+import tokenBuddy from 'token-buddy';
 
 import * as pjson from '../package.json';
 import { regExpCreator } from './lib/regexpCreator';
