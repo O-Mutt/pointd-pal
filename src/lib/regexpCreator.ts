@@ -2,16 +2,16 @@ const scoreKeyword = process.env.HUBOT_PLUSPLUS_KEYWORD || 'score|scores|karma';
 const reasonConjunctions = process.env.HUBOT_PLUSPLUS_CONJUNCTIONS || 'for|because|cause|cuz|as|porque|just|thanks for';
 
 export class RegExpCreator {
-  votedObject = '[\-\w.-:\u3040-\u30FF\uFF01-\uFF60\u4E00-\u9FA0]+(?<![+-])';
+  votedObject = '[\\-\\w.-:\u3040-\u30FF\uFF01-\uFF60\u4E00-\u9FA0]+(?<![+-])';
   captureVoted = `@(${this.votedObject})`;
   nonCaptureVoted = `@(?:${this.votedObject})`;
   multiUserSeparator= '(?:\\,|\\s|(?:\\s)?\\:(?:\\s)?)';
   // allow for spaces after the thing being upvoted (@user ++)
   allowSpaceAfterObject = '\\s*';
-  positiveOperators = '\+\+|:clap:(?::skin-tone-[0-9]:)?|:thumbsup:(?::skin-tone-[0-9]:)?|:thumbsup_all:|:\+1:(?::skin-tone-[0-9]:)?';
+  positiveOperators = '\\+\\+|:clap:(?::skin-tone-[0-9]:)?|:thumbsup:(?::skin-tone-[0-9]:)?|:thumbsup_all:|:\+1:(?::skin-tone-[0-9]:)?';
   negativeOperators = '--|—|\u2013|\u2014|:thumbsdown:(?::skin-tone-[0-9]:)?';
   operator = `(${this.positiveOperators}|${this.negativeOperators})`;
-  reasonForVote = `(?:\s+(${reasonConjunctions})?\s*(.+))?`;
+  reasonForVote = `(?:\\s+(${reasonConjunctions})?\\s*(.+))?`;
   eol = '$';
 
   /**
