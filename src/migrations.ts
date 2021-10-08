@@ -11,11 +11,11 @@ const procVars = Helpers.getProcessVariables(process.env);
 
 app.message(/try to map all slack users to db users/, mapUsersToDb);
   
-
-app.message(/try to map more data to all slack users to db users/, directMention(), mapMoreUserFieldsBySlackId);
-app.message( /try to map @.* to db users/, directMention(), mapSingleUserToDb);
-app.message(/unmap all users/, directMention(), unmapUsersToDb);
-app.message(/map all slackIds to slackEmail/, directMention(), mapSlackIdToEmail);
+// we ushould use `directMention() once the code "works"
+app.message(/try to map more data to all slack users to db users/, mapMoreUserFieldsBySlackId);
+app.message( /try to map @.* to db users/, mapSingleUserToDb);
+app.message(/unmap all users/, unmapUsersToDb);
+app.message(new RegExp(/map all slackIds to slackEmail/), mapSlackIdToEmail);
 
 async function mapUsersToDb({ message, context, client, logger, say }) {
   if (message.user.id !== 'UD46NSKSM' && message.user.id !== 'U0231VDAB1B') {
@@ -132,7 +132,7 @@ async function unmapUsersToDb({ message, context, logger, say }) {
   await say('Ding fries are done. We unmapped all users');
 }
 
-async function mapSlackIdToEmail({ message, context, client, logger, say }) {
+async function mapSlackIdToEmail({ message, client, logger, say }) {
   if (message.user.id !== 'UD46NSKSM' && message.user.id !== 'U0231VDAB1B') {
     await say('Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif');
     return;
