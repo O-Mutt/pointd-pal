@@ -2,21 +2,21 @@ import { AllMiddlewareArgs, directMention, SlackEventMiddlewareArgs } from '@sla
 
 
 import { DatabaseService } from './lib/services/database';
-const { scoresDocumentName } = require('./lib/data/scores');
+import { scoresDocumentName } from './lib/data/scores';
 import { Helpers } from './lib/helpers';
 
 import { app } from '../app';
 import { Db } from 'mongodb';
 import { Member } from '@slack/web-api/dist/response/UsersListResponse';
+
 const procVars = Helpers.getProcessVariables(process.env);
 
-app.message('try to map all slack users to db users', mapUsersToDb);
-  
 // we should use `directMention() once the code "works"
-app.message(/try to map more data to all slack users to db users/, mapMoreUserFieldsBySlackId);
-app.message( /try to map @.* to db users/, mapSingleUserToDb);
-app.message(/unmap all users/, unmapUsersToDb);
-app.message(/map all slackIds to slackEmail/, mapSlackIdToEmail);
+app.message('try to map all slack users to db users', mapUsersToDb);
+app.message('try to map more data to all slack users to db users', mapMoreUserFieldsBySlackId);
+app.message('try to map @.* to db users', mapSingleUserToDb);
+app.message('unmap all users', unmapUsersToDb);
+app.message('map all slackIds to slackEmail', mapSlackIdToEmail);
 
 const ALLOWED_ADMIN_IDS = [ 'ULKF78MG9', 'UD46NSKSM', 'U0231VDAB1B']
 

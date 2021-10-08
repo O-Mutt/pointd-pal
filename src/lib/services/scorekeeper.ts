@@ -1,9 +1,12 @@
-import { Logger } from '@slack/bolt';
-
-const helpers = require('../helpers');
-const DatabaseService = require('./database');
+import { DatabaseService } from './database';
+import { Helpers } from '../helpers';
+import EventEmitter from 'events';
+import { User } from '../data/scores';
 
 export class ScoreKeeper {
+  databaseService: DatabaseService;
+  eventEmitter: EventEmitter;
+  spamMessage: string;
   /*
   * params.robot
   * params.peerFeedbackUrl
@@ -12,9 +15,11 @@ export class ScoreKeeper {
   * params.mongoUri
   */
   constructor(params) {
+    this.eventEmitter = new EventEmitter();
     for (const key in params) {
       this[key] = params[key];
     }
+    this.spamMessage = params.spamMessage;
     this.databaseService = new DatabaseService(params);
     this.databaseService.init(); // this is async but it is just initializing the db connection, we let it run
   }
@@ -28,31 +33,31 @@ export class ScoreKeeper {
   * incrementValue - [number] the value to change the score by
   * return scoreObject - the new document for the user who received the score
   */
-  async incrementScore(to, from, room, reason, incrementValue) {
+  async incrementScore(to: any, from: any, channel: string, reason: string, incrementValue: number) {
     from = typeof from === 'string' ? { name: from, id: from } : from;
     let toUser;
     let fromUser;
     try {
       toUser = await this.getUser(to);
       fromUser = await this.getUser(from);
-      if ((await this.isSpam(toUser, fromUser)) || this.isSendingToSelf(toUser, fromUser) || this.isBotInDm(from, room)) {
+      if ((await this.isSpam(toUser, fromUser)) || this.isSendingToSelf(toUser, fromUser) || this.isBotInDm(from, channel)) {
         throw new Error(`I'm sorry <@${fromUser.slackId}>, I'm afraid I can't do that.`);
       }
-      toUser.score = parseInt(toUser.score, 10) + parseInt(incrementValue, 10);
+      toUser.score = parseInt(toUser.score, 10) + incrementValue;
       if (reason) {
         const oldReasonScore = toUser.reasons[`${reason}`] ? toUser.reasons[`${reason}`] : 0;
         toUser.reasons[`${reason}`] = oldReasonScore + incrementValue;
       }
 
       await this.databaseService.savePointsGiven(from, toUser, incrementValue);
-      let saveResponse = await this.databaseService.saveUser(toUser, fromUser, room, reason, incrementValue);
+      let saveResponse = await this.databaseService.saveUser(toUser);
       try {
-        await this.databaseService.savePlusPlusLog(toUser, fromUser, room, reason, incrementValue);
+        await this.databaseService.savePlusPlusLog(toUser, fromUser, channel, reason, incrementValue);
       } catch (e) {
-        //Logger.error(`failed saving spam log for user ${toUser.name} from ${from.name} in room ${room} because ${reason}`, e);
+        //Logger.error(`failed saving spam log for user ${toUser.name} from ${from.name} in channel ${channel} because ${reason}`, e);
       }
 
-      if (saveResponse.accountLevel > 1) {
+      if (saveResponse && saveResponse.accountLevel > 1) {
         saveResponse = await this.databaseService.transferScoreFromBotToUser(toUser, incrementValue, fromUser);
       }
       return { toUser: saveResponse, fromUser };
@@ -62,14 +67,14 @@ export class ScoreKeeper {
     }
   }
 
-  async transferTokens(to, from, room, reason, numberOfTokens) {
+  async transferTokens(to, from, channel, reason, numberOfTokens) {
     let toUser;
     let fromUser;
     try {
       toUser = await this.getUser(to);
       fromUser = await this.getUser(from);
       if (toUser.accountLevel >= 2 && fromUser.accountLevel >= 2) {
-        if ((await this.isSpam(toUser, fromUser)) || this.isSendingToSelf(toUser, fromUser) || this.isBotInDm(from, room)) {
+        if ((await this.isSpam(toUser, fromUser)) || this.isSendingToSelf(toUser, fromUser) || this.isBotInDm(from, channel)) {
           throw new Error(`I'm sorry <@${fromUser.slackId}>, I'm afraid I can't do that.`);
         }
         if (fromUser.token >= parseInt(numberOfTokens, 10)) {
@@ -81,13 +86,13 @@ export class ScoreKeeper {
           }
 
           await this.databaseService.savePointsGiven(from, toUser, numberOfTokens);
-          const saveResponse = await this.databaseService.saveUser(toUser, fromUser, room, reason, numberOfTokens);
+          const saveResponse = await this.databaseService.saveUser(toUser);
           try {
-            await this.databaseService.savePlusPlusLog(toUser, fromUser, room, reason, numberOfTokens);
+            await this.databaseService.savePlusPlusLog(toUser, fromUser, channel, reason, numberOfTokens);
           } catch (e) {
-            //Logger.error(`failed saving spam log for user ${toUser.name} from ${from.name} in room ${room} because ${reason}`, e);
+            //Logger.error(`failed saving spam log for user ${toUser.name} from ${from.name} in channel ${channel} because ${reason}`, e);
           }
-          await this.databaseService.saveUser(fromUser, toUser, room, reason, -numberOfTokens);
+          await this.databaseService.saveUser(fromUser);
           return {
             toUser: saveResponse,
             fromUser,
@@ -106,19 +111,19 @@ export class ScoreKeeper {
     }
   }
 
-  async getUser(user) {
-    const dbUser = await this.databaseService.getUser(user);
+  async getUser(user): Promise<User> {
+    const dbUser = await this.databaseService.getUser(user) as User;
     return dbUser;
   }
 
-  async erase(user, from, room, reason) {
+  async erase(user, from, channel, reason) {
     if (reason) {
       //Logger.error(`Erasing score for reason ${reason} for ${user} by ${from}`);
       await this.databaseService.erase(user, reason);
       return true;
     }
     //Logger.error(`Erasing all scores for ${user} by ${from}`);
-    await this.databaseService.erase(user);
+    await this.databaseService.erase(user, undefined);
 
     return true;
   }
@@ -127,7 +132,7 @@ export class ScoreKeeper {
     //Logger.debug(`Checking if is to self. To [${to.name}] From [${from.name}], Valid: ${to.name !== from.name}`);
     const isToSelf = to.name === from.name;
     if (isToSelf) {
-      this.robot.emit('plus-plus-spam', {
+      this.eventEmitter.emit('plus-plus-spam', {
         to,
         from,
         message: this.spamMessage,
@@ -143,7 +148,7 @@ export class ScoreKeeper {
     //Logger.debug(`Checking spam to [${to.name}] from [${from.name}]`);
     const isSpam = await this.databaseService.isSpam(toId, fromId);
     if (isSpam) {
-      this.robot.emit('plus-plus-spam', {
+      this.eventEmitter.emit('plus-plus-spam', {
         to,
         from,
         message: this.spamMessage,
@@ -155,17 +160,17 @@ export class ScoreKeeper {
 
   /*
   * tries to detect bots
-  * from - object from the msg.message.user
+  * from - object from the message.user
   * return {boolean} true if it is a bot
   */
-  isBotInDm(from, room) {
+  isBotInDm(from, channel) {
     let isBot = false;
-    if (from.is_bot && helpers.isPrivateMessage(room)) {
+    if (from.is_bot && Helpers.isPrivateMessage(channel)) {
       isBot = true;
       //Logger.error('A bot is sending points in DM');
     }
     if (isBot) {
-      this.robot.emit('plus-plus-spam', {
+      this.eventEmitter.emit('plus-plus-spam', {
         to: undefined,
         from,
         message: this.spamMessage,

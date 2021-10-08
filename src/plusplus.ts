@@ -27,24 +27,25 @@
 //
 // Author: O-Mutt
 
-const { default: axios } = require('axios');
-const tokenBuddy = require('token-buddy');
-import { directMention, Logger } from '@slack/bolt';
+import axios from 'axios';
+import { EventEmitter } from 'events';
+import { tokenBuddy } from 'token-buddy';
 
-const pjson = require('../package.json');
+import * as pjson from '../package.json';
 import { regExpCreator } from './lib/regexpCreator';
-const ScoreKeeper = require('./lib/services/scorekeeper');
-const helpers = require('./lib/helpers');
+import { ScoreKeeper }  from './lib/services/scorekeeper';
+import { Helpers } from './lib/helpers';
 // this may need to move or be generic...er
-const token = require('./lib/token.json');
-const decrypt = require('./lib/services/decrypt');
-const DatabaseService = require('./lib/services/database');
+import * as token from './lib/token.json';
+import { decrypt } from './lib/services/decrypt';
+import { DatabaseService } from './lib/services/database';
 
 import { app } from '../app';
 
-const procVars = helpers.getProcessVariables(process.env);
+const procVars = Helpers.getProcessVariables(process.env);
 const scoreKeeper = new ScoreKeeper({ ...procVars });
 const databaseService = new DatabaseService({ ...procVars });
+const emitter = new EventEmitter();
 
 databaseService.getMagicSecretStringNumberValue().then((databaseMagicString: string) => {
   const magicMnumber = decrypt(procVars.magicIv, procVars.magicNumber, databaseMagicString);
@@ -66,143 +67,145 @@ databaseService.getMagicSecretStringNumberValue().then((databaseMagicString: str
 
   // listen for bot tag/ping
   app.message(regExpCreator.createGiveTokenRegExp(), giveTokenBetweenUsers);
-  app.message(directMention(), regExpCreator.getHelp(), respondWithHelpGuidance);
-  app.message(directMention(), new RegExp(/(plusplus version|-v|--version)/, 'i'), async ({ message, context, say }) => {
-    await say(`${helpers.capitalizeFirstLetter(msg.'qrafty')} ${pjson.name}, version: ${pjson.version}`);
+  // directMention
+  app.message(regExpCreator.getHelp(), respondWithHelpGuidance);
+  // directMention
+  app.message(RegExp(/(plusplus version|-v|--version)/, 'i'), async ({ message, context, say }) => {
+    await say(`${Helpers.capitalizeFirstLetter('qrafty')} ${pjson.name}, version: ${pjson.version}`);
   });
 
   // admin
-  app.message(directMention(), regExpCreator.createEraseUserScoreRegExp(), eraseUserScore);
+  // directMention
+  app.message(regExpCreator.createEraseUserScoreRegExp(), eraseUserScore);
 
   /**
    * Functions for responding to commands
    */
-  async function upOrDownVote({ message, context, say }) {
+  async function upOrDownVote({ payload, message, context, logger, say }) {
+    logger.error(message, context, payload)
     const [fullText, premessage, name, operator, conjunction, reason] = context.matches;
 
-    if (helpers.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
+    if (Helpers.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
       // circuit break a plus plus
-      robot.emit('plus-plus-failure', {
-        notificationMessage: `False positive detected in <#${message.channel}> from <@${message.user.id}>:\nPre-Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText}`,
-        room: message.channel,
+      emitter.emit('plus-plus-failure', {
+        notificationMessage: `False positive detected in <#${message.channel}> from <@${message.user}>:\nPre-Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText}`,
+        channel: message.channel,
       });
       return;
     }
     const increment = operator.match(regExpCreator.positiveOperators) ? 1 : -1;
-    const { room, mentions } = msg.message;
-    const cleanName = helpers.cleanName(name);
+    const { channel, mentions } = message;
+    const cleanName = Helpers.cleanName(name);
     let to = { name: cleanName };
     if (mentions) {
       to = mentions.filter((men) => men.type === 'user').shift();
       to.name = cleanName;
     }
-    const cleanReason = helpers.cleanAndEncode(reason);
-    const from = msg.message.user;
+    const cleanReason = Helpers.cleanAndEncode(reason);
+    const from = message.user;
 
-    //Logger.debug(`${increment} score for [${to.name}] from [${from}]${cleanReason ? ` because ${cleanReason}` : ''} in [${room}]`);
+    logger.debug(`${increment} score for [${to.name}] from [${from}]${cleanReason ? ` because ${cleanReason}` : ''} in [${channel}]`);
     let toUser; let fromUser;
     try {
-      ({ toUser, fromUser } = await scoreKeeper.incrementScore(to, from, room, cleanReason, increment));
-    } catch (e) {
-      msg.send(e.message);
+      ({ toUser, fromUser } = await scoreKeeper.incrementScore(to, from, channel, cleanReason, increment));
+    } catch (e: any) {
+      await say(e.message);
       return;
     }
 
-    const theMessage = helpers.getMessageForNewScore(toUser, cleanReason, robot);
+    const theMessage = Helpers.getMessageForNewScore(toUser, cleanReason, 'qrafty');
 
     if (theMessage) {
-      msg.send(theMessage);
-      robot.emit('plus-plus', {
-        notificationMessage: `<@${fromUser.slackId}> ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'} a ${helpers.capitalizeFirstLetter('qrafty')} point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'} <@${toUser.slackId}> in <#${room}>`,
+      await say(theMessage);
+      emitter.emit('plus-plus', {
+        notificationMessage: `<@${fromUser.slackId}> ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'} a ${Helpers.capitalizeFirstLetter('qrafty')} point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'} <@${toUser.slackId}> in <#${channel}>`,
         sender: fromUser,
         recipient: toUser,
         direction: operator,
         amount: 1,
-        room,
+        channel,
         reason: cleanReason,
-        msg,
       });
     }
   }
 
-  async function giveTokenBetweenUsers({ message, context, say }) {
+  async function giveTokenBetweenUsers({ message, context, logger, say }) {
     const [fullText, premessage, name, number, conjunction, reason] = context.matches;
     if (!conjunction && reason) {
       // circuit break a plus plus
-      app.emit('plus-plus-failure', {
-        notificationMessage: `False positive detected in <#${msg.message.room}> from <@${message.user.id}>:\nPre-Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText}`,
-        room: msg.message.room,
+      emitter.emit('plus-plus-failure', {
+        notificationMessage: `False positive detected in <#${context.channel}> from <@${message.user}>:\nPre-Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText}`,
+        channel: context.channel,
       });
       return;
     }
-    const { room, mentions } = message;
-    const cleanName = helpers.cleanName(name);
+    const { channel, mentions } = message;
+    const cleanName = Helpers.cleanName(name);
     let to = { name: cleanName };
     if (mentions) {
       to = mentions.filter((men) => men.type === 'user').shift();
       to.name = cleanName;
     }
-    const cleanReason = helpers.cleanAndEncode(reason);
+    const cleanReason = Helpers.cleanAndEncode(reason);
     const from = message.user;
 
-    //Logger.debug(`${number} score for [${mentions}] from [${from}]${cleanReason ? ` because ${cleanReason}` : ''} in [${room}]`);
+    logger.debug(`${number} score for [${mentions}] from [${from}]${cleanReason ? ` because ${cleanReason}` : ''} in [${channel}]`);
     let response;
     try {
-      response = await scoreKeeper.transferTokens(to, from, room, cleanReason, number);
-    } catch (e) {
-      msg.send(e.message);
+      response = await scoreKeeper.transferTokens(to, from, channel, cleanReason, number);
+    } catch (e: any) {
+      await say(e.message);
       return;
     }
 
-    const theMessage = helpers.getMessageForTokenTransfer(robot,
+    const theMessage = Helpers.getMessageForTokenTransfer('qrafty',
       response.toUser,
       response.fromUser,
       number,
       cleanReason);
 
     if (message) {
-      msg.send(theMessage);
-      robot.emit('plus-plus', {
-        notificationMessage: `<@${response.fromUser.slackId}> sent ${number} ${helpers.capitalizeFirstLetter('qrafty')} point${parseInt(number, 10) > 1 ? 's' : ''} to <@${response.toUser.slackId}> in <#${room}>`,
+      await say(theMessage);
+      emitter.emit('plus-plus', {
+        notificationMessage: `<@${response.fromUser.slackId}> sent ${number} ${Helpers.capitalizeFirstLetter('qrafty')} point${parseInt(number, 10) > 1 ? 's' : ''} to <@${response.toUser.slackId}> in <#${channel}>`,
         recipient: response.toUser,
         sender: response.fromUser,
         direction: '++',
         amount: number,
-        room,
+        channel,
         reason: cleanReason,
-        msg,
       });
     }
   }
 
-  async function multipleUsersVote({ message, context, say }) {
+  async function multipleUsersVote({ message, context, logger, say }) {
     const [fullText, premessage, names, operator, conjunction, reason] = context.matches;
     if (!names) {
       return;
     }
-    if (helpers.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
+    if (Helpers.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
       // circuit break a plus plus
-      robot.emit('plus-plus-failure', {
-        notificationMessage: `False positive detected in <#${msg.message.room}> from <@${message.user.id}>:\nPre-Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText}`,
-        room: msg.message.room,
+      emitter.emit('plus-plus-failure', {
+        notificationMessage: `False positive detected in <#${context.channel}> from <@${message.user}>:\nPre-Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText}`,
+        channel: context.channel,
       });
       return;
     }
 
     const namesArray = names.trim().toLowerCase().split(new RegExp(regExpCreator.multiUserSeparator)).filter(Boolean);
-    const from = msg.message.user;
-    const { room, mentions } = msg.message;
+    const from = message.user;
+    const { channel, mentions } = context;
     let to;
     if (mentions) {
       to = mentions.filter((men) => men.type === 'user');
     }
-    const cleanReason = helpers.cleanAndEncode(reason);
+    const cleanReason = Helpers.cleanAndEncode(reason);
     const increment = operator.match(regExpCreator.positiveOperators) ? 1 : -1;
 
     const cleanNames = namesArray
       // Parse names
       .map((name) => {
-        const cleanedName = helpers.cleanName(name);
+        const cleanedName = Helpers.cleanName(name);
         return cleanedName;
       })
       // Remove empty ones: {,,,}++
@@ -211,35 +214,34 @@ databaseService.getMagicSecretStringNumberValue().then((databaseMagicString: str
       .filter((name, pos, self) => self.indexOf(name) === pos);
 
     if (cleanNames.length !== to.length) {
-      msg.send('We are having trouble mapping your multi-user plusplus. Please try again and only include @ mentions.');
+      await say('We are having trouble mapping your multi-user plusplus. Please try again and only include @ mentions.');
       return;
     }
 
-    let messages = [];
+    let messages: string[] = [];
     let fromUser;
     for (let i = 0; i < cleanNames.length; i++) {
       to[i].name = cleanNames[i];
       let toUser;
-      ({ toUser, fromUser } = await scoreKeeper.incrementScore(to[i], from, room, cleanReason, increment));
+      ({ toUser, fromUser } = await scoreKeeper.incrementScore(to[i], from, channel, cleanReason, increment));
       if (toUser) {
-        //Logger.debug(`clean names map [${to[i].name}]: ${toUser.score}, the reason ${toUser.reasons[cleanReason]}`);
-        messages.push(helpers.getMessageForNewScore(toUser, cleanReason, robot));
-        robot.emit('plus-plus', {
-          notificationMessage: `<@${fromUser.slackId}> ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'} a ${helpers.capitalizeFirstLetter('qrafty')} point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'} <@${toUser.slackId}> in <#${room}>`,
+        logger.debug(`clean names map [${to[i].name}]: ${toUser.score}, the reason ${toUser.reasons[cleanReason]}`);
+        messages.push(Helpers.getMessageForNewScore(toUser, cleanReason, 'qrafty'));
+        emitter.emit('plus-plus', {
+          notificationMessage: `<@${fromUser.slackId}> ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'} a ${Helpers.capitalizeFirstLetter('qrafty')} point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'} <@${toUser.slackId}> in <#${channel}>`,
           sender: fromUser,
           recipient: toUser,
           direction: operator,
           amount: 1,
-          room,
-          reason: cleanReason,
-          msg,
+          channel,
+          reason: cleanReason
         });
       }
     }
     messages = messages.filter((message) => !!message); // de-dupe
 
-    //Logger.debug(`These are the messages \n ${messages.join('\n')}`);
-    msg.send(messages.join('\n'));
+    logger.debug(`These are the messages \n ${messages.join('\n')}`);
+    await say(messages.join('\n'));
   }
 
   async function tellHowMuchPointsAreWorth({ message, context, say }) {
@@ -251,41 +253,40 @@ databaseService.getMagicSecretStringNumberValue().then((databaseMagicString: str
       const bitcoin = resp.data.bpi.USD.rate_float;
       const ars = resp.data.bpi.ARS.rate_float;
       const satoshi = bitcoin / 1e8;
-      return sayd(`A bitcoin is worth ${bitcoin} USD right now (${ars} ARS), a satoshi is about ${satoshi}, and qrafty points are worth nothing!`);
-    } catch (e) {
-      return msg.send('Seems like we are having trouble getting some data... Don't worry, though, your qrafty points are still worth nothing!');
+      return say(`A bitcoin is worth ${bitcoin} USD right now (${ars} ARS), a satoshi is about ${satoshi}, and qrafty points are worth nothing!`);
+    } catch (e: any) {
+      return await say('Seems like we are having trouble getting some data... Don\'t worry, though, your qrafty points are still worth nothing!');
     }
   }
 
   async function eraseUserScore({ message, context, say }) {
     let erased;
-    const [fullText, premessage, name, conjunction, reason] = context.matches;
-    const from = msg.message.user;
-    const { user } = msg.envelope;
-    const { room, mentions } = msg.message;
+    const [fullText, premessage, name, conjunction, reason] = context.matches
+    const from = message.user;
+    const { channel, mentions } = message;
 
-    const cleanReason = helpers.cleanAndEncode(reason);
+    const cleanReason = Helpers.cleanAndEncode(reason);
     let to = mentions.filter((men) => men.type === 'user').shift();
-    const cleanName = helpers.cleanName(name);
+    const cleanName = Helpers.cleanName(name);
     if (!to) {
       to = { name: cleanName };
     } else {
       to.name = cleanName;
     }
 
-    const isAdmin = (his.robot.auth ? this.robot.auth.hasRole(user, 'plusplus-admin') : undefined) || (this.robot.auth ? this.robot.auth.hasRole(user, 'admin') : undefined);
+    const isAdmin = await databaseService.isAdmin(from);
 
-    if (!this.robot.auth || !isAdmin) {
-      msg.reply("Sorry, you don't have authorization to do that.");
+    if (!isAdmin) {
+      await say("Sorry, you don't have authorization to do that.");
       return;
-    } if (isAdmin) {
-      erased = await scoreKeeper.erase(to, from, room, cleanReason);
+    } else if (isAdmin) {
+      erased = await scoreKeeper.erase(to, from, channel, cleanReason);
     }
 
     if (erased) {
-      const decodedReason = helpers.decode(cleanReason);
+      const decodedReason = Helpers.decode(cleanReason);
       const message = !decodedReason ? `Erased the following reason from ${to.name}: ${decodedReason}` : `Erased points for ${to.name}`;
-      msg.send(message);
+      await say(message);
     }
   }
 

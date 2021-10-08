@@ -99,7 +99,7 @@ export class DatabaseService {
     return updatedUser;
   }
 
-  async savePlusPlusLog(to, from, room, reason, incrementValue) {
+  async savePlusPlusLog(to, from, channel, reason, incrementValue) {
     const pointsAmount = parseInt(incrementValue, 10);
     const fromId = from.slackId || from.name;
     const scoreSearch = from.slackId ? { slackId: from.slackId } : { name: from.name };
@@ -110,7 +110,7 @@ export class DatabaseService {
       from: fromId,
       to: toId,
       date: moment().toISOString(),
-      room,
+      channel,
       reason,
       scoreChange: pointsAmount,
     });
@@ -339,7 +339,7 @@ export class DatabaseService {
         $match: { date: { $gt: new Date(new Date().setDate(new Date().getDate() - days)).toISOString() } },
       },
       {
-        $group: { _id: '$room', scoreChange: { $sum: '$scoreChange' } },
+        $group: { _id: '$channel', scoreChange: { $sum: '$scoreChange' } },
       },
       {
         $sort: { scoreChange: -1 },
@@ -389,5 +389,10 @@ export class DatabaseService {
       return updateBotWallet.magicString;
     }
     return '';
+  }
+
+  async isAdmin(user: string) {
+    const db = (await this.getDb()) as Db;
+    return false;
   }
 }

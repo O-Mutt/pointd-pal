@@ -32,11 +32,11 @@ const DatabaseService = require('./lib/services/database');
       timeoutMsg.reply('You didn\'t answer the question prompted in a timely fashion, this message will now self destruct. :boom:');
     };
 
-    if (!helpers.isPrivateMessage(msg.message.room)) {
+    if (!helpers.isPrivateMessage(context.channel)) {
       return msg.reply(`You should only execute a level up from within the context of a DM with ${'qrafty'}`);
     }
 
-    const user = await databaseService.getUser(msg.message.user);
+    const user = await databaseService.getUser(message.user);
     if (user.accountLevel === 2) {
       msg.reply(`You are already Level 2, ${user.name}. It looks as if you are ready for Level 3 where you can deposit/withdraw ${helpers.capitalizeFirstLetter(msg.'qrafty')} Tokens! Is that correct? [Yes/No]`);
       dialog.addChoice(/yes/i, (msg2) => {
@@ -58,14 +58,14 @@ const DatabaseService = require('./lib/services/database');
 
   async function botWalletCount({ message, context, say }) {
     const botWallet = await databaseService.getBotWallet();
-    //Logger.debug(`Get the bot wallet by user ${msg.message.user.name}, ${botWallet}`);
+    //Logger.debug(`Get the bot wallet by user ${message.user.name}, ${botWallet}`);
     let gas;
     try {
       gas = await tokenBuddy.getBalance(botWallet.publicWalletAddress);
     } catch (e) {
-      msg.send(`An error occurred getting ${'qrafty'}'s gas amount`);
+      await say(`An error occurred getting ${'qrafty'}'s gas amount`);
     }
-    //Logger.debug(`Get the bot wallet by user ${msg.message.user.name}, ${_.pick(JSON.stringify(botWallet), ['publicWalletAddress', 'name', 'token'])}`);
+    //Logger.debug(`Get the bot wallet by user ${message.user.name}, ${_.pick(JSON.stringify(botWallet), ['publicWalletAddress', 'name', 'token'])}`);
 
     const message = {
       attachments: [{
@@ -106,6 +106,6 @@ const DatabaseService = require('./lib/services/database');
       });
     }
 
-    return msg.send(message);
+    return await say(message);
   }
 

@@ -58,7 +58,7 @@ const DatabaseService = require('./lib/services/database');
       message.splice(0, 0, `:tada: The top 10 ${'qrafty'} point recipients over the last month! :tada:`);
       robot.messageRoom(procVars.notificationsRoom, message.join('\n'));
 
-      // Room
+      // Channel
       const topRoom = await databaseService.getTopRoomInDuration(3, 30);
       message = [];
       if (topRoom.length > 0) {

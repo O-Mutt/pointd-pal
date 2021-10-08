@@ -76,9 +76,9 @@ import { app } from '../app';
         return memo;
       }, '');
 
-      return msg.send(`${baseString}\n\n:star: Here are some ${procVars.reasonsKeyword} :star:${reasonMap}`);
+      return await say(`${baseString}\n\n:star: Here are some ${procVars.reasonsKeyword} :star:${reasonMap}`);
     }
-    return msg.send(`${baseString}`);
+    return await say(`${baseString}`);
   }
 
   async function respondWithLeaderLoserBoard({ message, context, say }) {
@@ -105,7 +105,7 @@ import { app } from '../app';
     const graphSize = Math.min(tops.length, Math.min(amount, 20));
     message.splice(0, 0, clark(_.take(_.map(tops, 'score'), graphSize)));
 
-    return msg.send(message.join('\n'));
+    return await say(message.join('\n'));
   }
 
   async function respondWithLeaderLoserTokenBoard({ message, context, say }) {
@@ -130,7 +130,7 @@ import { app } from '../app';
     const graphSize = Math.min(tops.length, Math.min(amount, 20));
     message.splice(0, 0, clark(_.take(_.map(tops, 'token'), graphSize)));
 
-    return msg.send(message.join('\n'));
+    return await say(message.join('\n'));
   }
 
   async function getTopPointSenders({ message, context, say }) {
@@ -153,5 +153,5 @@ import { app } from '../app';
     const graphSize = Math.min(tops.length, Math.min(amount, 20));
     message.splice(0, 0, clark(_.take(_.map(tops, 'totalPointsGiven'), graphSize)));
 
-    return msg.send(message.join('\n'));
+    return await say(message.join('\n'));
   }

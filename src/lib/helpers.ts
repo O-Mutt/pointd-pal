@@ -61,7 +61,7 @@ export class Helpers {
     return `${years}th `;
   }
 
-  static getMessageForNewScore(user: User, reason: string | undefined) {
+  static getMessageForNewScore(user: User, reason: string | undefined, robotName: string): string {
     if (!user) {
       return '';
     }
@@ -110,14 +110,14 @@ export class Helpers {
     return `${scoreStr}${reasonStr}${cakeDayStr}`;
   }
 
-  static getMessageForTokenTransfer(to, from, number, reason) {
+  static getMessageForTokenTransfer(robotName, to, from, number, reason) {
     if (!to) {
       return '';
     }
     const toTag = to.slackId ? `<@${to.slackId}>` : to.name;
     const fromTag = from.slackId ? `<@${from.slackId}>` : from.name;
 
-    const scoreStr = `${fromTag} transferred *${number}* ${'qrafty'} Tokens to ${toTag}.\n${toTag} now has ${
+    const scoreStr = `${fromTag} transferred *${number}* ${robotName} Tokens to ${toTag}.\n${toTag} now has ${
       to.token
     } token${Helpers.getEsOnEndOfWord(to.token)}`;
     let reasonStr = '.';
@@ -139,8 +139,8 @@ export class Helpers {
     }
 
     if (Helpers.isCakeDay(to[`robotDay`])) {
-      const yearsAsString = Helpers.getYearsAsString(to[`robotDay`]);
-      cakeDayStr = `\n:birthday: Today is ${toTag}'s ${yearsAsString}robotday! :birthday:`;
+      const yearsAsString = Helpers.getYearsAsString(to[`${robotName}Day`]);
+      cakeDayStr = `\n:birthday: Today is ${toTag}'s ${yearsAsString}${robotName}day! :birthday:`;
     }
     return `${scoreStr}${reasonStr}${cakeDayStr}\n_${fromTag} has ${from.token} token${Helpers.getEsOnEndOfWord(
       from.token
@@ -174,11 +174,11 @@ export class Helpers {
 
   /*
    * checks if the message is in DM
-   * room - {string} name of the room
+   * channel - {string} name of the channel
    */
-  static isPrivateMessage(room) {
+  static isPrivateMessage(channel) {
     // "Shell" is the adapter for running in the terminal
-    return room[0] === 'D' || room === 'Shell';
+    return channel[0] === 'D' || channel === 'Shell';
   }
 
   static isKnownFalsePositive(premessage, conjunction, reason, operator) {

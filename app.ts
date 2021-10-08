@@ -10,8 +10,9 @@ export const app = new App({
 });
 
 
-require('./src/eventHandlers');
-require('./src/migrations');
+import './src/eventHandlers';
+import './src/migrations';
+import './src/plusplus';
 
 
 app.action('button_click', async ({ body, ack, say }) => {
