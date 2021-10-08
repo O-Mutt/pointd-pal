@@ -20,6 +20,10 @@ app.action('button_click', async ({ body, ack, say }) => {
   await say(`<@${body.user.id}> clicked the button`);
 });
 
+app.message('hello world', async ({say}) => {
+  await say('hey, friend.');
+});
+
 (async () => {
   // Start your app
   let port = 5000;
