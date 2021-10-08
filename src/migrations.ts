@@ -9,16 +9,16 @@ import { app } from '../app';
 import { Db } from 'mongodb';
 const procVars = Helpers.getProcessVariables(process.env);
 
-app.message(/try to map all slack users to db users/, mapUsersToDb);
+app.message('try to map all slack users to db users', mapUsersToDb);
   
-// we ushould use `directMention() once the code "works"
+// we should use `directMention() once the code "works"
 app.message(/try to map more data to all slack users to db users/, mapMoreUserFieldsBySlackId);
 app.message( /try to map @.* to db users/, mapSingleUserToDb);
 app.message(/unmap all users/, unmapUsersToDb);
-app.message(new RegExp(/map all slackIds to slackEmail/), mapSlackIdToEmail);
+app.message(/map all slackIds to slackEmail/, mapSlackIdToEmail);
 
 async function mapUsersToDb({ message, context, client, logger, say }) {
-  if (message.user.id !== 'UD46NSKSM' && message.user.id !== 'U0231VDAB1B') {
+  if (context.user.id !== 'UD46NSKSM' && context.user.id !== 'U0231VDAB1B') {
     await say('Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif');
     return;
   }
@@ -132,8 +132,8 @@ async function unmapUsersToDb({ message, context, logger, say }) {
   await say('Ding fries are done. We unmapped all users');
 }
 
-async function mapSlackIdToEmail({ message, client, logger, say }) {
-  if (message.user.id !== 'UD46NSKSM' && message.user.id !== 'U0231VDAB1B') {
+async function mapSlackIdToEmail(payload: ) {
+  if (context.user.id !== 'UD46NSKSM' && context.user.id !== 'U0231VDAB1B') {
     await say('Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif');
     return;
   }
