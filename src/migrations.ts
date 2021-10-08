@@ -1,4 +1,4 @@
-import { directMention } from '@slack/bolt';
+import { AllMiddlewareArgs, directMention, SlackEventMiddlewareArgs } from '@slack/bolt';
 
 
 import { DatabaseService } from './lib/services/database';
@@ -7,6 +7,8 @@ import { Helpers } from './lib/helpers';
 
 import { app } from '../app';
 import { Db } from 'mongodb';
+import { UsersListArguments } from '@slack/web-api';
+import { Member } from '@slack/web-api/dist/response/UsersListResponse';
 const procVars = Helpers.getProcessVariables(process.env);
 
 app.message('try to map all slack users to db users', mapUsersToDb);
@@ -17,7 +19,7 @@ app.message( /try to map @.* to db users/, mapSingleUserToDb);
 app.message(/unmap all users/, unmapUsersToDb);
 app.message(/map all slackIds to slackEmail/, mapSlackIdToEmail);
 
-async function mapUsersToDb({ message, context, client, logger, say }) {
+async function mapUsersToDb({ message, context, client, logger, say }: SlackEventMiddlewareArgs<"message"> & AllMiddlewareArgs) {
   if (context.user.id !== 'UD46NSKSM' && context.user.id !== 'U0231VDAB1B') {
     await say('Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif');
     return;
@@ -26,7 +28,7 @@ async function mapUsersToDb({ message, context, client, logger, say }) {
   await databaseService.init();
   const db = await databaseService.getDb() as Db;
 
-  const { members } = await client.users.list();
+  const members = (await client.users.list()).members as Member[] ;
 
   const mappings: string[] = [];
   for (const member of members) {
@@ -132,7 +134,7 @@ async function unmapUsersToDb({ message, context, logger, say }) {
   await say('Ding fries are done. We unmapped all users');
 }
 
-async function mapSlackIdToEmail(payload: ) {
+async function mapSlackIdToEmail({message, context, logger, say, client}) {
   if (context.user.id !== 'UD46NSKSM' && context.user.id !== 'U0231VDAB1B') {
     await say('Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif');
     return;
