@@ -21,7 +21,8 @@ app.message(/map all slackIds to slackEmail/, mapSlackIdToEmail);
 
 async function mapUsersToDb({ message, context, client, logger, say }) {
   if (message.user !== 'UD46NSKSM' && message.user !== 'U0231VDAB1B') {
-    await say('Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif');
+    logger.error('sorry, can\'t do that', message, context);
+    await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif <@${message.user}>`);
     return;
   }
   const databaseService = new DatabaseService({ ...procVars });
@@ -49,8 +50,9 @@ async function mapUsersToDb({ message, context, client, logger, say }) {
 }
 
 async function mapMoreUserFieldsBySlackId({ message, context, client, logger, say }) {
-  if (message.user.id !== 'UD46NSKSM' && message.user.id !== 'U0231VDAB1B') {
-    await say('Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif');
+  if (message.user !== 'UD46NSKSM' && message.user !== 'U0231VDAB1B') {
+    logger.error('sorry, can\'t do that', message, context);
+    await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif <@${message.user}>`);
     return;
   }
   const databaseService = new DatabaseService({ ...procVars });
@@ -78,8 +80,9 @@ async function mapMoreUserFieldsBySlackId({ message, context, client, logger, sa
 }
 
 async function mapSingleUserToDb({ message, context, client, logger, say }) {
-  if (message.user.id !== 'UD46NSKSM' && message.user.id !== 'U0231VDAB1B') {
-    await say('Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif');
+  if (message.user !== 'UD46NSKSM' && message.user !== 'U0231VDAB1B') {
+    logger.error('sorry, can\'t do that', message, context);
+    await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif <@${message.user}>`);
     return;
   }
 
@@ -118,8 +121,9 @@ async function mapSingleUserToDb({ message, context, client, logger, say }) {
 }
 
 async function unmapUsersToDb({ message, context, logger, say }) {
-  if (message.user.id !== 'UD46NSKSM' && message.user.id !== 'U0231VDAB1B') {
-    await say('Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif');
+  if (message.user !== 'UD46NSKSM' && message.user !== 'U0231VDAB1B') {
+    logger.error('sorry, can\'t do that', message, context);
+    await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif <@${message.user}>`);
     return;
   }
   const databaseService = new DatabaseService({ ...procVars });
@@ -135,8 +139,9 @@ async function unmapUsersToDb({ message, context, logger, say }) {
 }
 
 async function mapSlackIdToEmail({message, context, logger, say, client}) {
-  if (context.user.id !== 'UD46NSKSM' && context.user.id !== 'U0231VDAB1B') {
-    await say('Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif');
+  if (message.user !== 'UD46NSKSM' && message.user !== 'U0231VDAB1B') {
+    logger.error('sorry, can\'t do that', message, context);
+    await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif <@${message.user}>`);
     return;
   }
 
