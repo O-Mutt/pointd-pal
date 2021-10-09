@@ -65,7 +65,7 @@ async function mapMoreUserFieldsBySlackId({ message, context, client, logger, sa
     if (member.profile.email) {
       try {
         logger.debug('Map this member', JSON.stringify(member));
-        const localMember = await databaseService.getUser(member);
+        const localMember = await databaseService.getUser(member.id);
         localMember.id = member.id;
         localMember.email = member.profile.email;
         if (localMember._id) {
@@ -151,7 +151,7 @@ async function mapSlackIdToEmail({message, context, logger, say, client}) {
   const db = await databaseService.getDb() as Db;
 
   try {
-    const missingEmailUsers = await db.collection(scoresDocumentName).find({ slackId: { $exists: true }, slackEmail: { $exists: false } }).toArray();
+    const missingEmailUsers = await db.collection(scoresDocumentName).find({ id: { $exists: true }, email: { $exists: false } }).toArray();
 
     for (const user of missingEmailUsers) {
       logger.debug('Map this member', user.id, user.name);

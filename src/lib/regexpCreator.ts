@@ -19,14 +19,14 @@ export class RegExpCreator {
    */
    createUpDownVoteRegExp(): RegExp {
     return new RegExp(
-      `(.*)?${this.userObject}${this.allowSpacesAfterObject}${this.operator}${this.reasonForVote}${this.eol}`,
+      `(?<premessage>.*)?${this.userObject}${this.allowSpacesAfterObject}${this.operator}${this.reasonForVote}${this.eol}`,
       'i'
     );
   }
 
   createMultiUserVoteRegExp(): RegExp {
     // the thing being upvoted, which is any number of words and spaces
-    const multiUserVotedObject = `(.*)?(?:\\{|\\[|\\()\\s?((?:${this.userObject}${this.multiUserSeparator}?(?:\\s)?)+)\\s?(?:\\}|\\]|\\))`;
+    const multiUserVotedObject = `(?<premessage>.*)?(?:\\{|\\[|\\()\\s?((?:${this.userObject}${this.multiUserSeparator}?(?:\\s)?)+)\\s?(?:\\}|\\]|\\))`;
 
     return new RegExp(
       `${multiUserVotedObject}${this.allowSpacesAfterObject}${this.operator}${this.reasonForVote}${this.eol}`,

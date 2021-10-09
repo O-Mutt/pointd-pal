@@ -109,7 +109,7 @@ async function upOrDownVote({ payload, message, context, logger, say }) {
     return;
   }
   const increment = operator.match(regExpCreator.positiveOperators) ? 1 : -1;
-  const { channel,  } = message;
+  const { channel } = message;
 
   const cleanReason = Helpers.cleanAndEncode(reason);
   const fromId = message.user;
