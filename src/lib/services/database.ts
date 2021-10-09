@@ -54,6 +54,8 @@ export class DatabaseService {
       { id: userId },
       { sort: { score: -1 } },
     );
+    logger.debug('did i find the user?', user, userId);
+
 
     if (!user) {
       logger.debug('creating a new user', userId);
