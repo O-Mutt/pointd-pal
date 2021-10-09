@@ -57,7 +57,7 @@ export class DatabaseService {
 
     if (!user) {
       logger.debug('creating a new user', userId);
-      const newUser = await createNewLevelOneUser(userId);
+      const newUser = await createNewLevelOneUser(userId, logger);
       return newUser;
     }
     return user as User;
