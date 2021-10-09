@@ -39,6 +39,7 @@ import { Helpers } from './lib/helpers';
 import * as token from './lib/token.json';
 import { decrypt } from './lib/services/decrypt';
 import { DatabaseService } from './lib/services/database';
+import { Blocks, Message } from 'slack-block-builder';
 
 import { app } from '../app';
 
@@ -67,6 +68,7 @@ if (procVars.magicIv && procVars.magicNumber) {
 }
 
 // listen to everything
+app.message(/.*/, logEverything);
 app.message(regExpCreator.createUpDownVoteRegExp(), upOrDownVote);
 app.message(new RegExp('how much .*point.*', 'i'), tellHowMuchPointsAreWorth);
 app.message(regExpCreator.createMultiUserVoteRegExp(), multipleUsersVote);
@@ -84,6 +86,11 @@ app.message(RegExp(/(plusplus version|-v|--version)/, 'i'), async ({ message, co
 // directMention
 app.message(regExpCreator.createEraseUserScoreRegExp(), eraseUserScore);
 
+
+async function logEverything({payload, message, context, logger, say}) {
+  logger.error(message, context, regExpCreator.createUpDownVoteRegExp());
+  await say(message);
+}
 /**
  * Functions for responding to commands
  */
@@ -291,50 +298,31 @@ async function eraseUserScore({ message, context, say }) {
 
 async function respondWithHelpGuidance({ message, context, say }) {
   const helpMessage = ''.concat('`<name>++ [<reason>]` - Increment score for a name (for a reason)\n')
-    .concat('`<name>-- [<reason>]` - Decrement score for a name (for a reason)\n')
-    .concat('`{name1, name2, name3}++ [<reason>]` - Increment score for all names (for a reason)\n')
-    .concat('`{name1, name2, name3}-- [<reason>]` - Decrement score for all names (for a reason) \n')
-    .concat('`{name1, name2, name3}-- [<reason>]` - Decrement score for all names (for a reason) \n')
-    .concat(`\`@${'qrafty'} score <name>\` - Display the score for a name and some of the reasons\n`)
-    .concat(`\`@${'qrafty'} top <amount>\` - Display the top scoring <amount>\n`)
-    .concat(`\`@${'qrafty'} erase <name> [<reason>]\` - Remove the score for a name (for a reason) \n`)
-    .concat(`\`@${'qrafty'} level me up\` - Level up your account for some additional ${'qrafty'}iness \n`)
-    .concat('`how much are <point_type> points worth` - Shows how much <point_type> points are worth\n');
+  .concat('`<name>-- [<reason>]` - Decrement score for a name (for a reason)\n')
+  .concat('`{name1, name2, name3}++ [<reason>]` - Increment score for all names (for a reason)\n')
+  .concat('`{name1, name2, name3}-- [<reason>]` - Decrement score for all names (for a reason) \n')
+  .concat('`{name1, name2, name3}-- [<reason>]` - Decrement score for all names (for a reason) \n')
+  .concat(`\`@${'qrafty'} score <name>\` - Display the score for a name and some of the reasons\n`)
+  .concat(`\`@${'qrafty'} top <amount>\` - Display the top scoring <amount>\n`)
+  .concat(`\`@${'qrafty'} erase <name> [<reason>]\` - Remove the score for a name (for a reason) \n`)
+  .concat(`\`@${'qrafty'} level me up\` - Level up your account for some additional ${'qrafty'}iness \n`)
+  .concat('`how much are <point_type> points worth` - Shows how much <point_type> points are worth\n');
 
-  const theMessage = {
-      blocks: [
-        {
-          type: 'section',
-          text: {
-            type: 'mrkdwn',
-            text: `Need help with ${'qrafty'}?`,
-          },
-        },
-        {
-          type: 'section',
-          text: {
-            type: 'mrkdwn',
-            text: '_Commands_:',
-          },
-        },
-        {
-          type: 'section',
-          text: {
-            type: 'mrkdwn',
-            text: helpMessage,
-          },
-        },
-      ],
-  };
-
-  if (procVars.furtherHelpUrl !== 'undefined') {
-    message.blocks.push({
-      type: 'section',
-      text: {
-        type: 'mrkdwn',
-        text: `For further help please visit ${procVars.furtherHelpUrl}`,
-      },
-    });
-  }
+  const theMessage = Message()
+    .channel(context.channel)
+    .text('Help menu for Qrafty')
+    .blocks(
+      Blocks.Header()
+      .text(`Need help with ${'Qrafty'}?`),
+      Blocks.Section()
+      .text(`_Commands_:`),
+      Blocks.Divider(),
+      Blocks.Section()
+      .text(helpMessage),
+      Blocks.Section()
+      .text((procVars.furtherHelpUrl !== 'undefined' && procVars.furtherHelpUrl !== undefined) ?
+              `For further help please visit ${procVars.furtherHelpUrl}` :
+              undefined)
+    );
   await say(theMessage);
 }
