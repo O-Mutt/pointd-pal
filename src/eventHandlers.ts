@@ -45,7 +45,7 @@ async function sendPlusPlusFalsePositiveNotification({ event, client, logger }) 
  */
 async function logAndNotifySpam({ event, client, logger }) {
   //Logger.error(`A spam event has been detected: ${notificationObject.message}. ${notificationObject.reason}`);
-  //robot.messageRoom(notificationObject.from.slackId, `${notificationObject.message}\n\n${notificationObject.reason}`);
+  //robot.messageRoom(notificationObject.from.id, `${notificationObject.message}\n\n${notificationObject.reason}`);
   try { 
     const result = await client.chat.postMessage({
       channel: procVars.notificationsRoom, 

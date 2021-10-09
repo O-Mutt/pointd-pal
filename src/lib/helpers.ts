@@ -65,7 +65,7 @@ export class Helpers {
     if (!user) {
       return '';
     }
-    const username = user.slackId ? `<@${user.slackId}>` : user.name;
+    const username = user.id ? `<@${user.id}>` : user.name;
     let scoreStr = `${username} has ${user.score} point${Helpers.getEsOnEndOfWord(user.score)}`;
     let reasonStr = '.';
     let cakeDayStr = '';
@@ -114,8 +114,8 @@ export class Helpers {
     if (!to) {
       return '';
     }
-    const toTag = to.slackId ? `<@${to.slackId}>` : to.name;
-    const fromTag = from.slackId ? `<@${from.slackId}>` : from.name;
+    const toTag = to.id ? `<@${to.id}>` : to.name;
+    const fromTag = from.id ? `<@${from.id}>` : from.name;
 
     const scoreStr = `${fromTag} transferred *${number}* ${robotName} Tokens to ${toTag}.\n${toTag} now has ${
       to.token
@@ -195,16 +195,10 @@ export class Helpers {
     procVars.peerFeedbackUrl =
       env.HUBOT_PEER_FEEDBACK_URL || `praise in Lattice (https://${procVars.companyName}.latticehq.com/)`;
     procVars.furtherFeedbackSuggestedScore = parseInt(env.HUBOT_FURTHER_FEEDBACK_SCORE, 10) || 10;
-    procVars.mongoUri =
-      env.MONGODB_URI ||
-      env.MONGO_URI ||
-      env.MONGODB_URL ||
-      env.MONGOLAB_URI ||
-      env.MONGOHQ_URL ||
-      'mongodb://localhost/plusPlus';
-    procVars.cryptoRpcProvider = env.HUBOT_CRYPTO_RPC_PROVIDER || '';
-    procVars.magicNumber = env.HUBOT_UNIMPORTANT_MAGIC_NUMBER || 'nope';
-    procVars.magicIv = env.HUBOT_UNIMPORTANT_MAGIC_IV || 'yup';
+    procVars.mongoUri = env.MONGO_URI || 'mongodb://localhost/plusPlus';
+    procVars.cryptoRpcProvider = env.HUBOT_CRYPTO_RPC_PROVIDER || undefined;
+    procVars.magicNumber = env.HUBOT_UNIMPORTANT_MAGIC_NUMBER || undefined;
+    procVars.magicIv = env.HUBOT_UNIMPORTANT_MAGIC_IV || undefined;
     procVars.furtherHelpUrl = env.HUBOT_CRYPTO_FURTHER_HELP_URL || undefined;
     procVars.notificationsRoom = env.HUBOT_PLUSPLUS_NOTIFICATION_ROOM || undefined;
     procVars.falsePositiveNotificationsRoom = env.HUBOT_PLUSPLUS_FALSE_POSITIVE_NOTIFICATION_ROOM || undefined;

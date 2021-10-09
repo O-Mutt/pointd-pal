@@ -2,53 +2,56 @@ import { app } from '../../../app';
 
 export const scoresDocumentName = 'scores';
 
-export type User = {
-  name: string,
-  score: number,
-  reasons: StringCounterObject,
-  pointsGiven: StringCounterObject,
-  robotDay: Date,
-  accountLevel: number,
-  totalPointsGiven: number,
-  slackId?: string,
-  slackEmail?: string;
-  token?: number
+export class User {
+  _id: string;
+  id: string;
+  score: number;
+  reasons: StringCounterObject;
+  pointsGiven: StringCounterObject;
+  robotDay: Date;
+  accountLevel: number;
+  totalPointsGiven: number;
+  isAdmin: boolean
+  isBot: boolean;
+  email?: string;
+  name?: string;
+  token?: number;
+
+  constructor(userArgs) {
+    this._id = userArgs._id;
+    this.id = userArgs.id;
+    this.score = userArgs.score || 0;
+    this.reasons = userArgs.reasons || {};
+    this.pointsGiven = userArgs.pointsGiven || {};
+    this.robotDay = userArgs.robotDay || new Date();
+    this.accountLevel = userArgs.accountLevel || 1;
+    this.totalPointsGiven = userArgs.accountLevel || 1;
+    this.email = userArgs.email;
+    this.name = userArgs.name;
+    this.token = userArgs.token;
+    this.isAdmin = userArgs.admin || false;
+    this.isBot = userArgs.admin || false;
+  }
 };
 
 export type StringCounterObject = {
   [key: string]: number
 }
 
-export async function createNewLevelOneUser(user: any): Promise<User> {
-  const userName = user.name ? user.name : user;
-
-  const newUser: User = {
-    name: userName,
+export async function createNewLevelOneUser(userId: string): Promise<User> {
+  const { user } = await app.client.users.info({ user: userId });
+  const newUser: User = new User({
+    id: userId,
     score: 0,
-    reasons: { },
-    pointsGiven: { },
+    reasons: {},
+    pointsGiven: {},
     robotDay: new Date(),
     accountLevel: 1,
     totalPointsGiven: 0,
-  };
-  if (user.id) {
-    newUser.slackId = user.id;
-  }
-  newUser.slackEmail = getEmail(user);
-
-  if (newUser.slackId && !newUser.slackEmail) {
-    const { slackUser } = await app.client.users.info({ user: newUser.slackId });
-    newUser.slackEmail = getEmail(slackUser);
-  }
-
+    email: user?.profile?.email,
+    name: user?.name,
+    admin: user?.is_admin,
+    bot: user?.is_bot
+  });
   return newUser;
-}
-
-function getEmail(user: any) {
-  if (user.profile && user.profile.email) {
-    return user.profile.email;
-  } else if (user.info && user.info.email_address) {
-    return user.info.email_address;
-  }
-  return undefined;
 }

@@ -33,23 +33,24 @@ export class ScoreKeeper {
   * incrementValue - [number] the value to change the score by
   * return scoreObject - the new document for the user who received the score
   */
-  async incrementScore(to: any, from: any, channel: string, reason: string, incrementValue: number) {
-    from = typeof from === 'string' ? { name: from, id: from } : from;
-    let toUser;
-    let fromUser;
+  async incrementScore(toId: string, fromId: string, channel: string, reason: string, incrementValue: number) {
     try {
-      toUser = await this.getUser(to);
-      fromUser = await this.getUser(from);
-      if ((await this.isSpam(toUser, fromUser)) || this.isSendingToSelf(toUser, fromUser) || this.isBotInDm(from, channel)) {
-        throw new Error(`I'm sorry <@${fromUser.slackId}>, I'm afraid I can't do that.`);
+      const toUser = await this.databaseService.getUser(toId);
+      const fromUser = await this.databaseService.getUser(fromId);
+      if (fromUser.isBot) {
+        throw new Error('Bots can\'t send points, silly.');
       }
-      toUser.score = parseInt(toUser.score, 10) + incrementValue;
+
+      if ((await this.databaseService.isSpam(toUser, fromUser)) || this.isSendingToSelf(toId, fromId)) {
+        throw new Error(`I'm sorry <@${fromUser.id}>, I'm afraid I can't do that.`);
+      }
+      toUser.score = toUser.score + incrementValue;
       if (reason) {
         const oldReasonScore = toUser.reasons[`${reason}`] ? toUser.reasons[`${reason}`] : 0;
         toUser.reasons[`${reason}`] = oldReasonScore + incrementValue;
       }
 
-      await this.databaseService.savePointsGiven(from, toUser, incrementValue);
+      await this.databaseService.savePointsGiven(fromUser, toUser, incrementValue);
       let saveResponse = await this.databaseService.saveUser(toUser);
       try {
         await this.databaseService.savePlusPlusLog(toUser, fromUser, channel, reason, incrementValue);
@@ -67,25 +68,23 @@ export class ScoreKeeper {
     }
   }
 
-  async transferTokens(to, from, channel, reason, numberOfTokens) {
-    let toUser;
-    let fromUser;
+  async transferTokens(toId: string, from, channel, reason, numberOfTokens: number): Promise<{ toUser: User; fromUser: User; }> {
     try {
-      toUser = await this.getUser(to);
-      fromUser = await this.getUser(from);
+      const toUser = await this.databaseService.getUser(toId);
+      const fromUser = await this.databaseService.getUser(from);
       if (toUser.accountLevel >= 2 && fromUser.accountLevel >= 2) {
-        if ((await this.isSpam(toUser, fromUser)) || this.isSendingToSelf(toUser, fromUser) || this.isBotInDm(from, channel)) {
-          throw new Error(`I'm sorry <@${fromUser.slackId}>, I'm afraid I can't do that.`);
+        if ((await this.databaseService.isSpam(toUser, fromUser)) || this.isSendingToSelf(toUser, fromUser)) {
+          throw new Error(`I'm sorry <@${fromUser.id}>, I'm afraid I can't do that.`);
         }
-        if (fromUser.token >= parseInt(numberOfTokens, 10)) {
-          fromUser.token = parseInt(fromUser.token, 10) - parseInt(numberOfTokens, 10);
-          toUser.token = parseInt(toUser.token, 10) + parseInt(numberOfTokens, 10);
+        if (fromUser.token && fromUser.token >= numberOfTokens) {
+          fromUser.token = fromUser.token - numberOfTokens;
+          toUser.token = toUser.token || 0 + numberOfTokens;
           if (reason) {
             const oldReasonScore = toUser.reasons[`${reason}`] ? toUser.reasons[`${reason}`] : 0;
             toUser.reasons[`${reason}`] = oldReasonScore + numberOfTokens;
           }
 
-          await this.databaseService.savePointsGiven(from, toUser, numberOfTokens);
+          await this.databaseService.savePointsGiven(fromUser, toUser, numberOfTokens);
           const saveResponse = await this.databaseService.saveUser(toUser);
           try {
             await this.databaseService.savePlusPlusLog(toUser, fromUser, channel, reason, numberOfTokens);
@@ -111,11 +110,6 @@ export class ScoreKeeper {
     }
   }
 
-  async getUser(user): Promise<User> {
-    const dbUser = await this.databaseService.getUser(user) as User;
-    return dbUser;
-  }
-
   async erase(user, from, channel, reason) {
     if (reason) {
       //Logger.error(`Erasing score for reason ${reason} for ${user} by ${from}`);
@@ -128,55 +122,17 @@ export class ScoreKeeper {
     return true;
   }
 
-  isSendingToSelf(to, from) {
+  isSendingToSelf(toId, fromId) {
     //Logger.debug(`Checking if is to self. To [${to.name}] From [${from.name}], Valid: ${to.name !== from.name}`);
-    const isToSelf = to.name === from.name;
+    const isToSelf = toId === fromId;
     if (isToSelf) {
       this.eventEmitter.emit('plus-plus-spam', {
-        to,
-        from,
+        toId,
+        fromId,
         message: this.spamMessage,
         reason: 'Looks like you may be trying to send a point to yourself.',
       });
     }
     return isToSelf;
-  }
-
-  async isSpam(to, from) {
-    const toId = to.slackId || to.name;
-    const fromId = from.slackId || from.name;
-    //Logger.debug(`Checking spam to [${to.name}] from [${from.name}]`);
-    const isSpam = await this.databaseService.isSpam(toId, fromId);
-    if (isSpam) {
-      this.eventEmitter.emit('plus-plus-spam', {
-        to,
-        from,
-        message: this.spamMessage,
-        reason: `You recently sent <@${toId}> a point.`,
-      });
-    }
-    return isSpam;
-  }
-
-  /*
-  * tries to detect bots
-  * from - object from the message.user
-  * return {boolean} true if it is a bot
-  */
-  isBotInDm(from, channel) {
-    let isBot = false;
-    if (from.is_bot && Helpers.isPrivateMessage(channel)) {
-      isBot = true;
-      //Logger.error('A bot is sending points in DM');
-    }
-    if (isBot) {
-      this.eventEmitter.emit('plus-plus-spam', {
-        to: undefined,
-        from,
-        message: this.spamMessage,
-        reason: 'You can\'t have a bot do the dirty work.',
-      });
-    }
-    return isBot;
   }
 }

@@ -2,7 +2,7 @@ const scoreKeyword = process.env.HUBOT_PLUSPLUS_KEYWORD || 'score|scores|karma';
 const reasonConjunctions = process.env.HUBOT_PLUSPLUS_CONJUNCTIONS || 'for|because|cause|cuz|as|porque|just|thanks for';
 
 export class RegExpCreator {
-  userObject = /<@(?<user_id>[^>|]+)(?:\|(?<label>[^>]+))?>/;
+  userObject = /<@(?<userId>[^>|]+)(?:\|(?<label>[^>]+))?>/;
   multiUserSeparator= `(?:\\,|\\s|(?:\\s)?\\:(?:\\s)?)`;
   // allow for spaces after the thing being upvoted (@user ++)
   allowSpacesAfterObject = /\s*/;

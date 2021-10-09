@@ -1,25 +1,33 @@
 /* eslint-disable no-restricted-syntax */
 import { Db, MongoClient } from 'mongodb';
 import moment, { Moment } from 'moment';
+import EventEmitter from 'events';
 
-import { scoresDocumentName, createNewLevelOneUser } from '../data/scores';
+import { app } from '../../../app';
 
+import { scoresDocumentName, createNewLevelOneUser, User } from '../data/scores';
 import { logDocumentName } from '../data/scoreLog';
 import { Helpers } from '../helpers';
 import { botTokenDocumentName } from '../data/botToken';
 
+
 export class DatabaseService {
+  private eventEmitter: EventEmitter;
   private db: Db | undefined;
   uri: string;
   furtherFeedbackScore: number;
   peerFeedbackUrl: string;
   spamTimeLimit: number;
+  spamMessage: string;
+
   constructor(params) {
     this.db = undefined;
     this.uri = params.mongoUri;
     this.furtherFeedbackScore = params.furtherFeedbackSuggestedScore;
     this.peerFeedbackUrl = params.peerFeedbackUrl;
     this.spamTimeLimit = params.spamTimeLimit;
+    this.eventEmitter = new EventEmitter();
+    this.spamMessage = params.spamMessage;
   }
 
   async init() {
@@ -38,30 +46,28 @@ export class DatabaseService {
   /*
   * user - the name of the user
   */
-  async getUser(user) {
-    const userName = user.name ? user.name : user;
-    const search = user.id ? { slackId: user.id } : { name: userName };
-    //Logger.debug(`trying to find user ${JSON.stringify(search)}`);
+  async getUser(userId: string): Promise<User> {
     const db = (await this.getDb()) as Db;
 
-    const dbUser = await db.collection(scoresDocumentName).findOne(
-      search,
+    // Maybe this should include a migration path to keep the user object up to date with any changes?
+    const user = new User(await db.collection(scoresDocumentName).findOne(
+      { id: userId },
       { sort: { score: -1 } },
-    );
+    ));
 
-    if (!dbUser) {
-      //Logger.debug('creating a new user', user);
-      const newUser = await createNewLevelOneUser(user);
+    if (!user) {
+      //logger.debug('creating a new user', user);
+      const newUser = await createNewLevelOneUser(userId);
       return newUser;
     }
-    return dbUser;
+    return user;
   }
 
   /*
   * user - the name of the user
   */
   async getAllUsers() {
-    const search = { slackId: { $exists: true } };
+    const search = { id: { $exists: true } };
     //Logger.debug('getting _all_ users');
     const db = (await this.getDb()) as Db;
 
@@ -74,14 +80,12 @@ export class DatabaseService {
    * @param {object} user the user who is getting a point change
    * @returns {object} the updated user who received a change
    */
-  async saveUser(user) {
-    const userName = user.name ? user.name : user;
-    const search = user.slackId ? { slackId: user.slackId } : { name: userName };
+  async saveUser(user: User): Promise<User> {
     const db = (await this.getDb()) as Db;
 
     const result = await db.collection(scoresDocumentName)
       .findOneAndUpdate(
-        search,
+        { id: user.id },
         {
           $set: user,
         },
@@ -96,14 +100,14 @@ export class DatabaseService {
 
     //Logger.debug(`Saving user original: [${user.name}: ${user.score}], new [${updatedUser.name}: ${updatedUser.score}]`);
 
-    return updatedUser;
+    return updatedUser as User;
   }
 
   async savePlusPlusLog(to, from, channel, reason, incrementValue) {
     const pointsAmount = parseInt(incrementValue, 10);
-    const fromId = from.slackId || from.name;
-    const scoreSearch = from.slackId ? { slackId: from.slackId } : { name: from.name };
-    const toId = to.slackId || to.name;
+    const fromId = from.id || from.name;
+    const scoreSearch = from.id ? { slackId: from.id } : { name: from.name };
+    const toId = to.id || to.name;
     const db = (await this.getDb()) as Db;
     await db.collection(scoresDocumentName).updateOne(scoreSearch, { $inc: { totalPointsGiven: pointsAmount } });
     await db.collection(logDocumentName).insertOne({
@@ -116,20 +120,25 @@ export class DatabaseService {
     });
   }
 
-  async isSpam(to, from) {
+  async isSpam(toId, fromId) {
     //Logger.debug('spam check');
     const db = (await this.getDb()) as Db;
     const now: Moment = moment();
     const fiveMinutesAgo = now.subtract(this.spamTimeLimit, 'minutes').toISOString();
     const previousScoreExists = await db.collection(logDocumentName)
       .countDocuments({
-        from,
-        to,
+        fromId,
+        toId,
         date: { $gte: fiveMinutesAgo },
       });
     //Logger.debug('spam check result', previousScoreExists);
     if (previousScoreExists !== 0) {
-      //Logger.error(`${from} is spamming points to ${to}! STOP THEM!!!!`);
+      this.eventEmitter.emit('plus-plus-spam', {
+        toId,
+        fromId,
+        message: this.spamMessage,
+        reason: `You recently sent <@${toId}> a point.`,
+      });
       return true;
     }
 
@@ -141,19 +150,16 @@ export class DatabaseService {
   * to - database user who is receiving the score
   * score - the number of score that is being sent
   */
-  async savePointsGiven(from, to, score) {
+  async savePointsGiven(from: User, to: User, score: number) {
     const db = (await this.getDb()) as Db;
-    const cleanName = Helpers.cleanAndEncode(to.name);
-    const fromUser = await this.getUser(from);
-    const fromSearch = fromUser.slackId ? { slackId: fromUser.slackId } : { name: fromUser.name };
 
-    const oldScore = fromUser.pointsGiven[cleanName] ? fromUser.pointsGiven[cleanName] : 0;
+    const oldScore = from.pointsGiven[to.id] ? from.pointsGiven[to.id] : 0;
     // even if they are down voting them they should still get a tally as they ++/-- the same person
-    fromUser.pointsGiven[cleanName] = (oldScore + 1);
+    from.pointsGiven[to.id] = (oldScore + 1);
     const result = await db.collection(scoresDocumentName)
       .findOneAndUpdate(
-        fromSearch,
-        { $set: fromUser },
+        { id: from.id },
+        { $set: from },
         {
           returnDocument: 'after',
           upsert: true,
@@ -162,10 +168,12 @@ export class DatabaseService {
       );
     const updatedUser = result.value;
 
-    if (updatedUser && updatedUser.pointsGiven[cleanName] % this.furtherFeedbackScore === 0) {
+    if (updatedUser && updatedUser.pointsGiven[to.id] % this.furtherFeedbackScore === 0) {
       //Logger.debug(`${from.name} has sent a lot of points to ${to.name} suggesting further feedback ${score}`);
-      const toIdent = to.slackId ? `<@${to.slackId}>` : to.name;
-      //this.robot.messageRoom(from.id, `Looks like you've given ${toIdent} quite a few points, maybe you should look at submitting ${this.peerFeedbackUrl}`);
+      await app.client.chat.postMessage({ 
+        channel: from.id,
+        text: `Looks like you've given <@${to.id}> quite a few points, maybe you should look at submitting ${this.peerFeedbackUrl}` 
+      });
     }
   }
 
@@ -253,7 +261,7 @@ export class DatabaseService {
 
   async erase(user, reason) {
     const userName = user.name ? user.name : user;
-    const search = user.slackId ? { slackId: user.slackId } : { name: userName };
+    const search = user.id ? { slackId: user.id } : { name: userName };
     const db = (await this.getDb()) as Db;
 
     let result;
@@ -274,7 +282,7 @@ export class DatabaseService {
 
   async updateAccountLevelToTwo(user) {
     const userName = user.name ? user.name : user;
-    const search = user.slackId ? { slackId: user.slackId } : { name: userName };
+    const search = user.id ? { slackId: user.id } : { name: userName };
     const db = (await this.getDb()) as Db;
     let tokensAdded = 0;
     const foundUser = await db.collection(scoresDocumentName).findOne(search);
@@ -355,9 +363,9 @@ export class DatabaseService {
    * @param {string} fromName the name of the user sending the points
    * @returns {object} the user who received the points updated value
    */
-  async transferScoreFromBotToUser(user, scoreChange, from: any | undefined) {
+  async transferScoreFromBotToUser(user: User, scoreChange: number, from: User | undefined): Promise<User> {
     const userName = user.name ? user.name : user;
-    const search = user.slackId ? { slackId: user.slackId } : { name: userName };
+    const search = user.id ? { slackId: user.id } : { name: userName };
 
     const db = (await this.getDb()) as Db;
     //Logger.info(`We are transferring ${scoreChange} ${Helpers.capitalizeFirstLetter('qrafty')} Tokens to ${userName} from ${from ? from.name : Helpers.capitalizeFirstLetter('qrafty')}`);
@@ -375,11 +383,10 @@ export class DatabaseService {
     );
     await db.collection(botTokenDocumentName).updateOne({ name: 'qrafty' }, { $inc: { token: -scoreChange } });
     // If this isn't a level up and the score is larger than 1 (tipping aka level 3)
-    if (from && from.name && (scoreChange > 1 || scoreChange < -1)) {
-      const fromSearch = from.slackId ? { slackId: from.slackId } : { name: from.name };
-      await db.collection(scoresDocumentName).updateOne(fromSearch, { $inc: { token: -scoreChange } });
+    if (from && (scoreChange > 1 || scoreChange < -1)) {
+      await db.collection(scoresDocumentName).updateOne({ id: from.id }, { $inc: { token: -scoreChange } });
     }
-    return result.value;
+    return result.value as User;
   }
 
   async getMagicSecretStringNumberValue() {
