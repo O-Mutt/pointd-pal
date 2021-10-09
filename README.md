@@ -1,38 +1,34 @@
 # Qrafty-Bolt
 
-> Slack app example from 📚 [Getting started with Bolt for JavaScript tutorial][1]
+This is a micropraise bot that is intended to help friends/coworkers `++` one another and provide quick easy feedback
 
 ## Overview
 
-This is a Slack app built with the [Bolt for JavaScript framework][2] that showcases
-responding to events and interactive buttons.
-
 ## Running locally
 
-### 1. Setup environment variables
-
-```zsh
-# Replace with your bot and app token
-export SLACK_BOT_TOKEN=<your-bot-token>
-export SLACK_APP_TOKEN=<your-app-level-token>
-```
-
-### 2. Setup your local project
+### 1. Setup your local project
 
 ```zsh
 # Clone this project onto your machine
-git clone https://github.com/slackapi/bolt-js-getting-started-app.git
+git clone git@github.com:O-Mutt/qrafty-bolt.git
 
 # Change into the project
-cd bolt-js-getting-started-app/
+cd qrafty-bolt/
 
 # Install the dependencies
 npm install
 ```
+### 2. Setup environment variables
+
+```zsh
+cp .env.example .env
+```
+
+Replace variables with ones from your "local" setup
 
 ### 3. Start servers
 ```zsh
-npm run start
+npm run start:dev
 ```
 
 ## Contributing
@@ -41,7 +37,7 @@ npm run start
 
 Found a bug or have a question about this project? We'd love to hear from you!
 
-1. Browse to [slackapi/bolt-js/issues][4]
+1. Browse to [O-Mutt/qrafty-bolt/issues][4]
 1. Create a new issue
 1. Select the `[x] examples` category
 
@@ -50,4 +46,4 @@ See you there and thanks for helping to improve Bolt for everyone!
 [1]: https://slack.dev/bolt-js/tutorial/getting-started
 [2]: https://slack.dev/bolt-js/
 [3]: https://slack.dev/bolt-js/tutorial/getting-started#setting-up-events
-[4]: https://github.com/slackapi/bolt-js/issues/new
+[4]: https://github.com/O-Mutt/qrafty-bolt/issues/new
