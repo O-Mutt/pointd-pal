@@ -7,7 +7,6 @@ import { app } from '../../../app';
 
 import { scoresDocumentName, createNewLevelOneUser, User } from '../data/scores';
 import { logDocumentName } from '../data/scoreLog';
-import { Helpers } from '../helpers';
 import { botTokenDocumentName } from '../data/botToken';
 
 

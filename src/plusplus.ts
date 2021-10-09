@@ -323,6 +323,6 @@ async function respondWithHelpGuidance({ message, context, say }) {
       .text((procVars.furtherHelpUrl !== 'undefined' && procVars.furtherHelpUrl !== undefined) ?
               `For further help please visit ${procVars.furtherHelpUrl}` :
               undefined)
-    );
+    ).asUser().buildToJSON();
   await say(theMessage);
 }
