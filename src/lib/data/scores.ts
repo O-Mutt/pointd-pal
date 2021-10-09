@@ -3,7 +3,7 @@ import { app } from '../../../app';
 export const scoresDocumentName = 'scores';
 
 export class User {
-  _id: string;
+  _id?: string;
   id: string;
   score: number;
   reasons: StringCounterObject;

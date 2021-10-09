@@ -89,8 +89,8 @@ app.message(regExpCreator.createEraseUserScoreRegExp(), eraseUserScore);
 
 
 async function logEverything({payload, message, context, logger, say}) {
-  logger.error(message, context, regExpCreator.createUpDownVoteRegExp());
-  await say(context.matches.input);
+  logger.debug("This is for logging all the things!", message, context);
+  //await say(context.matches.input);
 }
 /**
  * Functions for responding to commands

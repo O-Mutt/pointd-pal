@@ -26,7 +26,7 @@ const DatabaseService = require('./lib/services/database');
       let message: string[] = [];
       if (topSenders.length > 0) {
         for (let i = 0, end = topSenders.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
-          const person = `<@${topSenders[i]._id}>`;
+          const person = `<@${topSenders[i].id}>`;
           const pointStr = topSenders[i].scoreChange > 1 ? 'points given' : 'point given';
           message.push(`${i + 1}. ${person} (${topSenders[i].scoreChange} ${pointStr})`);
         }
@@ -45,7 +45,7 @@ const DatabaseService = require('./lib/services/database');
       message = [];
       if (topRecipient.length > 0) {
         for (let i = 0, end = topRecipient.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
-          const person = `<@${topRecipient[i]._id}>`;
+          const person = `<@${topRecipient[i].id}>`;
           const pointStr = topRecipient[i].scoreChange > 1 ? 'points received' : 'point received';
           message.push(`${i + 1}. ${person} (${topRecipient[i].scoreChange} ${pointStr})`);
         }
@@ -63,7 +63,7 @@ const DatabaseService = require('./lib/services/database');
       message = [];
       if (topRoom.length > 0) {
         for (let i = 0, end = topRoom.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
-          const person = `<#${topRoom[i]._id}>`;
+          const person = `<#${topRoom[i].id}>`;
           const pointStr = topRoom[i].scoreChange > 1 ? 'points given' : 'point given';
           message.push(`${i + 1}. ${person} (${topRoom[i].scoreChange} ${pointStr})`);
         }

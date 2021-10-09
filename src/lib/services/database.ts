@@ -49,17 +49,17 @@ export class DatabaseService {
     const db = (await this.getDb()) as Db;
 
     // Maybe this should include a migration path to keep the user object up to date with any changes?
-    const user = new User(await db.collection(scoresDocumentName).findOne(
+    const user = await db.collection(scoresDocumentName).findOne(
       { id: userId },
       { sort: { score: -1 } },
-    ));
+    );
 
     if (!user) {
       //logger.debug('creating a new user', user);
       const newUser = await createNewLevelOneUser(userId);
       return newUser;
     }
-    return user;
+    return user as User;
   }
 
   /*
