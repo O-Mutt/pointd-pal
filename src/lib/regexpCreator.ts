@@ -5,7 +5,7 @@ export class RegExpCreator {
   userObject = `<@(?<userId>[^>|]+)(?:\\|(?<label>[^>]+))?>`;
   multiUserSeparator= `(?:\\,|\\s|(?:\\s)?\\:(?:\\s)?)`;
   // allow for spaces after the thing being upvoted (@user ++)
-  allowSpacesAfterObject = `\s*`;
+  allowSpacesAfterObject = `\\s*`;
   positiveOperators = `\\+\\+|:clap:(?::skin-tone-[0-9]:)?|:thumbsup:(?::skin-tone-[0-9]:)?|:thumbsup_all:|:\\+1:(?::skin-tone-[0-9]:)?`;
   negativeOperators = `--|—|\\u2013|\\u2014|:thumbsdown:(?::skin-tone-[0-9]:)?`;
   operator = `(?<operator>${this.positiveOperators}|${this.negativeOperators})`;
@@ -13,21 +13,13 @@ export class RegExpCreator {
   eol = `$`;
 
   /**
-   * botName score for user1
+   * user1++ for being dope
+   * user1-- cuz nope
+   * billy @bob++
    */
-  createAskForScoreRegExp(): RegExp {
-    return new RegExp(`(.*)?(?:${scoreKeyword})\\s(\\w+\\s)?${this.userObject}`, 'i');
-  }
-
-  /**
-   * botName erase user1
-   * botName erase user2 because they quit and i don't like quitters
-   */
-  createEraseUserScoreRegExp(): RegExp {
-    const eraseClause = '(?:erase)';
-
+   createUpDownVoteRegExp(): RegExp {
     return new RegExp(
-      `(.*)?${eraseClause}${this.allowSpacesAfterObject}${this.userObject}${this.allowSpacesAfterObject}${this.reasonForVote}${this.eol}`,
+      `(.*)?${this.userObject}${this.allowSpacesAfterObject}${this.operator}${this.reasonForVote}${this.eol}`,
       'i'
     );
   }
@@ -69,18 +61,26 @@ export class RegExpCreator {
       'i'
     );
   }
-  
+
   /**
-   * user1++ for being dope
-   * user1-- cuz nope
-   * billy @bob++
+   * botName score for user1
    */
-  createUpDownVoteRegExp(): RegExp {
-    return new RegExp(
-      `(.*)?${this.userObject}${this.allowSpacesAfterObject}${this.operator}${this.reasonForVote}${this.eol}`,
-      'i'
-    );
-  }
+    createAskForScoreRegExp(): RegExp {
+      return new RegExp(`(.*)?(?:${scoreKeyword})\\s(\\w+\\s)?${this.userObject}`, 'i');
+    }
+  
+    /**
+     * botName erase user1
+     * botName erase user2 because they quit and i don't like quitters
+     */
+    createEraseUserScoreRegExp(): RegExp {
+      const eraseClause = '(?:erase)';
+  
+      return new RegExp(
+        `(.*)?${eraseClause}${this.allowSpacesAfterObject}${this.userObject}${this.allowSpacesAfterObject}${this.reasonForVote}${this.eol}`,
+        'i'
+      );
+    }
 
   /**
    *
