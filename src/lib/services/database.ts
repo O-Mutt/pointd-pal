@@ -8,6 +8,7 @@ import { app } from '../../../app';
 import { scoresDocumentName, createNewLevelOneUser, User } from '../data/scores';
 import { logDocumentName } from '../data/scoreLog';
 import { botTokenDocumentName } from '../data/botToken';
+import { Logger } from '@slack/logger';
 
 
 export class DatabaseService {
@@ -45,7 +46,7 @@ export class DatabaseService {
   /*
   * user - the name of the user
   */
-  async getUser(userId: string): Promise<User> {
+  async getUser(userId: string, logger: any | undefined = undefined): Promise<User> {
     const db = (await this.getDb()) as Db;
 
     // Maybe this should include a migration path to keep the user object up to date with any changes?
@@ -55,7 +56,7 @@ export class DatabaseService {
     );
 
     if (!user) {
-      //logger.debug('creating a new user', user);
+      logger.debug('creating a new user', userId);
       const newUser = await createNewLevelOneUser(userId);
       return newUser;
     }

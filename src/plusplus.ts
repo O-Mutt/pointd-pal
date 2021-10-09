@@ -117,7 +117,7 @@ async function upOrDownVote({ payload, message, context, logger, say }) {
   logger.debug(`${increment} score for [${userId}] from [${fromId}]${cleanReason ? ` because ${cleanReason}` : ''} in [${channel}]`);
   let toUser; let fromUser;
   try {
-    ({ toUser, fromUser } = await scoreKeeper.incrementScore(userId, fromId, channel, cleanReason, increment));
+    ({ toUser, fromUser } = await scoreKeeper.incrementScore(userId, fromId, channel, cleanReason, increment, logger));
   } catch (e: any) {
     await say(e.message);
     return;

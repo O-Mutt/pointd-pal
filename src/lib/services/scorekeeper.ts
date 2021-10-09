@@ -33,10 +33,10 @@ export class ScoreKeeper {
   * incrementValue - [number] the value to change the score by
   * return scoreObject - the new document for the user who received the score
   */
-  async incrementScore(toId: string, fromId: string, channel: string, reason: string, incrementValue: number) {
+  async incrementScore(toId: string, fromId: string, channel: string, reason: string, incrementValue: number, logger: any) {
     try {
-      const toUser = await this.databaseService.getUser(toId);
-      const fromUser = await this.databaseService.getUser(fromId);
+      const toUser = await this.databaseService.getUser(toId, logger);
+      const fromUser = await this.databaseService.getUser(fromId, logger);
       if (fromUser.isBot) {
         throw new Error('Bots can\'t send points, silly.');
       }

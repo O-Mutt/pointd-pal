@@ -38,8 +38,9 @@ export type StringCounterObject = {
   [key: string]: number
 }
 
-export async function createNewLevelOneUser(userId: string): Promise<User> {
+export async function createNewLevelOneUser(userId: string, logger: any): Promise<User> {
   const { user } = await app.client.users.info({ user: userId });
+  logger.debug('got user info', user);
   const newUser: User = new User({
     id: userId,
     score: 0,
