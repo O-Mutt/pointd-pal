@@ -42,6 +42,7 @@ import { DatabaseService } from './lib/services/database';
 import { Blocks, Message } from 'slack-block-builder';
 
 import { app } from '../app';
+import { directMention } from '@slack/bolt';
 
 const procVars = Helpers.getProcessVariables(process.env);
 const scoreKeeper = new ScoreKeeper({ ...procVars });
@@ -75,7 +76,7 @@ app.message(regExpCreator.createMultiUserVoteRegExp(), multipleUsersVote);
 
 // listen for bot tag/ping
 app.message(regExpCreator.createGiveTokenRegExp(), giveTokenBetweenUsers);
-// directMention
+ //directMention()
 app.message(regExpCreator.getHelp(), respondWithHelpGuidance);
 // directMention
 app.message(RegExp(/(plusplus version|-v|--version)/, 'i'), async ({ message, context, say }) => {
@@ -89,7 +90,7 @@ app.message(regExpCreator.createEraseUserScoreRegExp(), eraseUserScore);
 
 async function logEverything({payload, message, context, logger, say}) {
   logger.error(message, context, regExpCreator.createUpDownVoteRegExp());
-  await say(message);
+  await say(context.matches.input);
 }
 /**
  * Functions for responding to commands
