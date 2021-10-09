@@ -85,7 +85,7 @@ app.message(regExpCreator.createEraseUserScoreRegExp(), eraseUserScore);
  */
 async function upOrDownVote({ payload, message, context, logger, say }) {
   logger.error(message, context, payload)
-  const [fullText, premessage, name, operator, conjunction, reason] = context.matches;
+  const { premessage, name, operator, conjunction, reason } = context.matches.groups;
 
   if (Helpers.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
     // circuit break a plus plus

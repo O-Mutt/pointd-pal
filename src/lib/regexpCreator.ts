@@ -2,23 +2,21 @@ const scoreKeyword = process.env.HUBOT_PLUSPLUS_KEYWORD || 'score|scores|karma';
 const reasonConjunctions = process.env.HUBOT_PLUSPLUS_CONJUNCTIONS || 'for|because|cause|cuz|as|porque|just|thanks for';
 
 export class RegExpCreator {
-  votedObject = '[\\-\\w.-:\u3040-\u30FF\uFF01-\uFF60\u4E00-\u9FA0]+(?<![+-])';
-  captureVoted = `@(${this.votedObject})`;
-  nonCaptureVoted = `@(?:${this.votedObject})`;
-  multiUserSeparator= '(?:\\,|\\s|(?:\\s)?\\:(?:\\s)?)';
+  userObject = /<@(?<user_id>[^>|]+)(?:\|(?<label>[^>]+))?>/;
+  multiUserSeparator= `(?:\\,|\\s|(?:\\s)?\\:(?:\\s)?)`;
   // allow for spaces after the thing being upvoted (@user ++)
-  allowSpaceAfterObject = '\\s*';
-  positiveOperators = '\\+\\+|:clap:(?::skin-tone-[0-9]:)?|:thumbsup:(?::skin-tone-[0-9]:)?|:thumbsup_all:|:\+1:(?::skin-tone-[0-9]:)?';
-  negativeOperators = '--|—|\u2013|\u2014|:thumbsdown:(?::skin-tone-[0-9]:)?';
-  operator = `(${this.positiveOperators}|${this.negativeOperators})`;
-  reasonForVote = `(?:\\s+(${reasonConjunctions})?\\s*(.+))?`;
+  allowSpacesAfterObject = /\s*/;
+  positiveOperators = /\+\+|:clap:(?::skin-tone-[0-9]:)?|:thumbsup:(?::skin-tone-[0-9]:)?|:thumbsup_all:|:\+1:(?::skin-tone-[0-9]:)?/;
+  negativeOperators = /--|—|\u2013|\u2014|:thumbsdown:(?::skin-tone-[0-9]:)?/;
+  operator = `(?<operator>${this.positiveOperators}|${this.negativeOperators})`;
+  reasonForVote = `(?:\\s+(?<conjunction>${reasonConjunctions})?\\s*(?<reason>.+))?`;
   eol = '$';
 
   /**
    * botName score for user1
    */
   createAskForScoreRegExp(): RegExp {
-    return new RegExp(`(.*)?(?:${scoreKeyword})\\s(\\w+\\s)?${this.captureVoted}`, 'i');
+    return new RegExp(`(.*)?(?:${scoreKeyword})\\s(\\w+\\s)?${this.userObject}`, 'i');
   }
 
   /**
@@ -29,17 +27,17 @@ export class RegExpCreator {
     const eraseClause = '(?:erase)';
 
     return new RegExp(
-      `(.*)?${eraseClause}${this.allowSpaceAfterObject}${this.captureVoted}${this.allowSpaceAfterObject}${this.reasonForVote}${this.eol}`,
+      `(.*)?${eraseClause}${this.allowSpacesAfterObject}${this.userObject}${this.allowSpacesAfterObject}${this.reasonForVote}${this.eol}`,
       'i'
     );
   }
 
   createMultiUserVoteRegExp(): RegExp {
     // the thing being upvoted, which is any number of words and spaces
-    const multiUserVotedObject = `(.*)?(?:\\{|\\[|\\()\\s?((?:${this.nonCaptureVoted}${this.multiUserSeparator}?(?:\\s)?)+)\\s?(?:\\}|\\]|\\))`;
+    const multiUserVotedObject = `(.*)?(?:\\{|\\[|\\()\\s?((?:${this.userObject}${this.multiUserSeparator}?(?:\\s)?)+)\\s?(?:\\}|\\]|\\))`;
 
     return new RegExp(
-      `${multiUserVotedObject}${this.allowSpaceAfterObject}${this.operator}${this.reasonForVote}${this.eol}`,
+      `${multiUserVotedObject}${this.allowSpacesAfterObject}${this.operator}${this.reasonForVote}${this.eol}`,
       'i'
     );
   }
@@ -51,14 +49,14 @@ export class RegExpCreator {
   createTopBottomRegExp(): RegExp {
     const topOrBottom = '(top|bottom)';
     const digits = '(\\d+)';
-    return new RegExp(`${topOrBottom}${this.allowSpaceAfterObject}${digits}`, 'i');
+    return new RegExp(`${topOrBottom}${this.allowSpacesAfterObject}${digits}`, 'i');
   }
 
   createTopBottomTokenRegExp(): RegExp {
     const topOrBottom = '(top|bottom)';
     const digits = '(\\d+)';
     return new RegExp(
-      `${topOrBottom}${this.allowSpaceAfterObject}tokens${this.allowSpaceAfterObject}${digits}`,
+      `${topOrBottom}${this.allowSpacesAfterObject}tokens${this.allowSpacesAfterObject}${digits}`,
       'i'
     );
   }
@@ -67,7 +65,7 @@ export class RegExpCreator {
     const topOrBottom = '(top|bottom)';
     const digits = '(\\d+)';
     return new RegExp(
-      `${topOrBottom}${this.allowSpaceAfterObject}(?:point givers?|point senders?|givers?|senders?)${this.allowSpaceAfterObject}${digits}`,
+      `${topOrBottom}${this.allowSpacesAfterObject}(?:point givers?|point senders?|givers?|senders?)${this.allowSpacesAfterObject}${digits}`,
       'i'
     );
   }
@@ -79,7 +77,7 @@ export class RegExpCreator {
    */
   createUpDownVoteRegExp(): RegExp {
     return new RegExp(
-      `(.*)?${this.captureVoted}${this.allowSpaceAfterObject}${this.operator}${this.reasonForVote}${this.eol}`,
+      `(.*)?${this.userObject}${this.allowSpacesAfterObject}${this.operator}${this.reasonForVote}${this.eol}`,
       'i'
     );
   }
@@ -90,7 +88,7 @@ export class RegExpCreator {
    */
   createGiveTokenRegExp(): RegExp {
     const reg = new RegExp(
-      `(.*)?${this.captureVoted}${this.allowSpaceAfterObject}\\+${this.allowSpaceAfterObject}([0-9]{1,})${this.reasonForVote}${this.eol}`,
+      `(.*)?${this.userObject}${this.allowSpacesAfterObject}\\+${this.allowSpacesAfterObject}([0-9]{1,})${this.reasonForVote}${this.eol}`,
       'i'
     );
     return reg;
