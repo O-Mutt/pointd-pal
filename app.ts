@@ -1,4 +1,5 @@
 import { App } from '@slack/bolt';
+import { LogLevel } from '@slack/logger';
 
 require('dotenv').config();
 
@@ -6,7 +7,8 @@ require('dotenv').config();
 export const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
   socketMode: true,
-  appToken: process.env.SLACK_APP_TOKEN
+  appToken: process.env.SLACK_APP_TOKEN,
+  logLevel: process.env.LOG_LEVEL as LogLevel
 });
 
 
