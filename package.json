@@ -17,6 +17,7 @@
   "dependencies": {
     "@slack/bolt": "^3.7.0",
     "@slack/web-api": "^6.4.0",
+    "cron": "^1.8.2",
     "dotenv": "^10.0.0",
     "moment": "^2.29.1",
     "mongodb": "^4.1.3",

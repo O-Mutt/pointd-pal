@@ -30,7 +30,7 @@ export class User {
     this.name = userArgs.name;
     this.token = userArgs.token;
     this.isAdmin = userArgs.admin || false;
-    this.isBot = userArgs.admin || false;
+    this.isBot = userArgs.isBot || false;
   }
 };
 
@@ -51,8 +51,8 @@ export async function createNewLevelOneUser(userId: string, logger: any): Promis
     totalPointsGiven: 0,
     email: user?.profile?.email,
     name: user?.name,
-    admin: user?.is_admin,
-    bot: user?.is_bot
+    isAdmin: user?.is_admin,
+    isBot: user?.is_bot
   });
   return newUser;
 }

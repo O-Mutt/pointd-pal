@@ -1,12 +1,12 @@
-/*const clark = require('clark');
+const clark = require('clark');
 const moment = require('moment');
 const _ = require('lodash');
-const { CronJob } = require('cron');
-import { Logger } from '@slack/bolt';
+import { CronJob } from 'cron';
 
+import { app } from '../app';
 
-const helpers = require('./lib/helpers');
-const DatabaseService = require('./lib/services/database');
+import { Helpers } from './lib/helpers';
+import { DatabaseService } from './lib/services/database';
 
 
   const procVars = helpers.getProcessVariables(process.env);
@@ -38,7 +38,7 @@ const DatabaseService = require('./lib/services/database');
       message.splice(0, 0, clark(_.take(_.map(topSenders, 'scoreChange'), graphSize)));
       message.splice(0, 0, `:tada: The top 10 ${'qrafty'} point senders over the last month! :tada:`);
 
-      robot.messageRoom(procVars.notificationsRoom, message.join('\n'));
+      .messageRoom(procVars.notificationsRoom, message.join('\n'));
 
       // Recipients
       const topRecipient = await databaseService.getTopReceiverInDuration(10, 30);
@@ -85,4 +85,3 @@ const DatabaseService = require('./lib/services/database');
     return isToday;
   }
 };
-*/
