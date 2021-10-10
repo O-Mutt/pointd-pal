@@ -6,13 +6,13 @@ export class User {
   _id?: string;
   id: string;
   score: number;
-  reasons: StringCounterObject;
-  pointsGiven: StringCounterObject;
-  robotDay: Date;
-  accountLevel: number;
+  reasons: StringCounterObject = {};
+  pointsGiven: StringCounterObject = {};
+  robotDay: Date = new Date();
+  accountLevel: number = 1;
   totalPointsGiven: number;
-  isAdmin: boolean
-  isBot: boolean;
+  isAdmin: boolean = false;
+  isBot: boolean = false;
   email?: string;
   name?: string;
   token?: number;

@@ -49,6 +49,7 @@ export class DatabaseService {
   async getUser(userId: string, logger: any | undefined = undefined): Promise<User> {
     const db = (await this.getDb()) as Db;
 
+    logger.debug('get the db', db);
     // Maybe this should include a migration path to keep the user object up to date with any changes?
     const user = await db.collection(scoresDocumentName).findOne(
       { id: userId },

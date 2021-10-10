@@ -38,7 +38,7 @@ export class ScoreKeeper {
       const toUser = await this.databaseService.getUser(toId, logger);
       const fromUser = await this.databaseService.getUser(fromId, logger);
       logger.debug("this is the from user", fromUser);
-      if (fromUser.isBot) {
+      if (fromUser.isBot === true) {
         throw new Error('Bots can\'t send points, silly.');
       }
 
