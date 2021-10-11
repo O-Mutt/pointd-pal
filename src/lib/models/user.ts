@@ -57,8 +57,8 @@ export const UserSchema = new Schema({
   token: Number
 });
 
-UserSchema.statics.findOneBySlackIdOrCreate = async (slackId) => {
-  const self = this as unknown as Model<IUser>;
+UserSchema.statics.findOneBySlackIdOrCreate = async function (this: Model<any, any, any, any>, slackId): Promise<IUser> {
+  const self = this;
   let user = await self.findOne({ slackId }, null, { sort: { score: -1 } }).exec()
   if (user) {
     return user;
@@ -81,8 +81,9 @@ UserSchema.statics.findOneBySlackIdOrCreate = async (slackId) => {
   return await self.create(user);
 }
 
+
 export interface UserInterface extends IUser {
-// instance methods
+  // instance methods
 }
 
 export interface UserModelInterface extends Model<UserInterface> {
