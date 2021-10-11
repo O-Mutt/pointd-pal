@@ -1,7 +1,6 @@
 import moment from 'moment';
+import { IUser } from './models/user';
 import { regExpCreator } from './regexpCreator';
-
-import { User } from './data/scores';
 
 export class Helpers {
   static getEsOnEndOfWord(number: number) {
@@ -61,11 +60,11 @@ export class Helpers {
     return `${years}th `;
   }
 
-  static getMessageForNewScore(user: User, reason: string | undefined, robotName: string): string {
+  static getMessageForNewScore(user: IUser, reason: string | undefined, robotName: string): string {
     if (!user) {
       return '';
     }
-    const username = user.id ? `<@${user.id}>` : user.name;
+    const username = user.slackId ? `<@${user.slackId}>` : user.name;
     let scoreStr = `${username} has ${user.score} point${Helpers.getEsOnEndOfWord(user.score)}`;
     let reasonStr = '.';
     let cakeDayStr = '';
@@ -114,8 +113,8 @@ export class Helpers {
     if (!to) {
       return '';
     }
-    const toTag = to.id ? `<@${to.id}>` : to.name;
-    const fromTag = from.id ? `<@${from.id}>` : from.name;
+    const toTag = to.slackId ? `<@${to.slackId}>` : to.name;
+    const fromTag = from.slackId ? `<@${from.slackId}>` : from.name;
 
     const scoreStr = `${fromTag} transferred *${number}* ${robotName} Tokens to ${toTag}.\n${toTag} now has ${
       to.token

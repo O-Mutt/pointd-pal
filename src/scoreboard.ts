@@ -51,7 +51,7 @@ import { app } from '../app';
     }
 
     const scoreStr = user.score > 1 ? 'points' : 'point';
-    let baseString = `<@${user.id}> has ${user.score} ${scoreStr}${tokenString}`;
+    let baseString = `<@${user.slackId}> has ${user.score} ${scoreStr}${tokenString}`;
     baseString += `\nAccount Level: ${user.accountLevel}`;
     baseString += `\nTotal Points Given: ${user.totalPointsGiven}`;
     if (user[`${'qrafty'}Day`]) {
@@ -90,7 +90,7 @@ import { app } from '../app';
     const message = [];
     if (tops.length > 0) {
       for (let i = 0, end = tops.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
-        const person = tops[i].id ? `<@${tops[i].id}>` : tops[i].name;
+        const person = tops[i].slackId ? `<@${tops[i].slackId}>` : tops[i].name;
         if (tops[i].accountLevel && tops[i].accountLevel > 1) {
           const tokenStr = tops[i].token > 1 ? 'Tokens' : 'Token';
           message.push(`${i + 1}. ${person}: ${tops[i].score} (*${tops[i].token} ${helpers.capitalizeFirstLetter('qrafty')} ${tokenStr}*)`);
@@ -118,7 +118,7 @@ import { app } from '../app';
     const message = [];
     if (tops.length > 0) {
       for (let i = 0, end = tops.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
-        const person = tops[i].id ? `<@${tops[i].id}>` : tops[i].name;
+        const person = tops[i].slackId ? `<@${tops[i].slackId}>` : tops[i].name;
         const tokenStr = tops[i].token > 1 ? 'Tokens' : 'Token';
         const pointStr = tops[i].score > 1 ? 'points' : 'point';
         message.push(`${i + 1}. ${person}: *${tops[i].token} ${helpers.capitalizeFirstLetter('qrafty')} ${tokenStr}* (${tops[i].score} ${pointStr})`);
@@ -142,7 +142,7 @@ import { app } from '../app';
     const message = [];
     if (tops.length > 0) {
       for (let i = 0, end = tops.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
-        const person = `<@${tops[i].id}>`;
+        const person = `<@${tops[i].slackId}>`;
         const pointStr = tops[i].totalPointsGiven > 1 ? 'points given' : 'point given';
         message.push(`${i + 1}. ${person} (${tops[i].totalPointsGiven} ${pointStr})`);
       }

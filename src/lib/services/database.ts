@@ -1,19 +1,19 @@
 /* eslint-disable no-restricted-syntax */
-import { Db, MongoClient } from 'mongodb';
 import moment, { Moment } from 'moment';
 import EventEmitter from 'events';
 
 import { app } from '../../../app';
 
-import { scoresDocumentName, createNewLevelOneUser, User } from '../data/scores';
-import { logDocumentName } from '../data/scoreLog';
-import { botTokenDocumentName } from '../data/botToken';
 import { Logger } from '@slack/logger';
+import mongoose from 'mongoose';
+import { User, IUser } from '../models/user';
+import { ScoreLog } from '../models/scoreLog';
+import { BotToken } from '../models/botToken';
 
 
 export class DatabaseService {
   private eventEmitter: EventEmitter;
-  private db: Db | undefined;
+  private database: mongoose.Connection | undefined;
   uri: string;
   furtherFeedbackScore: number;
   peerFeedbackUrl: string;
@@ -21,7 +21,7 @@ export class DatabaseService {
   spamMessage: string;
 
   constructor(params) {
-    this.db = undefined;
+    this.database = undefined;
     this.uri = params.mongoUri;
     this.furtherFeedbackScore = params.furtherFeedbackSuggestedScore;
     this.peerFeedbackUrl = params.peerFeedbackUrl;
@@ -30,40 +30,24 @@ export class DatabaseService {
     this.spamMessage = params.spamMessage;
   }
 
-  async init() {
-    const client = new MongoClient(this.uri);
-    const connection = await client.connect();
-    this.db = connection.db();
-  }
-
-  async getDb(): Promise<Db | undefined> {
-    if (!this.db) {
-      await this.init();
+  async connect() {
+    if (this.database) {
+      return;
     }
-    return this.db;
+    await mongoose.connect(this.uri);
+    this.database = mongoose.connection;
   }
 
   /*
   * user - the name of the user
   */
-  async getUser(userId: string, logger: any | undefined = undefined): Promise<User> {
-    const db = (await this.getDb()) as Db;
+  async getUser(userId: string, logger: any | undefined = undefined): Promise<IUser> {
+    (await this.connect());
 
-    logger.debug('get the db', db);
     // Maybe this should include a migration path to keep the user object up to date with any changes?
-    const user = await db.collection(scoresDocumentName).findOne(
-      { id: userId },
-      { sort: { score: -1 } },
-    );
+    const user = await User.findOneBySlackIdOrCreate(userId);
     logger.debug('did i find the user?', user, userId);
-
-
-    if (!user) {
-      logger.debug('creating a new user', userId);
-      const newUser = await createNewLevelOneUser(userId, logger);
-      return newUser;
-    }
-    return user as User;
+    return user;
   }
 
   /*
@@ -72,9 +56,9 @@ export class DatabaseService {
   async getAllUsers() {
     const search = { id: { $exists: true } };
     //Logger.debug('getting _all_ users');
-    const db = (await this.getDb()) as Db;
+    (await this.connect());
 
-    const dbUsers = await db.collection(scoresDocumentName).find(search).toArray();
+    const dbUsers = await User.find(search).exec();
     return dbUsers;
   }
 
@@ -83,69 +67,41 @@ export class DatabaseService {
    * @param {object} user the user who is getting a point change
    * @returns {object} the updated user who received a change
    */
-  async saveUser(user: User): Promise<User> {
-    const db = (await this.getDb()) as Db;
+  async saveUser(user: IUser): Promise<IUser | null> {
+    (await this.connect());
 
-    const result = await db.collection(scoresDocumentName)
-      .findOneAndUpdate(
-        { id: user.id },
-        {
-          $set: user,
-        },
-        {
-          returnDocument: 'after',
-          upsert: true,
-          sort: { score: -1 },
-        },
-      );
 
-    const updatedUser = result.value;
+    const updatedUser = await User.findOneAndReplace({ slackId: user.slackId }, user, { sort: { score: -1 }, returnDocument: 'after' }).exec();
 
     //Logger.debug(`Saving user original: [${user.name}: ${user.score}], new [${updatedUser.name}: ${updatedUser.score}]`);
 
-    return updatedUser as User;
+    return updatedUser;
   }
 
-  async savePlusPlusLog(to, from, channel, reason, incrementValue) {
-    const pointsAmount = parseInt(incrementValue, 10);
-    const fromId = from.id || from.name;
-    const scoreSearch = from.id ? { slackId: from.id } : { name: from.name };
-    const toId = to.id || to.name;
-    const db = (await this.getDb()) as Db;
-    await db.collection(scoresDocumentName).updateOne(scoreSearch, { $inc: { totalPointsGiven: pointsAmount } });
-    await db.collection(logDocumentName).insertOne({
-      from: fromId,
-      to: toId,
-      date: moment().toISOString(),
+  async savePlusPlusLog(to: IUser, from: IUser, channel: string, reason: string | undefined, incrementValue: number) {
+    (await this.connect());
+
+    from.totalPointsGiven = from.totalPointsGiven + incrementValue;
+    await from.save();
+    await ScoreLog.create({ 
+      from: from.slackId,
+      to: to.slackId,
+      date: new Date(),
       channel,
       reason,
-      scoreChange: pointsAmount,
+      scoreChange: incrementValue
     });
   }
 
-  async isSpam(toId, fromId) {
+  async isSpam(to: IUser, from: IUser) {
     //Logger.debug('spam check');
-    const db = (await this.getDb()) as Db;
-    const now: Moment = moment();
-    const fiveMinutesAgo = now.subtract(this.spamTimeLimit, 'minutes').toISOString();
-    const previousScoreExists = await db.collection(logDocumentName)
-      .countDocuments({
-        fromId,
-        toId,
-        date: { $gte: fiveMinutesAgo },
-      });
-    //Logger.debug('spam check result', previousScoreExists);
-    if (previousScoreExists !== 0) {
-      this.eventEmitter.emit('plus-plus-spam', {
-        toId,
-        fromId,
-        message: this.spamMessage,
-        reason: `You recently sent <@${toId}> a point.`,
-      });
-      return true;
-    }
+    (await this.connect());
 
-    return false;
+    const now = moment();
+    const fiveMinutesAgo = now.subtract(this.spamTimeLimit, 'minutes').toDate();
+    const previousScoreExists = (await ScoreLog.countDocuments({ to: to.slackId, from: from.slackId, date: { $gte: fiveMinutesAgo }}).exec()) === 0;
+    //Logger.debug('spam check result', previousScoreExists);
+    return previousScoreExists
   }
 
   /*
@@ -153,40 +109,31 @@ export class DatabaseService {
   * to - database user who is receiving the score
   * score - the number of score that is being sent
   */
-  async savePointsGiven(from: User, to: User, score: number) {
-    const db = (await this.getDb()) as Db;
+  async savePointsGiven(from: IUser, to: IUser, score: number) {
+    (await this.connect());
 
-    const oldScore = from.pointsGiven[to.id] ? from.pointsGiven[to.id] : 0;
-    // even if they are down voting them they should still get a tally as they ++/-- the same person
-    from.pointsGiven[to.id] = (oldScore + 1);
-    const result = await db.collection(scoresDocumentName)
-      .findOneAndUpdate(
-        { id: from.id },
-        { $set: from },
-        {
-          returnDocument: 'after',
-          upsert: true,
-          sort: { score: -1 },
-        },
-      );
-    const updatedUser = result.value;
 
-    if (updatedUser && updatedUser.pointsGiven[to.id] % this.furtherFeedbackScore === 0) {
+    const oldScore = from.pointsGiven[to.slackId] ? from.pointsGiven[to.slackId] : 0;
+    // even if they are down voting them they should still get a tally (e.g. + 1) as they ++/-- the same person
+    from.pointsGiven[to.slackId] = (oldScore + 1);
+   await from.save();
+
+    if (from.pointsGiven[to.slackId] % this.furtherFeedbackScore === 0) {
       //Logger.debug(`${from.name} has sent a lot of points to ${to.name} suggesting further feedback ${score}`);
-      await app.client.chat.postMessage({ 
-        channel: from.id,
-        text: `Looks like you've given <@${to.id}> quite a few points, maybe you should look at submitting ${this.peerFeedbackUrl}` 
+      await app.client.chat.postMessage({
+        channel: from.slackId,
+        text: `Looks like you've given <@${to.slackId}> quite a few points, maybe you should look at submitting ${this.peerFeedbackUrl}`
       });
     }
   }
 
   async getTopScores(amount) {
-    const db = (await this.getDb()) as Db;
-    const results = await db.collection(scoresDocumentName)
+    (await this.connect());
+
+    const results = await User
       .find({})
       .sort({ score: -1, accountLevel: -1 })
-      .limit(amount)
-      .toArray();
+      .limit(amount);
 
     //Logger.debug('Trying to find top scores');
 
@@ -194,12 +141,12 @@ export class DatabaseService {
   }
 
   async getBottomScores(amount) {
-    const db = (await this.getDb()) as Db;
-    const results = await db.collection(scoresDocumentName)
+    (await this.connect());
+
+    const results = await User
       .find({})
       .sort({ score: 1, accountLevel: -1 })
-      .limit(amount)
-      .toArray();
+      .limit(amount);
 
     //Logger.debug('Trying to find bottom scores');
 
@@ -207,14 +154,14 @@ export class DatabaseService {
   }
 
   async getTopTokens(amount) {
-    const db = (await this.getDb()) as Db;
-    const results = await db.collection(scoresDocumentName)
+    (await this.connect());
+
+    const results = await User
       .find({
         accountLevel: { $gte: 2 },
       })
       .sort({ token: -1, score: -1 })
-      .limit(amount)
-      .toArray();
+      .limit(amount);
 
     //Logger.debug('Trying to find top tokens');
 
@@ -222,14 +169,14 @@ export class DatabaseService {
   }
 
   async getBottomTokens(amount) {
-    const db = (await this.getDb()) as Db;
-    const results = await db.collection(scoresDocumentName)
+    (await this.connect());
+
+    const results = await User
       .find({
         accountLevel: { $gte: 2 },
       })
       .sort({ token: 1, score: 1 })
-      .limit(amount)
-      .toArray();
+      .limit(amount);
 
     //Logger.debug('Trying to find bottom tokens');
 
@@ -237,12 +184,12 @@ export class DatabaseService {
   }
 
   async getTopSender(amount) {
-    const db = (await this.getDb()) as Db;
-    const results = await db.collection(scoresDocumentName)
+    (await this.connect());
+
+    const results = await User
       .find({ totalPointsGiven: { $exists: true } })
       .sort({ totalPointsGiven: -1, accountLevel: -1 })
-      .limit(amount)
-      .toArray();
+      .limit(amount);
 
     //Logger.debug('Trying to find top sender');
 
@@ -250,72 +197,56 @@ export class DatabaseService {
   }
 
   async getBottomSender(amount) {
-    const db = (await this.getDb()) as Db;
-    const results = await db.collection(scoresDocumentName)
+    (await this.connect());
+
+    const results = await User
       .find({ totalPointsGiven: { $exists: true } })
       .sort({ totalPointsGiven: 1, accountLevel: -1 })
-      .limit(amount)
-      .toArray();
+      .limit(amount);
 
     //Logger.debug('Trying to find bottom sender');
 
     return results;
   }
 
-  async erase(user, reason) {
-    const userName = user.name ? user.name : user;
-    const search = user.id ? { slackId: user.id } : { name: userName };
-    const db = (await this.getDb()) as Db;
+  async erase(user: IUser, reason): Promise<void> {
+    (await this.connect());
 
-    let result;
     if (reason) {
-      const oldUser = await db.collection(scoresDocumentName).findOne(search);
-      if (oldUser) {
-        const newScore = oldUser.score - oldUser.reasons[reason];
-        result = await db.collection(scoresDocumentName)
-          .updateOne(search, { $set: { score: newScore, reasons: { [`${reason}`]: 0 } } });
-      }
+      const reasonScore: number = user.reasons[reason];
+      delete user.reasons[reason];
+      user.score = user.score - reasonScore;
+      await user.save();
     } else {
-      /* result = await db.collection(scoresDocumentName)
-        .deleteOne(search, { $set: { score: 0 } }); */
+      await user.remove();
     }
-
-    return result;
+    return;
   }
 
-  async updateAccountLevelToTwo(user) {
-    const userName = user.name ? user.name : user;
-    const search = user.id ? { slackId: user.id } : { name: userName };
-    const db = (await this.getDb()) as Db;
-    let tokensAdded = 0;
-    const foundUser = await db.collection(scoresDocumentName).findOne(search);
-    if (foundUser) {
-      // we are leveling up from 0 (which is level 1) -> 2 or 2 -> 3
-      if (foundUser.accountLevel && foundUser.accountLevel === 2) {
-        // this is a weird case and shouldn't really happen... not sure about this...
-        //Logger.debug(`Somehow FoundUser[${foundUser.name}] SearchedUser[${user.name}] was trying to upgrade their account to level 2.`);
-        return true;
-      }
-      foundUser.accountLevel = 2;
-      foundUser.token = 0;
-      tokensAdded = foundUser.score;
-      await db.collection(scoresDocumentName).updateOne(search, { $set: foundUser });
-      const newScore = await this.transferScoreFromBotToUser(user, tokensAdded, undefined);
-      return newScore;
-    }
+  async updateAccountLevelToTwo(user: IUser): Promise<void> {
+    (await this.connect());
+
+    user.token = user.score;
+    user.accountLevel = 2;
+    await user.save();
+    await BotToken.findOneAndUpdate({}, { $inc: { token: -user.token }}).exec();
+    this.eventEmitter.emit('plusplus-tokens');
+    return;
   }
 
   async getBotWallet() {
-    const db = (await this.getDb()) as Db;
-    const botWallet = await db.collection(botTokenDocumentName).findOne({ name: 'qrafty' });
+    (await this.connect());
+
+    const botWallet = await BotToken.findOne({ name: 'qrafty' });
     return botWallet;
   }
 
   async getTopSenderInDuration(amount = 10, days = 7) {
-    const db = (await this.getDb()) as Db;
-    const topSendersForDuration = await db.collection(logDocumentName).aggregate([
+    (await this.connect());
+
+    const topSendersForDuration = await ScoreLog.aggregate([
       {
-        $match: { date: { $gt: new Date(new Date().setDate(new Date().getDate() - days)).toISOString() } },
+        $match: { date: { $gt: new Date(new Date().setDate(new Date().getDate() - days)) } },
       },
       {
         $group: { _id: '$from', scoreChange: { $sum: '$scoreChange' } },
@@ -323,15 +254,16 @@ export class DatabaseService {
       {
         $sort: { scoreChange: -1 },
       }])
-      .limit(amount).toArray();
+      .limit(amount).exec();
     return topSendersForDuration;
   }
 
   async getTopReceiverInDuration(amount = 10, days = 7) {
-    const db = (await this.getDb()) as Db;
-    const topRecipientForDuration = await db.collection(logDocumentName).aggregate([
+    (await this.connect());
+
+    const topRecipientForDuration = await ScoreLog.aggregate([
       {
-        $match: { date: { $gt: new Date(new Date().setDate(new Date().getDate() - days)).toISOString() } },
+        $match: { date: { $gt: new Date(new Date().setDate(new Date().getDate() - days)) } },
       },
       {
         $group: { _id: '$to', scoreChange: { $sum: '$scoreChange' } },
@@ -339,15 +271,16 @@ export class DatabaseService {
       {
         $sort: { scoreChange: -1 },
       }])
-      .limit(amount).toArray();
+      .limit(amount).exec();
     return topRecipientForDuration;
   }
 
   async getTopRoomInDuration(amount = 3, days = 7) {
-    const db = (await this.getDb()) as Db;
-    const topRoomForDuration = await db.collection(logDocumentName).aggregate([
+    (await this.connect());
+
+    const topRoomForDuration = await ScoreLog.aggregate([
       {
-        $match: { date: { $gt: new Date(new Date().setDate(new Date().getDate() - days)).toISOString() } },
+        $match: { date: { $gt: new Date(new Date().setDate(new Date().getDate() - days)) } },
       },
       {
         $group: { _id: '$channel', scoreChange: { $sum: '$scoreChange' } },
@@ -355,54 +288,33 @@ export class DatabaseService {
       {
         $sort: { scoreChange: -1 },
       }])
-      .limit(amount).toArray();
+      .limit(amount).exec();
     return topRoomForDuration;
   }
 
   /**
    *
-   * @param {string} userName the name of the user receiving the points
+   * @param {object} user the user receiving the points
+   * @param {object} from the user sending the points
    * @param {number} scoreChange the increment in which the user is getting/losing points
-   * @param {string} fromName the name of the user sending the points
    * @returns {object} the user who received the points updated value
    */
-  async transferScoreFromBotToUser(user: User, scoreChange: number, from: User | undefined): Promise<User> {
-    const userName = user.name ? user.name : user;
-    const search = user.id ? { slackId: user.id } : { name: userName };
+  async transferTokens(user: IUser, from: IUser, scoreChange: number, ): Promise<void> {
+    (await this.connect());
 
-    const db = (await this.getDb()) as Db;
-    //Logger.info(`We are transferring ${scoreChange} ${Helpers.capitalizeFirstLetter('qrafty')} Tokens to ${userName} from ${from ? from.name : Helpers.capitalizeFirstLetter('qrafty')}`);
-    const result = await db.collection(scoresDocumentName).findOneAndUpdate(
-      search,
-      {
-        $inc:
-        {
-          token: scoreChange,
-        },
-      },
-      {
-        returnDocument: 'after',
-      },
-    );
-    await db.collection(botTokenDocumentName).updateOne({ name: 'qrafty' }, { $inc: { token: -scoreChange } });
-    // If this isn't a level up and the score is larger than 1 (tipping aka level 3)
-    if (from && (scoreChange > 1 || scoreChange < -1)) {
-      await db.collection(scoresDocumentName).updateOne({ id: from.id }, { $inc: { token: -scoreChange } });
-    }
-    return result.value as User;
+    user.token = user.token || 0 + scoreChange;
+    from.token = from.token || 0 - scoreChange;
+    await user.save();
+    await from.save();
   }
 
   async getMagicSecretStringNumberValue() {
-    const db = (await this.getDb()) as Db;
-    const updateBotWallet = await db.collection(botTokenDocumentName).findOne({ name: 'qrafty' });
+    (await this.connect());
+
+    const updateBotWallet = await BotToken.findOne({ name: 'qrafty' });
     if (updateBotWallet) {
       return updateBotWallet.magicString;
     }
     return '';
-  }
-
-  async isAdmin(user: string) {
-    const db = (await this.getDb()) as Db;
-    return false;
   }
 }

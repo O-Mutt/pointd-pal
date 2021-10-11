@@ -77,7 +77,7 @@ export class RegExpCreator {
       const eraseClause = '(?:erase)';
   
       return new RegExp(
-        `(.*)?${eraseClause}${this.allowSpacesAfterObject}${this.userObject}${this.allowSpacesAfterObject}${this.reasonForVote}${this.eol}`,
+        `(?<premessage>.*)?${eraseClause}${this.allowSpacesAfterObject}${this.userObject}${this.allowSpacesAfterObject}${this.reasonForVote}${this.eol}`,
         'i'
       );
     }
@@ -88,7 +88,7 @@ export class RegExpCreator {
    */
   createGiveTokenRegExp(): RegExp {
     const reg = new RegExp(
-      `(.*)?${this.userObject}${this.allowSpacesAfterObject}\\+${this.allowSpacesAfterObject}([0-9]{1,})${this.reasonForVote}${this.eol}`,
+      `(?<premessage>.*)?${this.userObject}${this.allowSpacesAfterObject}\\+${this.allowSpacesAfterObject}([0-9]{1,})${this.reasonForVote}${this.eol}`,
       'i'
     );
     return reg;

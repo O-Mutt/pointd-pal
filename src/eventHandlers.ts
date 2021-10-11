@@ -1,36 +1,37 @@
 import { Helpers } from './lib/helpers';
 import { app } from '../app';
+import { EventEmitter } from 'events';
+import { PlusPlus, PlusPlusFailure } from './lib/types/PlusPlusEvents';
 
-(() => {
+const events = new EventEmitter();
 const procVars = Helpers.getProcessVariables(process.env);
 
-app.event('plus-plus', sendPlusPlusNotification);
-app.event('plus-plus-failure', sendPlusPlusFalsePositiveNotification);
-app.event('plus-plus-spam', logAndNotifySpam);
+events.on('plus-plus', sendPlusPlusNotification);
+events.on('plus-plus-failure', sendPlusPlusFalsePositiveNotification);
+events.on('plus-plus-spam', logAndNotifySpam);
 
-async function sendPlusPlusNotification({ event, client, logger }) {
+async function sendPlusPlusNotification({ notificationMessage, sender, recipient, direction, amount, channel, reason }: PlusPlus) {
   if (procVars.notificationsRoom) {
     try { 
-      const result = await client.chat.postMessage({
+      const result = await app.client.chat.postMessage({
         channel: procVars.notificationsRoom, 
-        text: event.notificationMessage
+        text: notificationMessage
       });
     } catch (error){
-      logger.error(error);
+      //logger.error(error);
     }
   }
 }
 
-async function sendPlusPlusFalsePositiveNotification({ event, client, logger }) {
+async function sendPlusPlusFalsePositiveNotification({ notificationMessage, channel }: PlusPlusFailure) {
   if (procVars.falsePositiveNotificationsRoom) {
-    //robot.messageRoom(procVars.falsePositiveNotificationsRoom, notificationObject.notificationMessage);
     try { 
-      const result = await client.chat.postMessage({
+      const result = await app.client.chat.postMessage({
         channel: procVars.notificationsRoom, 
-        text: event.notificationMessage
+        text: notificationMessage
       });
     } catch (error){
-      logger.error(error);
+      //logger.error(error);
     }
   }
 }
@@ -45,7 +46,7 @@ async function sendPlusPlusFalsePositiveNotification({ event, client, logger }) 
  */
 async function logAndNotifySpam({ event, client, logger }) {
   //Logger.error(`A spam event has been detected: ${notificationObject.message}. ${notificationObject.reason}`);
-  //robot.messageRoom(notificationObject.from.id, `${notificationObject.message}\n\n${notificationObject.reason}`);
+  //robot.messageRoom(notificationObject.from.slackId, `${notificationObject.message}\n\n${notificationObject.reason}`);
   try { 
     const result = await client.chat.postMessage({
       channel: procVars.notificationsRoom, 
@@ -55,4 +56,3 @@ async function logAndNotifySpam({ event, client, logger }) {
     logger.error(error);
   }
 }
-})();

@@ -1,7 +1,8 @@
 import { DatabaseService } from './database';
 import { Helpers } from '../helpers';
 import EventEmitter from 'events';
-import { User } from '../data/scores';
+import { IUser } from '../models/user';
+import { PlusPlusSpam } from '../types/PlusPlusEvents';
 
 export class ScoreKeeper {
   databaseService: DatabaseService;
@@ -21,7 +22,7 @@ export class ScoreKeeper {
     }
     this.spamMessage = params.spamMessage;
     this.databaseService = new DatabaseService(params);
-    this.databaseService.init(); // this is async but it is just initializing the db connection, we let it run
+    this.databaseService.connect(); // this is async but it is just initializing the db connection, we let it run
   }
 
   /*
@@ -42,8 +43,8 @@ export class ScoreKeeper {
         throw new Error('Bots can\'t send points, silly.');
       }
 
-      if ((await this.databaseService.isSpam(toUser, fromUser)) || this.isSendingToSelf(toId, fromId)) {
-        throw new Error(`I'm sorry <@${fromUser.id}>, I'm afraid I can't do that.`);
+      if ((await this.isSpam(toUser, fromUser)) || this.isSendingToSelf(toUser, fromUser)) {
+        throw new Error(`I'm sorry <@${fromUser.slackId}>, I'm afraid I can't do that.`);
       }
       toUser.score = toUser.score + incrementValue;
       if (reason) {
@@ -60,7 +61,7 @@ export class ScoreKeeper {
       }
 
       if (saveResponse && saveResponse.accountLevel > 1) {
-        saveResponse = await this.databaseService.transferScoreFromBotToUser(toUser, incrementValue, fromUser);
+        //saveResponse = await this.databaseService.transferScoreFromBotToUser(toUser, incrementValue, fromUser);
       }
       return { toUser: saveResponse, fromUser };
     } catch (e) {
@@ -69,13 +70,14 @@ export class ScoreKeeper {
     }
   }
 
-  async transferTokens(toId: string, from, channel, reason, numberOfTokens: number): Promise<{ toUser: User; fromUser: User; }> {
+  async transferTokens(toId: string, fromId: string, channel, reason, numberOfTokens: number): Promise<{ toUser: IUser; fromUser: IUser; }> {
     try {
       const toUser = await this.databaseService.getUser(toId);
-      const fromUser = await this.databaseService.getUser(from);
+      const fromUser = await this.databaseService.getUser(fromId);
       if (toUser.accountLevel >= 2 && fromUser.accountLevel >= 2) {
         if ((await this.databaseService.isSpam(toUser, fromUser)) || this.isSendingToSelf(toUser, fromUser)) {
-          throw new Error(`I'm sorry <@${fromUser.id}>, I'm afraid I can't do that.`);
+          
+          throw new Error(`I'm sorry <@${fromUser.slackId}>, I'm afraid I can't do that.`);
         }
         if (fromUser.token && fromUser.token >= numberOfTokens) {
           fromUser.token = fromUser.token - numberOfTokens;
@@ -86,15 +88,13 @@ export class ScoreKeeper {
           }
 
           await this.databaseService.savePointsGiven(fromUser, toUser, numberOfTokens);
-          const saveResponse = await this.databaseService.saveUser(toUser);
           try {
             await this.databaseService.savePlusPlusLog(toUser, fromUser, channel, reason, numberOfTokens);
           } catch (e) {
             //Logger.error(`failed saving spam log for user ${toUser.name} from ${from.name} in channel ${channel} because ${reason}`, e);
           }
-          await this.databaseService.saveUser(fromUser);
           return {
-            toUser: saveResponse,
+            toUser,
             fromUser,
           };
         } else {
@@ -123,16 +123,32 @@ export class ScoreKeeper {
     return true;
   }
 
-  isSendingToSelf(toId, fromId) {
-    //Logger.debug(`Checking if is to self. To [${to.name}] From [${from.name}], Valid: ${to.name !== from.name}`);
-    const isToSelf = toId === fromId;
-    if (isToSelf) {
-      this.eventEmitter.emit('plus-plus-spam', {
-        toId,
-        fromId,
+  async isSpam(to: IUser, from: IUser) {
+    const isSpam = await this.databaseService.isSpam(to, from);
+    if (isSpam) {
+      const spamEvent = new PlusPlusSpam({
+        to,
+        from,
         message: this.spamMessage,
-        reason: 'Looks like you may be trying to send a point to yourself.',
+        reason: `You recently sent <@${to.slackId}> a point.`
       });
+
+      this.eventEmitter.emit('plus-plus-spam', spamEvent);
+    }
+    return isSpam;
+  }
+
+  isSendingToSelf(to: IUser, from: IUser) {
+    //Logger.debug(`Checking if is to self. To [${to.name}] From [${from.name}], Valid: ${to.name !== from.name}`);
+    const isToSelf = to.slackId === from.slackId;
+    if (isToSelf) {
+      const spamEvent = new PlusPlusSpam({
+        to,
+        from,
+        message: this.spamMessage,
+        reason: 'Looks like you may be trying to send a point to yourself.'
+      });
+      this.eventEmitter.emit('plus-plus-spam', spamEvent);
     }
     return isToSelf;
   }

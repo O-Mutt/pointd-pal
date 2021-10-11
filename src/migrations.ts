@@ -2,12 +2,12 @@ import { AllMiddlewareArgs, directMention, SlackEventMiddlewareArgs } from '@sla
 
 
 import { DatabaseService } from './lib/services/database';
-import { scoresDocumentName } from './lib/data/scores';
 import { Helpers } from './lib/helpers';
 
 import { app } from '../app';
 import { Db } from 'mongodb';
 import { Member } from '@slack/web-api/dist/response/UsersListResponse';
+import { IUser, User } from './lib/models/user';
 
 const procVars = Helpers.getProcessVariables(process.env);
 
@@ -27,21 +27,16 @@ async function mapUsersToDb({ message, context, client, logger, say }) {
     return;
   }
   const databaseService = new DatabaseService({ ...procVars });
-  await databaseService.init();
-  const db = await databaseService.getDb() as Db;
+  await databaseService.connect();
 
-  const members = (await client.users.list()).members as Member[] ;
+  const members: Member[] = (await client.users.list()).members;
 
   const mappings: string[] = [];
   for (const member of members) {
     try {
       logger.debug('Map this member', JSON.stringify(member));
       const localMember = await databaseService.getUser(member.id as string);
-      localMember.id = member.id as string;
-      if (localMember._id) {
-        await db.collection(scoresDocumentName).replaceOne({ name: localMember.name }, localMember);
-        mappings.push(`\`{ name: ${localMember.name}, slackId: ${localMember.id}, id: ${localMember._id} }\``);
-      }
+      mappings.push(`\`{ name: ${localMember.name}, slackId: ${localMember.slackId}, id: ${localMember._id} }\``);
       logger.debug(`Save the new member ${JSON.stringify(localMember)}`);
     } catch (er) {
       logger.error('failed to find', member, er);
@@ -57,20 +52,17 @@ async function mapMoreUserFieldsBySlackId({ message, context, client, logger, sa
     return;
   }
   const databaseService = new DatabaseService({ ...procVars });
-  await databaseService.init();
-  const db = await databaseService.getDb() as Db;
+  await databaseService.connect();
 
-  const { members } = await client.users.list();
+  const members: Member[] = (await client.users.list()).members;
   for (const member of members) {
-    if (member.profile.email) {
+    if (member?.profile?.email) {
       try {
         logger.debug('Map this member', JSON.stringify(member));
-        const localMember = await databaseService.getUser(member.id);
-        localMember.id = member.id;
+        const localMember = await databaseService.getUser(member.id as string);
+        localMember.slackId = member.id as string;
         localMember.email = member.profile.email;
-        if (localMember._id) {
-          await db.collection(scoresDocumentName).replaceOne({ id: localMember.id }, localMember);
-        }
+        await localMember.save();
         logger.debug(`Save the new member ${JSON.stringify(localMember)}`);
       } catch (er) {
         logger.error('failed to find', member, er);
@@ -88,31 +80,21 @@ async function mapSingleUserToDb({ message, context, client, logger, say }) {
   }
 
   logger.debug(context);
-  const { mentions } = context;
-  if (!mentions) {
-    await say('You need to @ someone to map.');
-    return;
-  }
-  const userMentions = mentions.filter((men) => men.type === 'user');
-  if (userMentions > 1) {
-    userMentions.shift(); // shift off @hubot
-  }
-  const to = userMentions.shift();
+
+// do the mention dance
+const to = { slackId: 'drp', name: 'derrp' };
   const databaseService = new DatabaseService({ ...procVars });
-  await databaseService.init();
-  const db = await databaseService.getDb() as Db;
+  await databaseService.connect();
 
-
-  const { user } = await client.users.info({ user: to.id });
-
+  const { user } = await client.users.info({ user: to.slackId });
   try {
     logger.debug('Map this member', JSON.stringify(user));
     const localMember = await databaseService.getUser(user);
-    localMember.id = user.id;
+    localMember.slackId = user.slackId;
     // eslint-disable-next-line no-underscore-dangle
     if (localMember._id) {
-      await db.collection(scoresDocumentName).replaceOne({ name: localMember.name }, localMember);
-      await say(`Mapping completed for ${to.name}: { name: ${localMember.name}, slackId: ${localMember.id}, id: ${localMember._id} }`);
+      await localMember.save();
+      await say(`Mapping completed for ${to.name}: { name: ${localMember.name}, slackId: ${localMember.slackId}, id: ${localMember._id} }`);
       return;
     }
     logger.debug(`Save the new member ${JSON.stringify(localMember)}`);
@@ -128,11 +110,10 @@ async function unmapUsersToDb({ message, context, logger, say }) {
     return;
   }
   const databaseService = new DatabaseService({ ...procVars });
-  await databaseService.init();
+  await databaseService.connect();
 
   try {
-    const db = await databaseService.getDb() as Db;
-    await db.collection(scoresDocumentName).updateMany({}, { $unset: { slackId: 1 } });
+    await User.updateMany({}, { $unset: { slackId: 1 } }).exec();
   } catch (er) {
     logger.error('failed to unset all slack ids', er);
   }
@@ -147,25 +128,24 @@ async function mapSlackIdToEmail({message, context, logger, say, client}) {
   }
 
   const databaseService = new DatabaseService({ ...procVars });
-  await databaseService.init();
-  const db = await databaseService.getDb() as Db;
+  await databaseService.connect();
 
   try {
-    const missingEmailUsers = await db.collection(scoresDocumentName).find({ id: { $exists: true }, email: { $exists: false } }).toArray();
+    const missingEmailUsers: IUser[] = await User.find({ id: { $exists: true }, email: { $exists: false } }).exec();
 
     for (const user of missingEmailUsers) {
-      logger.debug('Map this member', user.id, user.name);
+      logger.debug('Map this member', user.slackId, user.name);
       let slackUser;
       try {
-        slackUser = (await client.users.info({ user: user.id })).user;
+        slackUser = (await client.users.info({ user: user.slackId })).user;
       } catch (e) {
-        logger.error(`error retrieving user: ${user.id} ${user.name}`);
+        logger.error(`error retrieving user: ${user.slackId} ${user.name}`);
       }
       if (slackUser.profile && slackUser.profile.email) {
         user.email = slackUser.profile.email;
-        await db.collection(scoresDocumentName).replaceOne({ slackId: user.id }, user);
+        await user.save();
       }
-      await say(`Mapping completed for ${user.name}: { name: ${user.name}, slackId: <@${user.id}>, email: ${user.email} }`);
+      await say(`Mapping completed for ${user.name}: { name: ${user.name}, slackId: <@${user.slackId}>, email: ${user.email} }`);
     }
   } catch (er) {
     logger.error('Error processing users', er);

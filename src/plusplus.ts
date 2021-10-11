@@ -43,6 +43,7 @@ import { Blocks, Message } from 'slack-block-builder';
 
 import { app } from '../app';
 import { directMention } from '@slack/bolt';
+import { DirectionEnum, PlusPlus, PlusPlusFailure, PlusPlusSpam } from './lib/types/PlusPlusEvents';
 
 const procVars = Helpers.getProcessVariables(process.env);
 const scoreKeeper = new ScoreKeeper({ ...procVars });
@@ -102,10 +103,12 @@ async function upOrDownVote({ payload, message, context, logger, say }) {
 
   if (Helpers.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
     // circuit break a plus plus
-    emitter.emit('plus-plus-failure', {
+    const failureEvent = new PlusPlusFailure({
       notificationMessage: `False positive detected in <#${message.channel}> from <@${message.user}>:\nPre-Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText}`,
-      channel: message.channel,
+      channel: message.channel
     });
+
+    emitter.emit('plus-plus-failure', failureEvent);
     return;
   }
   const increment = operator.match(regExpCreator.positiveOperators) ? 1 : -1;
@@ -127,8 +130,8 @@ async function upOrDownVote({ payload, message, context, logger, say }) {
 
   if (theMessage) {
     await say(theMessage);
-    emitter.emit('plus-plus', {
-      notificationMessage: `<@${fromUser.id}> ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'} a ${Helpers.capitalizeFirstLetter('qrafty')} point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'} <@${toUser.id}> in <#${channel}>`,
+    const plusPlusEvent = new PlusPlus({
+      notificationMessage: `<@${fromUser.slackId}> ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'} a ${Helpers.capitalizeFirstLetter('qrafty')} point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'} <@${toUser.slackId}> in <#${channel}>`,
       sender: fromUser,
       recipient: toUser,
       direction: operator,
@@ -136,6 +139,7 @@ async function upOrDownVote({ payload, message, context, logger, say }) {
       channel,
       reason: cleanReason,
     });
+    emitter.emit('plus-plus', plusPlusEvent);
   }
 }
 
@@ -144,10 +148,11 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
   const { premessage, userId, number, conjunction, reason } = context.matches.groups;
   if (!conjunction && reason) {
     // circuit break a plus plus
-    emitter.emit('plus-plus-failure', {
-      notificationMessage: `False positive detected in <#${context.channel}> from <@${message.user}>:\nPre-Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText}`,
-      channel: context.channel,
+    const failureEvent = new PlusPlusFailure({
+      notificationMessage: `False positive detected in <#${message.channel}> from <@${message.user}>:\nPre-Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText}`,
+      channel: message.channel
     });
+    emitter.emit('plus-plus-failure', failureEvent);
     return;
   }
   const { channel, mentions } = message;
@@ -171,70 +176,58 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
 
   if (message) {
     await say(theMessage);
-    emitter.emit('plus-plus', {
-      notificationMessage: `<@${response.fromUser.id}> sent ${number} ${Helpers.capitalizeFirstLetter('qrafty')} point${parseInt(number, 10) > 1 ? 's' : ''} to <@${response.toUser.id}> in <#${channel}>`,
+    const plusPlusEvent = new PlusPlus({
+      notificationMessage: `<@${response.fromUser.slackId}> sent ${number} ${Helpers.capitalizeFirstLetter('qrafty')} point${parseInt(number, 10) > 1 ? 's' : ''} to <@${response.toUser.slackId}> in <#${channel}>`,
       recipient: response.toUser,
       sender: response.fromUser,
-      direction: '++',
+      direction: DirectionEnum.PLUS,
       amount: number,
       channel,
       reason: cleanReason,
     });
+    emitter.emit('plus-plus', plusPlusEvent);
   }
 }
 
 async function multipleUsersVote({ message, context, logger, say }) {
   const fullText = context.matches.input;
-  const { premessage, names, operator, conjunction, reason } = context.matches.groups;
-  if (!names) {
+  const { premessage, userId, operator, conjunction, reason } = context.matches.groups;
+  if (!userId) {
     return;
   }
   if (Helpers.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
     // circuit break a plus plus
-    emitter.emit('plus-plus-failure', {
-      notificationMessage: `False positive detected in <#${context.channel}> from <@${message.user}>:\nPre-Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText}`,
-      channel: context.channel,
+    const failureEvent = new PlusPlusFailure({
+      notificationMessage: `False positive detected in <#${message.channel}> from <@${message.user}>:\nPre-Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText}`,
+      channel: message.channel
     });
+    emitter.emit('plus-plus-failure', failureEvent);
     return;
   }
 
-  const namesArray = names.trim().toLowerCase().split(new RegExp(regExpCreator.multiUserSeparator)).filter(Boolean);
-  const from = message.user;
-  const { channel, mentions } = context;
-  let to;
-  if (mentions) {
-    to = mentions.filter((men) => men.type === 'user');
-  }
+  const idArray = userId.trim().toLowerCase().split(new RegExp(regExpCreator.multiUserSeparator)).filter(Boolean);
+
+  const { channel } = context;
+
   const cleanReason = Helpers.cleanAndEncode(reason);
   const increment = operator.match(regExpCreator.positiveOperators) ? 1 : -1;
 
-  const cleanNames = namesArray
-    // Parse names
-    .map((name) => {
-      const cleanedName = Helpers.cleanName(name);
-      return cleanedName;
-    })
+  const cleanedIdArray = idArray
     // Remove empty ones: {,,,}++
-    .filter((name) => !!name.length)
+    .filter((id) => !!id.length)
     // Remove duplicates: {user1,user1}++
-    .filter((name, pos, self) => self.indexOf(name) === pos);
-
-  if (cleanNames.length !== to.length) {
-    await say('We are having trouble mapping your multi-user plusplus. Please try again and only include @ mentions.');
-    return;
-  }
+    .filter((id, pos, self) => self.indexOf(id) === pos);
 
   let messages: string[] = [];
-  let fromUser;
-  for (let i = 0; i < cleanNames.length; i++) {
-    to[i].name = cleanNames[i];
-    let toUser;
-    ({ toUser, fromUser } = await scoreKeeper.incrementScore(to[i], from, channel, cleanReason, increment));
+  const from = message.user;
+  for (let i = 0; i < cleanedIdArray.length; i++) {
+    const { toUser, fromUser } = await scoreKeeper.incrementScore(cleanedIdArray[i], from, channel, cleanReason, increment);
     if (toUser) {
-      logger.debug(`clean names map [${to[i].name}]: ${toUser.score}, the reason ${toUser.reasons[cleanReason]}`);
+      logger.debug(`clean names map [${cleanedIdArray[i]}]: ${toUser.score}, the reason ${toUser.reasons[cleanReason]}`);
       messages.push(Helpers.getMessageForNewScore(toUser, cleanReason, 'qrafty'));
-      emitter.emit('plus-plus', {
-        notificationMessage: `<@${fromUser.id}> ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'} a ${Helpers.capitalizeFirstLetter('qrafty')} point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'} <@${toUser.id}> in <#${channel}>`,
+
+      const plusPlusEvent = new PlusPlus({
+        notificationMessage: `<@${fromUser.slackId}> ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'} a ${Helpers.capitalizeFirstLetter('qrafty')} point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'} <@${toUser.slackId}> in <#${channel}>`,
         sender: fromUser,
         recipient: toUser,
         direction: operator,
@@ -242,6 +235,8 @@ async function multipleUsersVote({ message, context, logger, say }) {
         channel,
         reason: cleanReason
       });
+
+      emitter.emit('plus-plus', plusPlusEvent);
     }
   }
   messages = messages.filter((message) => !!message); // de-dupe
@@ -281,7 +276,7 @@ async function eraseUserScore({ message, context, say }) {
     to.name = cleanName;
   }
 
-  const isAdmin = await databaseService.isAdmin(from);
+  const isAdmin = false;//from.isadmin
 
   if (!isAdmin) {
     await say("Sorry, you don't have authorization to do that.");
