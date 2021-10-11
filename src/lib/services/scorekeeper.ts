@@ -76,7 +76,6 @@ export class ScoreKeeper {
       const fromUser = await this.databaseService.getUser(fromId);
       if (toUser.accountLevel >= 2 && fromUser.accountLevel >= 2) {
         if ((await this.databaseService.isSpam(toUser, fromUser)) || this.isSendingToSelf(toUser, fromUser)) {
-          
           throw new Error(`I'm sorry <@${fromUser.slackId}>, I'm afraid I can't do that.`);
         }
         if (fromUser.token && fromUser.token >= numberOfTokens) {
@@ -135,7 +134,7 @@ export class ScoreKeeper {
 
       this.eventEmitter.emit('plus-plus-spam', spamEvent);
     }
-    return isSpam;
+    return !isSpam;
   }
 
   isSendingToSelf(to: IUser, from: IUser) {

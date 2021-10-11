@@ -99,7 +99,7 @@ export class DatabaseService {
 
     const now = moment();
     const fiveMinutesAgo = now.subtract(this.spamTimeLimit, 'minutes').toDate();
-    const previousScoreExists = (await ScoreLog.countDocuments({ to: to.slackId, from: from.slackId, date: { $gte: fiveMinutesAgo }}).exec()) === 0;
+    const previousScoreExists = (await ScoreLog.countDocuments({ to: to.slackId, from: from.slackId, date: { $gte: fiveMinutesAgo }}).exec()) !== 0;
     //Logger.debug('spam check result', previousScoreExists);
     return previousScoreExists
   }
