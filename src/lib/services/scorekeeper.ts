@@ -44,6 +44,7 @@ export class ScoreKeeper {
       }
 
       if ((await this.isSpam(toUser, fromUser)) || this.isSendingToSelf(toUser, fromUser)) {
+        logger.debug("is spam:", (await this.isSpam(toUser, fromUser)), "is sending self", this.isSendingToSelf(toUser, fromUser), "both", (await this.isSpam(toUser, fromUser)) || this.isSendingToSelf(toUser, fromUser))
         throw new Error(`I'm sorry <@${fromUser.slackId}>, I'm afraid I can't do that.`);
       }
       toUser.score = toUser.score + incrementValue;
@@ -134,7 +135,7 @@ export class ScoreKeeper {
 
       this.eventEmitter.emit('plus-plus-spam', spamEvent);
     }
-    return !isSpam;
+    return isSpam;
   }
 
   isSendingToSelf(to: IUser, from: IUser) {
