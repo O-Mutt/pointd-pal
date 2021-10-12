@@ -62,22 +62,6 @@ export class DatabaseService {
     return dbUsers;
   }
 
-  /**
-   * Saves the user with a new score
-   * @param {object} user the user who is getting a point change
-   * @returns {object} the updated user who received a change
-   */
-  async saveUser(user: IUser): Promise<IUser | null> {
-    (await this.connect());
-
-
-    const updatedUser = await User.findOneAndReplace({ slackId: user.slackId }, user, { sort: { score: -1 }, returnDocument: 'after' }).exec();
-
-    //Logger.debug(`Saving user original: [${user.name}: ${user.score}], new [${updatedUser.name}: ${updatedUser.score}]`);
-
-    return updatedUser;
-  }
-
   async savePlusPlusLog(to: IUser, from: IUser, channel: string, reason: string | undefined, incrementValue: number) {
     (await this.connect());
 

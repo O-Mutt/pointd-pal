@@ -54,57 +54,60 @@ export class ScoreKeeper {
       }
 
       await this.databaseService.savePointsGiven(fromUser, toUser, incrementValue);
-      let saveResponse = await this.databaseService.saveUser(toUser);
+      await toUser.save();
       try {
         await this.databaseService.savePlusPlusLog(toUser, fromUser, channel, reason, incrementValue);
       } catch (e) {
         //Logger.error(`failed saving spam log for user ${toUser.name} from ${from.name} in channel ${channel} because ${reason}`, e);
       }
 
-      if (saveResponse && saveResponse.accountLevel > 1) {
+      if (toUser && toUser.accountLevel > 1 && incrementValue > 1) {
         //saveResponse = await this.databaseService.transferScoreFromBotToUser(toUser, incrementValue, fromUser);
       }
-      return { toUser: saveResponse, fromUser };
+      return { toUser, fromUser };
     } catch (e) {
       //Logger.error(`failed to ${incrementValue > 0 ? 'add' : 'subtract'} point to [${to.name || 'no to'}] from [${from ? from.name : 'no from'}] because [${reason}] object [${JSON.stringify(toUser)}]`, e);
       throw e;
     }
   }
 
-  async transferTokens(toId: string, fromId: string, channel, reason, numberOfTokens: number): Promise<{ toUser: IUser; fromUser: IUser; }> {
+  async transferTokens(toId: string, fromId: string, channel: string, reason: string, numberOfTokens: number): Promise<{ toUser: IUser; fromUser: IUser; }> {
     try {
       const toUser = await this.databaseService.getUser(toId);
       const fromUser = await this.databaseService.getUser(fromId);
-      if (toUser.accountLevel >= 2 && fromUser.accountLevel >= 2) {
-        if ((await this.databaseService.isSpam(toUser, fromUser)) || this.isSendingToSelf(toUser, fromUser)) {
-          throw new Error(`I'm sorry <@${fromUser.slackId}>, I'm afraid I can't do that.`);
-        }
-        if (fromUser.token && fromUser.token >= numberOfTokens) {
-          fromUser.token = fromUser.token - numberOfTokens;
-          toUser.token = toUser.token || 0 + numberOfTokens;
-          if (reason) {
-            const oldReasonScore = toUser.reasons[`${reason}`] ? toUser.reasons[`${reason}`] : 0;
-            toUser.reasons[`${reason}`] = oldReasonScore + numberOfTokens;
-          }
-
-          await this.databaseService.savePointsGiven(fromUser, toUser, numberOfTokens);
-          try {
-            await this.databaseService.savePlusPlusLog(toUser, fromUser, channel, reason, numberOfTokens);
-          } catch (e) {
-            //Logger.error(`failed saving spam log for user ${toUser.name} from ${from.name} in channel ${channel} because ${reason}`, e);
-          }
-          return {
-            toUser,
-            fromUser,
-          };
-        } else {
-          // from has too few tokens to send that many
-          throw new Error(`You don't have enough tokens to send ${numberOfTokens} to ${toUser.name}`);
-        }
-      } else {
+      if (toUser.accountLevel < 2 && fromUser.accountLevel < 2) {
         // to or from is not level 2
         throw new Error(`In order to send tokens to ${toUser.name} you both must be, at least, level 2.`);
       }
+
+      if (fromUser.token && fromUser.token >= numberOfTokens) {
+          // from has too few tokens to send that many
+          throw new Error(`You don't have enough tokens to send ${numberOfTokens} to ${toUser.name}`);
+      }
+
+      if ((await this.databaseService.isSpam(toUser, fromUser)) || this.isSendingToSelf(toUser, fromUser)) {
+        throw new Error(`I'm sorry <@${fromUser.slackId}>, I'm afraid I can't do that.`);
+      }
+
+      fromUser.token = fromUser.token || 0 - numberOfTokens;
+      toUser.token = toUser.token || 0 + numberOfTokens;
+      if (reason) {
+        const oldReasonScore = toUser.reasons[`${reason}`] ? toUser.reasons[`${reason}`] : 0;
+        toUser.reasons[`${reason}`] = oldReasonScore + numberOfTokens;
+      }
+
+      await this.databaseService.savePointsGiven(fromUser, toUser, numberOfTokens);
+      try {
+        await this.databaseService.savePlusPlusLog(toUser, fromUser, channel, reason, numberOfTokens);
+      } catch (e) {
+        //Logger.error(`failed saving spam log for user ${toUser.name} from ${from.name} in channel ${channel} because ${reason}`, e);
+      }
+      await toUser.save();
+      await fromUser.save()
+      return {
+        toUser,
+        fromUser,
+      };
     } catch (e) {
       //Logger.error(`failed to transfer tokens to [${to.name || 'no to'}] from [${from ? from.name : 'no from'}] because [${reason}] object [${toUser.name}]`, e);
       throw e;
