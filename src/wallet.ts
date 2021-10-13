@@ -29,7 +29,7 @@ app.message(regExpCreator.getBotWallet(), botWalletCount);
 app.message(regExpCreator.createLevelUpAccount(), levelUpAccount);
 
 async function levelUpAccount({ message, context, say }) {
-  if (!Helpers.isPrivateMessage(context.channel)) {
+  if (!Helpers.isPrivateMessage(message.channel)) {
     return await say(`You should only execute a level up from within the context of a DM with ${'qrafty'}`);
   }
 
