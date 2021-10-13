@@ -7,27 +7,29 @@
 //
 // Author:
 //  O'Mutt (Matt@OKeefe.dev)
-const _ = require('lodash');
-const tokenBuddy = require('token-buddy');
+import _ from 'lodash';
+import tokenBuddy from 'token-buddy';
 import { directMention, Logger } from '@slack/bolt';
 import { Message, Blocks, Elements } from 'slack-block-builder';
 import { app } from '../app';
 
-const helpers = require('./lib/helpers');
-const regExpCreator = require('./lib/regexpCreator');
-const DatabaseService = require('./lib/services/database');
+import { Helpers } from './lib/helpers';
+import { regExpCreator } from './lib/regexpCreator';
+import { DatabaseService } from './lib/services/database';
+import { IBotToken } from './lib/models/botToken';
 
-  const procVars = helpers.getProcessVariables(process.env);
+  const procVars = Helpers.getProcessVariables(process.env);
   const databaseService = new DatabaseService({ ...procVars });
 
-// message @'qrafty'
-app.message(directMention(), regExpCreator.getBotWallet(), botWalletCount);
+// directMention()
+app.message(regExpCreator.getBotWallet(), botWalletCount);
 
 // DM only
-app.message(directMention(), regExpCreator.createLevelUpAccount(), levelUpAccount);
+// directMention()
+app.message(regExpCreator.createLevelUpAccount(), levelUpAccount);
 
 async function levelUpAccount({ message, context, say }) {
-  if (!helpers.isPrivateMessage(context.channel)) {
+  if (!Helpers.isPrivateMessage(context.channel)) {
     return await say(`You should only execute a level up from within the context of a DM with ${'qrafty'}`);
   }
 
@@ -35,7 +37,7 @@ async function levelUpAccount({ message, context, say }) {
   if (user.accountLevel === 2) {
     const theBlocks = Message({ channel: context.channel, text: "Let's level you up!" })
       .blocks(
-        Blocks.Section({ text: `You are already Level 2, <@${user.slackId}>. It looks as if you are ready for Level 3 where you can deposit/withdraw ${helpers.capitalizeFirstLetter('qrafty')} Tokens!`}),
+        Blocks.Section({ text: `You are already Level 2, <@${user.slackId}>. It looks as if you are ready for Level 3 where you can deposit/withdraw ${Helpers.capitalizeFirstLetter('qrafty')} Tokens!`}),
         Blocks.Actions()
         .elements(
           Elements.Button({ text: "Confirm", actionId: 'confirm_levelup' }).primary(),
@@ -65,7 +67,7 @@ async function levelUpAccount({ message, context, say }) {
 }
 
 async function botWalletCount({ context, say }) {
-  const botWallet = await databaseService.getBotWallet();
+  const botWallet: IBotToken = await databaseService.getBotWallet();
   //Logger.debug(`Get the bot wallet by user ${message.user.name}, ${botWallet}`);
   let gas;
   try {
@@ -75,9 +77,9 @@ async function botWalletCount({ context, say }) {
   }
   //Logger.debug(`Get the bot wallet by user ${message.user.name}, ${_.pick(JSON.stringify(botWallet), ['publicWalletAddress', 'name', 'token'])}`);
 
-  const theBlocks = Message({ channel: context.channel, text: `${helpers.capitalizeFirstLetter('qrafty')} Wallet:` })
+  const theBlocks = Message({ channel: context.channel, text: `${Helpers.capitalizeFirstLetter('qrafty')} Wallet:` })
       .blocks(
-        Blocks.Section({ text: `${helpers.capitalizeFirstLetter('qrafty')} Token Wallet Info:`}),
+        Blocks.Section({ text: `${Helpers.capitalizeFirstLetter('qrafty')} Token Wallet Info:`}),
         Blocks.Divider(),
         Blocks.Section({ text: `Public Wallet Address: ${botWallet.publicWalletAddress}` }),
         Blocks.Section({ text: `Tokens In Wallet: ${botWallet.token.toLocaleString()}` }),

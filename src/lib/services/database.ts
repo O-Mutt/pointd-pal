@@ -8,7 +8,7 @@ import { Logger } from '@slack/logger';
 import mongoose from 'mongoose';
 import { User, IUser } from '../models/user';
 import { ScoreLog } from '../models/scoreLog';
-import { BotToken } from '../models/botToken';
+import { BotToken, IBotToken } from '../models/botToken';
 
 
 export class DatabaseService {
@@ -219,11 +219,11 @@ export class DatabaseService {
     return;
   }
 
-  async getBotWallet() {
+  async getBotWallet(): Promise<IBotToken> {
     (await this.connect());
 
     const botWallet = await BotToken.findOne({ name: 'qrafty' });
-    return botWallet;
+    return botWallet as IBotToken;
   }
 
   async getTopSenderInDuration(amount = 10, days = 7) {

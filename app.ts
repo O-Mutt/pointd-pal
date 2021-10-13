@@ -15,6 +15,7 @@ export const app = new App({
 import './src/eventHandlers';
 import './src/migrations';
 import './src/plusplus';
+import './src/wallet';
 
 app.action('button_click', async ({ body, ack, say }) => {
   // Acknowledge the action
