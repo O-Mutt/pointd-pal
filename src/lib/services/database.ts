@@ -101,7 +101,7 @@ export class DatabaseService {
     const oldScore = from.pointsGiven[to.slackId] ? from.pointsGiven[to.slackId] : 0;
     // even if they are down voting them they should still get a tally (e.g. + 1) as they ++/-- the same person
     from.pointsGiven[to.slackId] = (oldScore + 1);
-   await from.save();
+    await from.save();
 
     if (from.pointsGiven[to.slackId] % this.furtherFeedbackScore === 0) {
       //Logger.debug(`${from.name} has sent a lot of points to ${to.name} suggesting further feedback ${score}`);

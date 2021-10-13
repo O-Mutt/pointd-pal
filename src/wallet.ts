@@ -8,9 +8,10 @@
 // Author:
 //  O'Mutt (Matt@OKeefe.dev)
 const _ = require('lodash');
-const Conversation = require('hubot-conversation');
 const tokenBuddy = require('token-buddy');
-import { Logger } from '@slack/bolt';
+import { directMention, Logger } from '@slack/bolt';
+import { Message, Blocks, Elements } from 'slack-block-builder';
+import { app } from '../app';
 
 const helpers = require('./lib/helpers');
 const regExpCreator = require('./lib/regexpCreator');
@@ -19,93 +20,71 @@ const DatabaseService = require('./lib/services/database');
   const procVars = helpers.getProcessVariables(process.env);
   const databaseService = new DatabaseService({ ...procVars });
 
-  // message @'qrafty'
-  app.message(directMention(), regExpCreator.getBotWallet(), botWalletCount);
+// message @'qrafty'
+app.message(directMention(), regExpCreator.getBotWallet(), botWalletCount);
 
-  // DM only
-  app.message(directMention(), regExpCreator.createLevelUpAccount(), levelUpAccount);
+// DM only
+app.message(directMention(), regExpCreator.createLevelUpAccount(), levelUpAccount);
 
-  async function levelUpAccount({ message, context, say }) {
-    const switchBoard = new Conversation(msg.robot);
-    const dialog = switchBoard.startDialog({ message, context, say });
-    dialog.dialogTimeout = (timeoutMsg) => {
-      timeoutMsg.reply('You didn\'t answer the question prompted in a timely fashion, this message will now self destruct. :boom:');
-    };
-
-    if (!helpers.isPrivateMessage(context.channel)) {
-      return msg.reply(`You should only execute a level up from within the context of a DM with ${'qrafty'}`);
-    }
-
-    const user = await databaseService.getUser(message.user);
-    if (user.accountLevel === 2) {
-      msg.reply(`You are already Level 2, ${user.name}. It looks as if you are ready for Level 3 where you can deposit/withdraw ${helpers.capitalizeFirstLetter(msg.'qrafty')} Tokens! Is that correct? [Yes/No]`);
-      dialog.addChoice(/yes/i, (msg2) => {
-        // do the level 3 step up, get their info for deposit withdrawal
-        msg2.reply(`Hey ${user.name}, looks like you are ready for Level 3 but I'm not :sob:. Level 3 is still WIP and will be available very soon!`);
-      });
-      dialog.addChoice(/no/i, (msg2) => {
-        msg2.reply('Woops. My mistake. Carry on++');
-      });
-      return false;
-    }
-
-    const leveledUpUser = await databaseService.updateAccountLevelToTwo(user);
-    //Logger.debug('DB results', leveledUpUser);
-
-    msg.reply(`${user.name}, we are going to level up your account to Level 2! This means you will start getting ${helpers.capitalizeFirstLetter(msg.'qrafty')} Tokens as well as points!`);
-    return true;
+async function levelUpAccount({ message, context, say }) {
+  if (!helpers.isPrivateMessage(context.channel)) {
+    return await say(`You should only execute a level up from within the context of a DM with ${'qrafty'}`);
   }
 
-  async function botWalletCount({ message, context, say }) {
-    const botWallet = await databaseService.getBotWallet();
-    //Logger.debug(`Get the bot wallet by user ${message.user.name}, ${botWallet}`);
-    let gas;
-    try {
-      gas = await tokenBuddy.getBalance(botWallet.publicWalletAddress);
-    } catch (e) {
-      await say(`An error occurred getting ${'qrafty'}'s gas amount`);
-    }
-    //Logger.debug(`Get the bot wallet by user ${message.user.name}, ${_.pick(JSON.stringify(botWallet), ['publicWalletAddress', 'name', 'token'])}`);
+  const user = await databaseService.getUser(message.user);
+  if (user.accountLevel === 2) {
+    const theBlocks = Message({ channel: context.channel, text: "Let's level you up!" })
+      .blocks(
+        Blocks.Section({ text: `You are already Level 2, <@${user.slackId}>. It looks as if you are ready for Level 3 where you can deposit/withdraw ${helpers.capitalizeFirstLetter('qrafty')} Tokens!`}),
+        Blocks.Actions()
+        .elements(
+          Elements.Button({ text: "Confirm", actionId: 'confirm_levelup' }).primary(),
+          Elements.Button({ text: "Cancel", actionId: 'cancel_levelup' }).danger()
+        )
+      ).asUser().buildToJSON();
 
-    const message = {
-      attachments: [{
-        color: '#FEA500',
-        blocks: [
-          {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: `${helpers.capitalizeFirstLetter(msg.'qrafty')} Token Wallet Info:`,
-            },
-          },
-          { type: 'divider' },
-          {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: `Public Wallet Address: ${botWallet.publicWalletAddress}`,
-            },
-          },
-          {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: `Tokens In Wallet: ${botWallet.token.toLocaleString()}`,
-            },
-          },
-        ],
-      }],
-    };
-    if (gas) {
-      message.attachments[0].blocks.push({
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: `Gas Available: ${gas.toLocaleString()}`,
-        },
-      });
-    }
+    await say(theBlocks);
 
-    return await say(message);
+  /*
+   dialog.addChoice(/yes/i, (msg2) => {
+      // do the level 3 step up, get their info for deposit withdrawal
+      msg2.reply(`Hey ${user.name}, looks like you are ready for Level 3 but I'm not :sob:. Level 3 is still WIP and will be available very soon!`);
+    });
+    dialog.addChoice(/no/i, (msg2) => {
+      msg2.reply('Woops. My mistake. Carry on++');
+    });
+    return false;
+    */
   }
+
+  
+  const leveledUpUser = await databaseService.updateAccountLevelToTwo(user);
+  //Logger.debug('DB results', leveledUpUser);
+
+  //await say(`${user.name}, we are going to level up your account to Level 2! This means you will start getting ${helpers.capitalizeFirstLetter('qrafty')} Tokens as well as points!`);
+}
+
+async function botWalletCount({ context, say }) {
+  const botWallet = await databaseService.getBotWallet();
+  //Logger.debug(`Get the bot wallet by user ${message.user.name}, ${botWallet}`);
+  let gas;
+  try {
+    gas = await tokenBuddy.getBalance(botWallet.publicWalletAddress);
+  } catch (e) {
+    await say(`An error occurred getting ${'qrafty'}'s gas amount`);
+  }
+  //Logger.debug(`Get the bot wallet by user ${message.user.name}, ${_.pick(JSON.stringify(botWallet), ['publicWalletAddress', 'name', 'token'])}`);
+
+  const theBlocks = Message({ channel: context.channel, text: `${helpers.capitalizeFirstLetter('qrafty')} Wallet:` })
+      .blocks(
+        Blocks.Section({ text: `${helpers.capitalizeFirstLetter('qrafty')} Token Wallet Info:`}),
+        Blocks.Divider(),
+        Blocks.Section({ text: `Public Wallet Address: ${botWallet.publicWalletAddress}` }),
+        Blocks.Section({ text: `Tokens In Wallet: ${botWallet.token.toLocaleString()}` }),
+        Blocks.Section( gas ? { text: `Gas Available: ${gas.toLocaleString()}` } : undefined)
+      ).asUser().buildToJSON();
+
+      
+  await say(theBlocks);
+}
 

@@ -11,6 +11,8 @@ export class RegExpCreator {
   operator = `(?<operator>${this.positiveOperators}|${this.negativeOperators})`;
   reasonForVote = `(?:\\s+(?<conjunction>${reasonConjunctions})?\\s*(?<reason>.+))?`;
   eol = `$`;
+  topOrBottom = '(?<topOrBottom>top|bottom)';
+  digits = '(?<digits>\\d+)';
 
   /**
    * user1++ for being dope
@@ -39,25 +41,19 @@ export class RegExpCreator {
    * botName bottom 3
    */
   createTopBottomRegExp(): RegExp {
-    const topOrBottom = '(top|bottom)';
-    const digits = '(\\d+)';
-    return new RegExp(`${topOrBottom}${this.allowSpacesAfterObject}${digits}`, 'i');
+    return new RegExp(`${this.topOrBottom}${this.allowSpacesAfterObject}${this.digits}`, 'i');
   }
 
   createTopBottomTokenRegExp(): RegExp {
-    const topOrBottom = '(top|bottom)';
-    const digits = '(\\d+)';
     return new RegExp(
-      `${topOrBottom}${this.allowSpacesAfterObject}tokens${this.allowSpacesAfterObject}${digits}`,
+      `${this.topOrBottom}${this.allowSpacesAfterObject}tokens${this.allowSpacesAfterObject}${this.digits}`,
       'i'
     );
   }
 
   createTopPointGiversRegExp(): RegExp {
-    const topOrBottom = '(top|bottom)';
-    const digits = '(\\d+)';
     return new RegExp(
-      `${topOrBottom}${this.allowSpacesAfterObject}(?:point givers?|point senders?|givers?|senders?)${this.allowSpacesAfterObject}${digits}`,
+      `${this.topOrBottom}${this.allowSpacesAfterObject}(?:point givers?|point senders?|givers?|senders?)${this.allowSpacesAfterObject}${this.digits}`,
       'i'
     );
   }
@@ -65,22 +61,22 @@ export class RegExpCreator {
   /**
    * botName score for user1
    */
-    createAskForScoreRegExp(): RegExp {
-      return new RegExp(`(.*)?(?:${scoreKeyword})\\s(\\w+\\s)?${this.userObject}`, 'i');
-    }
+  createAskForScoreRegExp(): RegExp {
+    return new RegExp(`(.*)?(?:${scoreKeyword})\\s(\\w+\\s)?${this.userObject}`, 'i');
+  }
   
-    /**
-     * botName erase user1
-     * botName erase user2 because they quit and i don't like quitters
-     */
-    createEraseUserScoreRegExp(): RegExp {
-      const eraseClause = '(?:erase)';
-  
-      return new RegExp(
-        `(?<premessage>.*)?${eraseClause}${this.allowSpacesAfterObject}${this.userObject}${this.allowSpacesAfterObject}${this.reasonForVote}${this.eol}`,
-        'i'
-      );
-    }
+  /**
+   * botName erase user1
+   * botName erase user2 because they quit and i don't like quitters
+   */
+  createEraseUserScoreRegExp(): RegExp {
+    const eraseClause = '(?:erase)';
+
+    return new RegExp(
+      `(?<premessage>.*)?${eraseClause}${this.allowSpacesAfterObject}${this.userObject}${this.allowSpacesAfterObject}${this.reasonForVote}${this.eol}`,
+      'i'
+    );
+  }
 
   /**
    *
