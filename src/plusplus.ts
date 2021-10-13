@@ -186,6 +186,7 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
 }
 
 async function multipleUsersVote({ message, context, logger, say }) {
+  logger.debug("multi user matches", context.matches);
   const fullText = context.matches.input;
   const { premessage, userId, operator, conjunction, reason } = context.matches.groups;
   if (!userId) {
