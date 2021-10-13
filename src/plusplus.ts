@@ -70,7 +70,6 @@ if (procVars.magicIv && procVars.magicNumber) {
 }
 
 // listen to everything
-app.message(/.*/, logEverything);
 app.message(regExpCreator.createUpDownVoteRegExp(), upOrDownVote);
 app.message(new RegExp('how much .*point.*', 'i'), tellHowMuchPointsAreWorth);
 app.message(regExpCreator.createMultiUserVoteRegExp(), multipleUsersVote);
@@ -89,10 +88,7 @@ app.message(RegExp(/(plusplus version|-v|--version)/, 'i'), async ({ message, co
 app.message(regExpCreator.createEraseUserScoreRegExp(), eraseUserScore);
 
 
-async function logEverything({payload, message, context, logger, say}) {
-  logger.debug("This is for logging all the things!", message, context);
-  //await say(context.matches.input);
-}
+
 /**
  * Functions for responding to commands
  */

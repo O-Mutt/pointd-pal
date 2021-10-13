@@ -222,7 +222,7 @@ export class DatabaseService {
   async getBotWallet(): Promise<IBotToken> {
     (await this.connect());
 
-    const botWallet = await BotToken.findOne({ name: 'qrafty' });
+    const botWallet = await BotToken.findOne({ name: 'qrafty' }).exec();
     return botWallet as IBotToken;
   }
 
