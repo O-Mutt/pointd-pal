@@ -28,7 +28,7 @@ export class RegExpCreator {
 
   createMultiUserVoteRegExp(): RegExp {
     // the thing being upvoted, which is any number of words and spaces
-    const multiUserVotedObject = `(?<premessage>.*)?(?:\\{|\\[|\\()\\s?((?:${this.userObject}${this.multiUserSeparator}?(?:\\s)?)+)\\s?(?:\\}|\\]|\\))`;
+    const multiUserVotedObject = `(?<premessage>.*)?(?:\\{|\\[|\\()\\s?(?<allUsers>(?:${this.userObject}${this.multiUserSeparator}?(?:\\s)?)+)\\s?(?:\\}|\\]|\\))`;
 
     return new RegExp(
       `${multiUserVotedObject}${this.allowSpacesAfterObject}${this.operator}${this.reasonForVote}${this.eol}`,
