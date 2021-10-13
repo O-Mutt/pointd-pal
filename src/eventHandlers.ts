@@ -1,14 +1,14 @@
 import { Helpers } from './lib/helpers';
 import { app } from '../app';
 import { EventEmitter } from 'events';
-import { PlusPlus, PlusPlusFailure } from './lib/types/PlusPlusEvents';
+import { PlusPlus, PlusPlusEventName, PlusPlusFailure, PlusPlusFailureEventName, PlusPlusSpamEventName } from './lib/types/PlusPlusEvents';
 
 const events = new EventEmitter();
 const procVars = Helpers.getProcessVariables(process.env);
 
-events.on('plus-plus', sendPlusPlusNotification);
-events.on('plus-plus-failure', sendPlusPlusFalsePositiveNotification);
-events.on('plus-plus-spam', logAndNotifySpam);
+events.on(PlusPlusEventName, sendPlusPlusNotification);
+events.on(PlusPlusFailureEventName, sendPlusPlusFalsePositiveNotification);
+events.on(PlusPlusSpamEventName, logAndNotifySpam);
 
 async function sendPlusPlusNotification({ notificationMessage, sender, recipient, direction, amount, channel, reason }: PlusPlus) {
   if (procVars.notificationsRoom) {

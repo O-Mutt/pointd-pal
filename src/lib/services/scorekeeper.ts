@@ -2,7 +2,7 @@ import { DatabaseService } from './database';
 import { Helpers } from '../helpers';
 import EventEmitter from 'events';
 import { IUser } from '../models/user';
-import { PlusPlusSpam } from '../types/PlusPlusEvents';
+import { PlusPlusSpam, PlusPlusSpamEventName } from '../types/PlusPlusEvents';
 
 export class ScoreKeeper {
   databaseService: DatabaseService;
@@ -134,7 +134,7 @@ export class ScoreKeeper {
         reason: `You recently sent <@${to.slackId}> a point.`
       });
 
-      this.eventEmitter.emit('plus-plus-spam', spamEvent);
+      this.eventEmitter.emit(PlusPlusSpamEventName, spamEvent);
     }
     return isSpam;
   }
@@ -149,7 +149,7 @@ export class ScoreKeeper {
         message: this.spamMessage,
         reason: 'Looks like you may be trying to send a point to yourself.'
       });
-      this.eventEmitter.emit('plus-plus-spam', spamEvent);
+      this.eventEmitter.emit(PlusPlusSpamEventName, spamEvent);
     }
     return isToSelf;
   }

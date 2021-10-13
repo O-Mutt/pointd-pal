@@ -43,7 +43,7 @@ import { Blocks, Message } from 'slack-block-builder';
 
 import { app } from '../app';
 import { directMention } from '@slack/bolt';
-import { DirectionEnum, PlusPlus, PlusPlusFailure, PlusPlusSpam } from './lib/types/PlusPlusEvents';
+import { DirectionEnum, PlusPlus, PlusPlusEventName, PlusPlusFailure, PlusPlusFailureEventName, PlusPlusSpam } from './lib/types/PlusPlusEvents';
 
 const procVars = Helpers.getProcessVariables(process.env);
 const scoreKeeper = new ScoreKeeper({ ...procVars });
@@ -104,7 +104,7 @@ async function upOrDownVote({ payload, message, context, logger, say }) {
       channel: message.channel
     });
 
-    emitter.emit('plus-plus-failure', failureEvent);
+    emitter.emit(PlusPlusFailureEventName, failureEvent);
     return;
   }
   const increment = operator.match(regExpCreator.positiveOperators) ? 1 : -1;
@@ -135,7 +135,7 @@ async function upOrDownVote({ payload, message, context, logger, say }) {
       channel,
       reason: cleanReason,
     });
-    emitter.emit('plus-plus', plusPlusEvent);
+    emitter.emit(PlusPlusEventName, plusPlusEvent);
   }
 }
 
@@ -148,7 +148,7 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
       notificationMessage: `False positive detected in <#${message.channel}> from <@${message.user}>:\nPre-Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText}`,
       channel: message.channel
     });
-    emitter.emit('plus-plus-failure', failureEvent);
+    emitter.emit(PlusPlusFailureEventName, failureEvent);
     return;
   }
   const { channel, mentions } = message;
@@ -181,7 +181,7 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
       channel,
       reason: cleanReason,
     });
-    emitter.emit('plus-plus', plusPlusEvent);
+    emitter.emit(PlusPlusEventName, plusPlusEvent);
   }
 }
 
@@ -197,7 +197,7 @@ async function multipleUsersVote({ message, context, logger, say }) {
       notificationMessage: `False positive detected in <#${message.channel}> from <@${message.user}>:\nPre-Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText}`,
       channel: message.channel
     });
-    emitter.emit('plus-plus-failure', failureEvent);
+    emitter.emit(PlusPlusFailureEventName, failureEvent);
     return;
   }
 
@@ -232,7 +232,7 @@ async function multipleUsersVote({ message, context, logger, say }) {
         reason: cleanReason
       });
 
-      emitter.emit('plus-plus', plusPlusEvent);
+      emitter.emit(PlusPlusEventName, plusPlusEvent);
     }
   }
   messages = messages.filter((message) => !!message); // de-dupe

@@ -14,12 +14,13 @@ export const app = new App({
 });
 
 
-import './src/eventHandlers';
-import './src/migrations';
 import './src/plusplus';
+import './src/migrations';
 import './src/wallet';
 import './src/scoreboard';
 import './src/eventHandlers';
+import './src/cronEvents';
+
 
 app.action('button_click', async ({ body, ack, say }) => {
   // Acknowledge the action
@@ -27,12 +28,8 @@ app.action('button_click', async ({ body, ack, say }) => {
   await say(`<@${body.user.id}> clicked the button`);
 });
 
-app.message('hello world', async ({say}) => {
-  await say('hey, friend.');
-});
-
 app.message(/.*/, async ({ message, context, logger }) => {
-  logger.debug("This is for logging all the things!", message, context, regExpCreator.createAskForScoreRegExp());
+  logger.debug("This is for logging all the things!", message, context);
   //await say(context.matches.input);
 });
 

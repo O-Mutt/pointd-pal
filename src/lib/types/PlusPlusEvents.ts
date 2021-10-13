@@ -1,5 +1,7 @@
 import { IUser } from "../models/user";
 
+export const PlusPlusEventName = 'plus-plus';
+
 export class PlusPlus {
   notificationMessage?: string;
   sender?: IUser;
@@ -8,13 +10,14 @@ export class PlusPlus {
   amount?: number;
   channel?: string;
   reason?: string;
-  
+
   // https://stackoverflow.com/a/37682352/593154
   constructor(init?:Partial<PlusPlus>) {
     Object.assign(this, init);
   }
 }
 
+export const PlusPlusFailureEventName = 'plus-plus-fail';
 export class PlusPlusFailure {
   notificationMessage?: string;
   channel?: string;
@@ -25,6 +28,7 @@ export class PlusPlusFailure {
   }
 }
 
+export const PlusPlusSpamEventName = 'plus-plus-spam';
 export class PlusPlusSpam {
   to?: IUser;
   from?: IUser;
