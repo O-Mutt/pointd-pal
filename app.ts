@@ -18,6 +18,7 @@ import './src/eventHandlers';
 import './src/migrations';
 import './src/plusplus';
 import './src/wallet';
+import './src/scoreboard';
 import './src/eventHandlers';
 
 app.action('button_click', async ({ body, ack, say }) => {

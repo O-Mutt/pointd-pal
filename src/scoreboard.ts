@@ -13,9 +13,9 @@
 // Author:
 //  O'Mutt (Matt@OKeefe.dev)
 
-const moment = require('moment');
-const clark = require('clark');
-const _ = require('lodash');
+import moment from 'moment';
+import clark from 'clark';
+import _ from 'lodash';
 
 import { Helpers } from './lib/helpers';
 import { DatabaseService } from './lib/services/database';
