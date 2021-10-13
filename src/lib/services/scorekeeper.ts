@@ -34,17 +34,15 @@ export class ScoreKeeper {
   * incrementValue - [number] the value to change the score by
   * return scoreObject - the new document for the user who received the score
   */
-  async incrementScore(toId: string, fromId: string, channel: string, reason: string, incrementValue: number, logger: any | undefined = undefined) {
+  async incrementScore(toId: string, fromId: string, channel: string, reason: string, incrementValue: number) {
     try {
-      const toUser = await this.databaseService.getUser(toId, logger);
-      const fromUser = await this.databaseService.getUser(fromId, logger);
-      logger.debug("this is the from user", fromUser);
+      const toUser = await this.databaseService.getUser(toId);
+      const fromUser = await this.databaseService.getUser(fromId);
       if (fromUser.isBot === true) {
         throw new Error('Bots can\'t send points, silly.');
       }
 
       if ((await this.isSpam(toUser, fromUser)) || this.isSendingToSelf(toUser, fromUser)) {
-        logger.debug("is spam:", (await this.isSpam(toUser, fromUser)), "is sending self", this.isSendingToSelf(toUser, fromUser), "both", (await this.isSpam(toUser, fromUser)) || this.isSendingToSelf(toUser, fromUser))
         throw new Error(`I'm sorry <@${fromUser.slackId}>, I'm afraid I can't do that.`);
       }
       toUser.score = toUser.score + incrementValue;

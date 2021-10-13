@@ -41,12 +41,11 @@ export class DatabaseService {
   /*
   * user - the name of the user
   */
-  async getUser(userId: string, logger: any | undefined = undefined): Promise<IUser> {
+  async getUser(userId: string): Promise<IUser> {
     (await this.connect());
 
     // Maybe this should include a migration path to keep the user object up to date with any changes?
     const user = await User.findOneBySlackIdOrCreate(userId);
-    logger.debug('did i find the user?', user, userId);
     return user;
   }
 
