@@ -213,6 +213,8 @@ async function multipleUsersVote({ message, context, logger, say }) {
   const cleanedIdArray = idArray
     // Remove empty ones: {,,,}++
     .filter((id) => !!id.length)
+    // remove <@.....>
+    .map((id) => id.replace(regExpCreator.userObject, '$1'))
     // Remove duplicates: {user1,user1}++
     .filter((id, pos, self) => self.indexOf(id) === pos);
 
