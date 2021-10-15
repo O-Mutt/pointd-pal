@@ -44,6 +44,7 @@ import { Blocks, Message } from 'slack-block-builder';
 import { app } from '../app';
 import { directMention } from '@slack/bolt';
 import { DirectionEnum, PlusPlus, PlusPlusEventName, PlusPlusFailure, PlusPlusFailureEventName, PlusPlusSpam } from './lib/types/PlusPlusEvents';
+import { IUser, User } from './lib/models/user';
 
 const procVars = Helpers.getProcessVariables(process.env);
 const scoreKeeper = new ScoreKeeper({ ...procVars });
@@ -129,7 +130,7 @@ async function upOrDownVote({ payload, message, context, logger, say }) {
     const plusPlusEvent = new PlusPlus({
       notificationMessage: `<@${fromUser.slackId}> ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'} a ${Helpers.capitalizeFirstLetter('qrafty')} point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'} <@${toUser.slackId}> in <#${channel}>`,
       sender: fromUser,
-      recipient: toUser,
+      recipients: [toUser],
       direction: operator,
       amount: 1,
       channel,
@@ -174,7 +175,7 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
     await say(theMessage);
     const plusPlusEvent = new PlusPlus({
       notificationMessage: `<@${response.fromUser.slackId}> sent ${number} ${Helpers.capitalizeFirstLetter('qrafty')} point${parseInt(number, 10) > 1 ? 's' : ''} to <@${response.toUser.slackId}> in <#${channel}>`,
-      recipient: response.toUser,
+      recipients: [response.toUser],
       sender: response.fromUser,
       direction: DirectionEnum.PLUS,
       amount: number,
@@ -186,10 +187,9 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
 }
 
 async function multipleUsersVote({ message, context, logger, say }) {
-  logger.debug("multi user matches", context.matches);
   const fullText = context.matches.input;
-  const { premessage, userId, operator, conjunction, reason } = context.matches.groups;
-  if (!userId) {
+  const { premessage, allUsers, operator, conjunction, reason } = context.matches.groups;
+  if (!allUsers) {
     return;
   }
   if (Helpers.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
@@ -202,7 +202,8 @@ async function multipleUsersVote({ message, context, logger, say }) {
     return;
   }
 
-  const idArray = userId.trim().toLowerCase().split(new RegExp(regExpCreator.multiUserSeparator)).filter(Boolean);
+  const idArray = allUsers.trim().split(new RegExp(regExpCreator.multiUserSeparator)).filter(Boolean);
+  logger.debug('We pulled all the user ids from the \'allUsers\' regexp group', idArray.join(','));
 
   const { channel } = context;
 
@@ -215,28 +216,34 @@ async function multipleUsersVote({ message, context, logger, say }) {
     // Remove duplicates: {user1,user1}++
     .filter((id, pos, self) => self.indexOf(id) === pos);
 
-  let messages: string[] = [];
+  logger.debug('We filtered out empty items and removed "self"', cleanedIdArray.join(','));
   const from = message.user;
+  let messages: string[] = [];
+  let notificationMessage: string[] = [];
+  let sender: IUser = new User();
+  let to: IUser[] = [];
   for (let i = 0; i < cleanedIdArray.length; i++) {
-    const { toUser, fromUser } = await scoreKeeper.incrementScore(cleanedIdArray[i], from, channel, cleanReason, increment);
-    if (toUser) {
-      logger.debug(`clean names map [${cleanedIdArray[i]}]: ${toUser.score}, the reason ${toUser.reasons[cleanReason]}`);
-      messages.push(Helpers.getMessageForNewScore(toUser, cleanReason, 'qrafty'));
-
-      const plusPlusEvent = new PlusPlus({
-        notificationMessage: `<@${fromUser.slackId}> ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'} a ${Helpers.capitalizeFirstLetter('qrafty')} point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'} <@${toUser.slackId}> in <#${channel}>`,
-        sender: fromUser,
-        recipient: toUser,
-        direction: operator,
-        amount: 1,
-        channel,
-        reason: cleanReason
-      });
-
-      emitter.emit(PlusPlusEventName, plusPlusEvent);
+    const response = await scoreKeeper.incrementScore(cleanedIdArray[i], from, channel, cleanReason, increment);
+    sender = response.fromUser
+    if (response.toUser) {
+      logger.debug(`clean names map [${cleanedIdArray[i]}]: ${response.toUser.score}, the reason ${response.toUser.reasons[cleanReason]}`);
+      messages.push(Helpers.getMessageForNewScore(response.toUser, cleanReason, 'qrafty'));
+      to.push(response.toUser);
+      notificationMessage.push(`<@${response.fromUser.slackId}> ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'} a ${Helpers.capitalizeFirstLetter('qrafty')} point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'} <@${response.toUser.slackId}> in <#${channel}>`,)
     }
   }
   messages = messages.filter((message) => !!message); // de-dupe
+  const plusPlusEvent = new PlusPlus({
+    notificationMessage: notificationMessage.join('\n'),
+    sender,
+    recipients: to,
+    direction: operator,
+    amount: 1,
+    channel,
+    reason: cleanReason
+  });
+
+  emitter.emit(PlusPlusEventName, plusPlusEvent);
 
   logger.debug(`These are the messages \n ${messages.join('\n')}`);
   await say(messages.join('\n'));

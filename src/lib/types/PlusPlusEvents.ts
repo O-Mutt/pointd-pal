@@ -5,7 +5,7 @@ export const PlusPlusEventName = 'plus-plus';
 export class PlusPlus {
   notificationMessage?: string;
   sender?: IUser;
-  recipient?: IUser;
+  recipients?: IUser[];
   direction?: DirectionEnum;
   amount?: number;
   channel?: string;

@@ -1,8 +1,6 @@
 import { App } from '@slack/bolt';
 import { LogLevel } from '@slack/logger';
 
-import { regExpCreator } from './src/lib/regexpCreator';
-
 require('dotenv').config();
 
 // Initializes your app with your bot token and app token
