@@ -42,7 +42,7 @@ import { DatabaseService } from './lib/services/database';
 import { Blocks, Message } from 'slack-block-builder';
 
 import { app } from '../app';
-import { directMention } from '@slack/bolt';
+import { directMention, SlackEventMiddlewareArgs } from '@slack/bolt';
 import { DirectionEnum, PlusPlus, PlusPlusEventName, PlusPlusFailure, PlusPlusFailureEventName, PlusPlusSpam } from './lib/types/PlusPlusEvents';
 import { IUser, User } from './lib/models/user';
 
@@ -152,11 +152,11 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
     emitter.emit(PlusPlusFailureEventName, failureEvent);
     return;
   }
-  const { channel, mentions } = message;
+  const { channel } = message;
   const cleanReason = Helpers.cleanAndEncode(reason);
   const from = message.user;
 
-  logger.debug(`${number} score for [${mentions}] from [${from}]${cleanReason ? ` because ${cleanReason}` : ''} in [${channel}]`);
+  logger.debug(`${number} score for [${userId}] from [${from}]${cleanReason ? ` because ${cleanReason}` : ''} in [${channel}]`);
   let response;
   try {
     response = await scoreKeeper.transferTokens(userId, from, channel, cleanReason, number);
@@ -224,11 +224,17 @@ async function multipleUsersVote({ message, context, logger, say }) {
   let notificationMessage: string[] = [];
   let sender: IUser = new User();
   let to: IUser[] = [];
-  for (let i = 0; i < cleanedIdArray.length; i++) {
-    const response = await scoreKeeper.incrementScore(cleanedIdArray[i], from, channel, cleanReason, increment);
+  for (const toUserId of cleanedIdArray) {
+    let response: { toUser: IUser, fromUser: IUser };
+    try {
+      response = await scoreKeeper.incrementScore(toUserId, from, channel, cleanReason, increment);
+    } catch (e: any) {
+      await say(e.message);
+      continue;
+    }
     sender = response.fromUser
     if (response.toUser) {
-      logger.debug(`clean names map [${cleanedIdArray[i]}]: ${response.toUser.score}, the reason ${response.toUser.reasons[cleanReason]}`);
+      logger.debug(`clean names map [${toUserId}]: ${response.toUser.score}, the reason ${response.toUser.reasons[cleanReason]}`);
       messages.push(Helpers.getMessageForNewScore(response.toUser, cleanReason, 'qrafty'));
       to.push(response.toUser);
       notificationMessage.push(`<@${response.fromUser.slackId}> ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'} a ${Helpers.capitalizeFirstLetter('qrafty')} point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'} <@${response.toUser.slackId}> in <#${channel}>`,)
@@ -247,7 +253,7 @@ async function multipleUsersVote({ message, context, logger, say }) {
 
   emitter.emit(PlusPlusEventName, plusPlusEvent);
 
-  logger.debug(`These are the messages \n ${messages.join('\n')}`);
+  logger.debug(`These are the messages \n ${messages.join(' ')}`);
   await say(messages.join('\n'));
 }
 
@@ -269,18 +275,12 @@ async function tellHowMuchPointsAreWorth({ payload, logger, message, context, sa
 
 async function eraseUserScore({ message, context, say }) {
   let erased;
-  const [fullText, premessage, name, conjunction, reason] = context.matches
+  const fullText = context.matches.input;
+  const  { premessage, userId, conjunction, reason } = context.matches
   const from = message.user;
-  const { channel, mentions } = message;
+  const { channel } = message;
 
   const cleanReason = Helpers.cleanAndEncode(reason);
-  let to = mentions.filter((men) => men.type === 'user').shift();
-  const cleanName = Helpers.cleanName(name);
-  if (!to) {
-    to = { name: cleanName };
-  } else {
-    to.name = cleanName;
-  }
 
   const isAdmin = false;//from.isadmin
 
@@ -288,12 +288,12 @@ async function eraseUserScore({ message, context, say }) {
     await say("Sorry, you don't have authorization to do that.");
     return;
   } else if (isAdmin) {
-    erased = await scoreKeeper.erase(to, from, channel, cleanReason);
+    erased = await scoreKeeper.erase(userId, from, channel, cleanReason);
   }
 
   if (erased) {
     const decodedReason = Helpers.decode(cleanReason);
-    const message = !decodedReason ? `Erased the following reason from ${to.name}: ${decodedReason}` : `Erased points for ${to.name}`;
+    const message = !decodedReason ? `Erased the following reason from <@${userId}>: ${decodedReason}` : `Erased points for <@${userId}>`;
     await say(message);
   }
 }
@@ -310,9 +310,7 @@ async function respondWithHelpGuidance({ message, context, say }) {
   .concat(`\`@${'qrafty'} level me up\` - Level up your account for some additional ${'qrafty'}iness \n`)
   .concat('`how much are <point_type> points worth` - Shows how much <point_type> points are worth\n');
 
-  const theMessage = Message()
-    .channel(context.channel)
-    .text('Help menu for Qrafty')
+  const theMessage = Message({ channel: context.channel, text: 'Help menu for Qrafty'})
     .blocks(
       Blocks.Header()
       .text(`Need help with ${'Qrafty'}?`),
@@ -325,6 +323,6 @@ async function respondWithHelpGuidance({ message, context, say }) {
       .text((procVars.furtherHelpUrl !== 'undefined' && procVars.furtherHelpUrl !== undefined) ?
               `For further help please visit ${procVars.furtherHelpUrl}` :
               undefined)
-    ).asUser().buildToJSON();
+    ).asUser().buildToObject();
   await say(theMessage);
 }
