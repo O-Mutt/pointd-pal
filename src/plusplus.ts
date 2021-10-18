@@ -42,7 +42,7 @@ import { DatabaseService } from './lib/services/database';
 import { Blocks, Message } from 'slack-block-builder';
 
 import { app } from '../app';
-import { directMention, SlackEventMiddlewareArgs } from '@slack/bolt';
+import { directMention, SayFn, SlackEventMiddlewareArgs } from '@slack/bolt';
 import { DirectionEnum, PlusPlus, PlusPlusEventName, PlusPlusFailure, PlusPlusFailureEventName, PlusPlusSpam } from './lib/types/PlusPlusEvents';
 import { IUser, User } from './lib/models/user';
 
@@ -323,6 +323,6 @@ async function respondWithHelpGuidance({ message, context, say }) {
       .text((procVars.furtherHelpUrl !== 'undefined' && procVars.furtherHelpUrl !== undefined) ?
               `For further help please visit ${procVars.furtherHelpUrl}` :
               undefined)
-    ).asUser().buildToObject();
-  await say(theMessage);
+    ).asUser();
+  await say({ blocks: theMessage.getBlocks() });
 }

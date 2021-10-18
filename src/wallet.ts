@@ -43,9 +43,9 @@ async function levelUpAccount({ message, context, say }) {
           Elements.Button({ text: "Confirm", actionId: 'confirm_levelup' }).primary(),
           Elements.Button({ text: "Cancel", actionId: 'cancel_levelup' }).danger()
         )
-      ).asUser().buildToJSON();
+      ).asUser();
 
-    await say(theBlocks);
+    await say({ blocks: theBlocks.getBlocks() });
 
   /*
    dialog.addChoice(/yes/i, (msg2) => {
@@ -84,9 +84,8 @@ async function botWalletCount({ context, say }) {
         Blocks.Section({ text: `Public Wallet Address: ${botWallet.publicWalletAddress}` }),
         Blocks.Section({ text: `Tokens In Wallet: ${botWallet.token.toLocaleString()}` }),
         Blocks.Section( gas ? { text: `Gas Available: ${gas.toLocaleString()}` } : undefined)
-      ).asUser().buildToJSON();
+      ).asUser();
 
-      
-  await say(theBlocks);
+  await say({ blocks: theBlocks.getBlocks() });
 }
 
