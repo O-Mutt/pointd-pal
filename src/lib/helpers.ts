@@ -185,24 +185,42 @@ export class Helpers {
     return falsePositive;
   }
 
-  static getProcessVariables(env) {
-    const procVars: any = {};
-    procVars.reasonsKeyword = env.HUBOT_PLUSPLUS_REASONS || 'reasons';
-    procVars.spamMessage = env.HUBOT_SPAM_MESSAGE || 'Looks like you hit the spam filter. Please slow your roll.';
-    procVars.spamTimeLimit = parseInt(env.SPAM_TIME_LIMIT, 10) || 5;
-    procVars.companyName = env.HUBOT_COMPANY_NAME || 'Company Name';
-    procVars.peerFeedbackUrl =
-      env.HUBOT_PEER_FEEDBACK_URL || `praise in Lattice (https://${procVars.companyName}.latticehq.com/)`;
-    procVars.furtherFeedbackSuggestedScore = parseInt(env.HUBOT_FURTHER_FEEDBACK_SCORE, 10) || 10;
-    procVars.mongoUri = env.MONGO_URI || 'mongodb://localhost/plusPlus';
-    procVars.cryptoRpcProvider = env.HUBOT_CRYPTO_RPC_PROVIDER || undefined;
-    procVars.magicNumber = env.HUBOT_UNIMPORTANT_MAGIC_NUMBER || undefined;
-    procVars.magicIv = env.HUBOT_UNIMPORTANT_MAGIC_IV || undefined;
-    procVars.furtherHelpUrl = env.HUBOT_CRYPTO_FURTHER_HELP_URL || undefined;
-    procVars.notificationsRoom = env.HUBOT_PLUSPLUS_NOTIFICATION_ROOM || undefined;
-    procVars.falsePositiveNotificationsRoom = env.HUBOT_PLUSPLUS_FALSE_POSITIVE_NOTIFICATION_ROOM || undefined;
-    procVars.monthlyScoreboardCron = env.HUBOT_PLUSPLUS_MONTHLY_SCOREBOARD_CRON || '0 10 1-7 * *';
-    procVars.monthlyScoreboardDayOfWeek = parseInt(env.HUBOT_PLUSPLUS_MONTHLY_SCOREBOARD_DAY_OF_WEEK, 10) || 1; // 0-6 (Sun - Sat)
-    return procVars;
+  static getProcessVariables(env): ProcessVariable {
+    return {
+      reasonsKeyword: env.HUBOT_PLUSPLUS_REASONS || 'reasons',
+      spamMessage: env.HUBOT_SPAM_MESSAGE || 'Looks like you hit the spam filter. Please slow your roll.',
+      spamTimeLimit: env.SPAM_TIME_LIMIT || 5,
+      companyName: env.HUBOT_COMPANY_NAME || 'Company Name',
+      peerFeedbackUrl: env.HUBOT_PEER_FEEDBACK_URL || `praise in Lattice (https://${env.HUBOT_COMPANY_NAME || 'Company Name'}.latticehq.com/)`,
+      furtherFeedbackSuggestedScore: env.HUBOT_FURTHER_FEEDBACK_SCORE || 10,
+      mongoUri: env.MONGO_URI || 'mongodb://localhost/plusPlus',
+      cryptoRpcProvider: env.HUBOT_CRYPTO_RPC_PROVIDER || undefined,
+      magicNumber: env.HUBOT_UNIMPORTANT_MAGIC_NUMBER || undefined,
+      magicIv: env.HUBOT_UNIMPORTANT_MAGIC_IV || undefined,
+      furtherHelpUrl: env.HUBOT_CRYPTO_FURTHER_HELP_URL || undefined,
+      notificationsRoom: env.HUBOT_PLUSPLUS_NOTIFICATION_ROOM || undefined,
+      falsePositiveNotificationsRoom: env.HUBOT_PLUSPLUS_FALSE_POSITIVE_NOTIFICATION_ROOM || undefined,
+      monthlyScoreboardCron: env.HUBOT_PLUSPLUS_MONTHLY_SCOREBOARD_CRON || '0 10 1-7 * *',
+      monthlyScoreboardDayOfWeek: env.HUBOT_PLUSPLUS_MONTHLY_SCOREBOARD_DAY_OF_WEEK || 1, // 0-6 (Sun - Sat)
+    };
   }
 }
+
+
+type ProcessVariable = {
+  reasonsKeyword: string,
+  spamMessage: string,
+  spamTimeLimit: number,
+  companyName: string,
+  peerFeedbackUrl: string,
+  furtherFeedbackSuggestedScore: number,
+  mongoUri: string,
+  cryptoRpcProvider: string,
+  magicNumber: number,
+  magicIv: string,
+  furtherHelpUrl: URL,
+  notificationsRoom: string,
+  falsePositiveNotificationsRoom: string,
+  monthlyScoreboardCron: string,
+  monthlyScoreboardDayOfWeek: number
+};
