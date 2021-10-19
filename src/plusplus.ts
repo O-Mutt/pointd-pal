@@ -324,7 +324,7 @@ async function respondWithHelpGuidance({ message, context, say }) {
       Blocks.Section()
       .text(helpMessage),
       Blocks.Section()
-      .text((procVars.furtherHelpUrl !== 'undefined' && procVars.furtherHelpUrl !== undefined) ?
+      .text((procVars.furtherHelpUrl !== undefined) ?
               `For further help please visit ${procVars.furtherHelpUrl}` :
               undefined)
     ).asUser();

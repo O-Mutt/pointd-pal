@@ -216,7 +216,7 @@ type ProcessVariable = {
   furtherFeedbackSuggestedScore: number,
   mongoUri: string,
   cryptoRpcProvider: string,
-  magicNumber: number,
+  magicNumber: string,
   magicIv: string,
   furtherHelpUrl: URL,
   notificationsRoom: string,
