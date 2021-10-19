@@ -24,5 +24,5 @@ export interface BotTokenInterfaceModelInterface extends Model<BotTokenInterface
   // static methods
 }
 
-export const BotToken = model<BotTokenInterface, BotTokenInterfaceModelInterface>("botWallet", BotTokenSchema);
+export const BotToken = model<BotTokenInterface, BotTokenInterfaceModelInterface>("botToken", BotTokenSchema);
 
