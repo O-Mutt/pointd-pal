@@ -202,6 +202,7 @@ export class Helpers {
       falsePositiveNotificationsRoom: env.HUBOT_PLUSPLUS_FALSE_POSITIVE_NOTIFICATION_ROOM || undefined,
       monthlyScoreboardCron: env.HUBOT_PLUSPLUS_MONTHLY_SCOREBOARD_CRON || '0 10 1-7 * *',
       monthlyScoreboardDayOfWeek: env.HUBOT_PLUSPLUS_MONTHLY_SCOREBOARD_DAY_OF_WEEK || 1, // 0-6 (Sun - Sat)
+      defaultDb: env.DEFAULT_DB_NAME || undefined,
     };
   }
 }
@@ -222,5 +223,6 @@ type ProcessVariable = {
   notificationsRoom: string,
   falsePositiveNotificationsRoom: string,
   monthlyScoreboardCron: string,
-  monthlyScoreboardDayOfWeek: number
+  monthlyScoreboardDayOfWeek: number,
+  defaultDb: string
 };

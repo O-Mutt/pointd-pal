@@ -10,10 +10,8 @@ import { ScoreLog } from '../models/scoreLog';
 import { BotToken, IBotToken } from '../models/botToken';
 import { connectionFactory } from './connectionsFactory';
 
-
 export class DatabaseService {
   private eventEmitter: EventEmitter;
-  private database: mongoose.Connection | undefined;
   uri: string;
   furtherFeedbackScore: number;
   peerFeedbackUrl: string;
@@ -21,7 +19,6 @@ export class DatabaseService {
   spamMessage: string;
 
   constructor(params) {
-    this.database = undefined;
     this.uri = params.mongoUri;
     this.furtherFeedbackScore = params.furtherFeedbackSuggestedScore;
     this.peerFeedbackUrl = params.peerFeedbackUrl;
@@ -35,7 +32,7 @@ export class DatabaseService {
   */
   async getUser(teamId: string, userId: string): Promise<IUser> {
     // Maybe this should include a migration path to keep the user object up to date with any changes?
-    const user = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(userId);
+    const user = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, userId);
     return user;
   }
 
