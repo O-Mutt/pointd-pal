@@ -35,7 +35,8 @@ app.message(regExpCreator.createTopPointGiversRegExp(), getTopPointSenders);
 
 async function respondWithScore({ message, context, say }) {
   const { userId } = context.matches.groups;
-  const user = await databaseService.getUser(userId);
+  const teamId = context.teamId;
+  const user = await databaseService.getUser(teamId, userId);
 
   let tokenString = '.';
   if (user.accountLevel > 1) {

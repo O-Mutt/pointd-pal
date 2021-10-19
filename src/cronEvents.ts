@@ -23,7 +23,7 @@ const databaseService = new DatabaseService({ ...procVars });
       //Logger.debug('running the cron job');
 
       // Senders
-      const topSenders = await databaseService.getTopSenderInDuration(10, 30);
+      const topSenders = await databaseService.getTopSenderInDuration('123', 10, 30);
       let messages: string[] = [];
       if (topSenders.length > 0) {
         for (let i = 0, end = topSenders.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
@@ -45,7 +45,7 @@ const databaseService = new DatabaseService({ ...procVars });
       });
 
       // Recipients
-      const topRecipient = await databaseService.getTopReceiverInDuration(10, 30);
+      const topRecipient = await databaseService.getTopReceiverInDuration('123', 10, 30);
       messages = [];
       if (topRecipient.length > 0) {
         for (let i = 0, end = topRecipient.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
@@ -67,7 +67,7 @@ const databaseService = new DatabaseService({ ...procVars });
 
 
       // Channel
-      const topRoom = await databaseService.getTopRoomInDuration(3, 30);
+      const topRoom = await databaseService.getTopRoomInDuration('123', 3, 30);
       messages = [];
       if (topRoom.length > 0) {
         for (let i = 0, end = topRoom.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {

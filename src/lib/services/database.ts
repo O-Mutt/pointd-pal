@@ -1,14 +1,14 @@
 /* eslint-disable no-restricted-syntax */
-import moment, { Moment } from 'moment';
+import moment from 'moment';
 import EventEmitter from 'events';
 
 import { app } from '../../../app';
 
-import { Logger } from '@slack/logger';
 import mongoose from 'mongoose';
 import { User, IUser } from '../models/user';
 import { ScoreLog } from '../models/scoreLog';
 import { BotToken, IBotToken } from '../models/botToken';
+import { connectionFactory } from './connectionsFactory';
 
 
 export class DatabaseService {
@@ -30,43 +30,29 @@ export class DatabaseService {
     this.spamMessage = params.spamMessage;
   }
 
-  async connect() {
-    if (this.database) {
-      return;
-    }
-    await mongoose.connect(this.uri);
-    this.database = mongoose.connection;
-  }
-
   /*
   * user - the name of the user
   */
-  async getUser(userId: string): Promise<IUser> {
-    (await this.connect());
-
+  async getUser(teamId: string, userId: string): Promise<IUser> {
     // Maybe this should include a migration path to keep the user object up to date with any changes?
-    const user = await User.findOneBySlackIdOrCreate(userId);
+    const user = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(userId);
     return user;
   }
 
   /*
   * user - the name of the user
   */
-  async getAllUsers() {
+  async getAllUsers(teamId: string) {
     const search = { id: { $exists: true } };
     //Logger.debug('getting _all_ users');
-    (await this.connect());
-
-    const dbUsers = await User.find(search).exec();
+    const dbUsers = await User(connectionFactory(teamId)).find(search).exec();
     return dbUsers;
   }
 
-  async savePlusPlusLog(to: IUser, from: IUser, channel: string, reason: string | undefined, incrementValue: number) {
-    (await this.connect());
-
+  async savePlusPlusLog(teamId: string, to: IUser, from: IUser, channel: string, reason: string | undefined, incrementValue: number) {
     from.totalPointsGiven = from.totalPointsGiven + incrementValue;
     await from.save();
-    await ScoreLog.create({ 
+    await ScoreLog(connectionFactory(teamId)).create({ 
       from: from.slackId,
       to: to.slackId,
       date: new Date(),
@@ -76,14 +62,12 @@ export class DatabaseService {
     });
   }
 
-  async isSpam(to: IUser, from: IUser) {
+  async isSpam(teamId: string, to: IUser, from: IUser) {
     //Logger.debug('spam check');
-    (await this.connect());
-
     const now = moment();
     const fiveMinutesAgo = now.subtract(this.spamTimeLimit, 'minutes').toDate();
     // There is 1+ and that means we have spam
-    const isSpam = (await ScoreLog.countDocuments({ to: to.slackId, from: from.slackId, date: { $gte: fiveMinutesAgo }}).exec()) !== 0;
+    const isSpam = (await ScoreLog(connectionFactory(teamId)).countDocuments({ to: to.slackId, from: from.slackId, date: { $gte: fiveMinutesAgo }}).exec()) !== 0;
     //Logger.debug('spam check result', previousScoreExists);
     return isSpam
   }
@@ -94,9 +78,6 @@ export class DatabaseService {
   * score - the number of score that is being sent
   */
   async savePointsGiven(from: IUser, to: IUser, score: number) {
-    (await this.connect());
-
-
     const oldScore = from.pointsGiven[to.slackId] ? from.pointsGiven[to.slackId] : 0;
     // even if they are down voting them they should still get a tally (e.g. + 1) as they ++/-- the same person
     from.pointsGiven[to.slackId] = (oldScore + 1);
@@ -111,11 +92,8 @@ export class DatabaseService {
     }
   }
 
-  async getTopScores(amount) {
-    (await this.connect());
-
-    const results = await User
-      .find({})
+  async getTopScores(teamId: string, amount) {
+    const results = await User(connectionFactory(teamId)).find({})
       .sort({ score: -1, accountLevel: -1 })
       .limit(amount);
 
@@ -124,11 +102,8 @@ export class DatabaseService {
     return results;
   }
 
-  async getBottomScores(amount) {
-    (await this.connect());
-
-    const results = await User
-      .find({})
+  async getBottomScores(teamId: string, amount) {
+    const results = await User(connectionFactory(teamId)).find({})
       .sort({ score: 1, accountLevel: -1 })
       .limit(amount);
 
@@ -137,11 +112,8 @@ export class DatabaseService {
     return results;
   }
 
-  async getTopTokens(amount) {
-    (await this.connect());
-
-    const results = await User
-      .find({
+  async getTopTokens(teamId: string, amount) {
+    const results = await User(connectionFactory(teamId)).find({
         accountLevel: { $gte: 2 },
       })
       .sort({ token: -1, score: -1 })
@@ -152,11 +124,8 @@ export class DatabaseService {
     return results;
   }
 
-  async getBottomTokens(amount) {
-    (await this.connect());
-
-    const results = await User
-      .find({
+  async getBottomTokens(teamId: string, amount) {
+    const results = await User(connectionFactory(teamId)).find({
         accountLevel: { $gte: 2 },
       })
       .sort({ token: 1, score: 1 })
@@ -167,11 +136,8 @@ export class DatabaseService {
     return results;
   }
 
-  async getTopSender(amount) {
-    (await this.connect());
-
-    const results = await User
-      .find({ totalPointsGiven: { $exists: true } })
+  async getTopSender(teamId: string, amount) {
+    const results = await User(connectionFactory(teamId)).find({ totalPointsGiven: { $exists: true } })
       .sort({ totalPointsGiven: -1, accountLevel: -1 })
       .limit(amount);
 
@@ -180,11 +146,8 @@ export class DatabaseService {
     return results;
   }
 
-  async getBottomSender(amount) {
-    (await this.connect());
-
-    const results = await User
-      .find({ totalPointsGiven: { $exists: true } })
+  async getBottomSender(teamId: string, amount) {
+    const results = await User(connectionFactory(teamId)).find({ totalPointsGiven: { $exists: true } })
       .sort({ totalPointsGiven: 1, accountLevel: -1 })
       .limit(amount);
 
@@ -193,9 +156,7 @@ export class DatabaseService {
     return results;
   }
 
-  async erase(user: IUser, reason): Promise<void> {
-    (await this.connect());
-
+  async erase(teamId: string, user: IUser, reason?: string): Promise<void> {
     if (reason) {
       const reasonScore: number = user.reasons[reason];
       delete user.reasons[reason];
@@ -207,9 +168,7 @@ export class DatabaseService {
     return;
   }
 
-  async updateAccountLevelToTwo(user: IUser): Promise<void> {
-    (await this.connect());
-
+  async updateAccountLevelToTwo(teamId: string, user: IUser): Promise<void> {
     user.token = user.score;
     user.accountLevel = 2;
     await user.save();
@@ -218,17 +177,13 @@ export class DatabaseService {
     return;
   }
 
-  async getBotWallet(): Promise<IBotToken> {
-    (await this.connect());
-
+  async getBotWallet(teamId: string): Promise<IBotToken> {
     const botWallet = await BotToken.findOne({ name: 'qrafty' }).exec();
     return botWallet as IBotToken;
   }
 
-  async getTopSenderInDuration(amount = 10, days = 7) {
-    (await this.connect());
-
-    const topSendersForDuration = await ScoreLog.aggregate([
+  async getTopSenderInDuration(teamId: string, amount = 10, days = 7) {
+    const topSendersForDuration = await ScoreLog(connectionFactory(teamId)).aggregate([
       {
         $match: { date: { $gt: new Date(new Date().setDate(new Date().getDate() - days)) } },
       },
@@ -242,10 +197,8 @@ export class DatabaseService {
     return topSendersForDuration;
   }
 
-  async getTopReceiverInDuration(amount = 10, days = 7) {
-    (await this.connect());
-
-    const topRecipientForDuration = await ScoreLog.aggregate([
+  async getTopReceiverInDuration(teamId: string, amount = 10, days = 7) {
+    const topRecipientForDuration = await ScoreLog(connectionFactory(teamId)).aggregate([
       {
         $match: { date: { $gt: new Date(new Date().setDate(new Date().getDate() - days)) } },
       },
@@ -259,10 +212,8 @@ export class DatabaseService {
     return topRecipientForDuration;
   }
 
-  async getTopRoomInDuration(amount = 3, days = 7) {
-    (await this.connect());
-
-    const topRoomForDuration = await ScoreLog.aggregate([
+  async getTopRoomInDuration(teamId: string, amount = 3, days = 7) {
+    const topRoomForDuration = await ScoreLog(connectionFactory(teamId)).aggregate([
       {
         $match: { date: { $gt: new Date(new Date().setDate(new Date().getDate() - days)) } },
       },
@@ -283,9 +234,7 @@ export class DatabaseService {
    * @param {number} scoreChange the increment in which the user is getting/losing points
    * @returns {object} the user who received the points updated value
    */
-  async transferTokens(user: IUser, from: IUser, scoreChange: number, ): Promise<void> {
-    (await this.connect());
-
+  async transferTokens(teamId: string, user: IUser, from: IUser, scoreChange: number, ): Promise<void> {
     user.token = user.token || 0 + scoreChange;
     from.token = from.token || 0 - scoreChange;
     await user.save();
@@ -293,8 +242,6 @@ export class DatabaseService {
   }
 
   async getMagicSecretStringNumberValue() {
-    (await this.connect());
-
     const updateBotWallet = await BotToken.findOne({ name: 'qrafty' });
     if (updateBotWallet) {
       return updateBotWallet.magicString;

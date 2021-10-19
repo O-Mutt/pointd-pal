@@ -18,8 +18,8 @@ import { regExpCreator } from './lib/regexpCreator';
 import { DatabaseService } from './lib/services/database';
 import { IBotToken } from './lib/models/botToken';
 
-  const procVars = Helpers.getProcessVariables(process.env);
-  const databaseService = new DatabaseService({ ...procVars });
+const procVars = Helpers.getProcessVariables(process.env);
+const databaseService = new DatabaseService({ ...procVars });
 
 // directMention()
 app.message(regExpCreator.getBotWallet(), botWalletCount);
@@ -28,12 +28,15 @@ app.message(regExpCreator.getBotWallet(), botWalletCount);
 // directMention()
 app.message(regExpCreator.createLevelUpAccount(), levelUpAccount);
 
-async function levelUpAccount({ message, context, say }) {
+app.action('confirm_levelup', levelUpToLevelThree);
+
+async function levelUpAccount({ message, context, logger, say }) {
   if (!Helpers.isPrivateMessage(message.channel)) {
     return await say(`You should only execute a level up from within the context of a DM with ${'qrafty'}`);
   }
+  const teamId = context.teamId;
 
-  const user = await databaseService.getUser(message.user);
+  const user = await databaseService.getUser(teamId, message.user);
   if (user.accountLevel === 2) {
     const theBlocks = Message({ channel: context.channel, text: "Let's level you up!" })
       .blocks(
@@ -46,36 +49,32 @@ async function levelUpAccount({ message, context, say }) {
       ).asUser();
 
     await say({ blocks: theBlocks.getBlocks() });
-
-  /*
-   dialog.addChoice(/yes/i, (msg2) => {
-      // do the level 3 step up, get their info for deposit withdrawal
-      msg2.reply(`Hey ${user.name}, looks like you are ready for Level 3 but I'm not :sob:. Level 3 is still WIP and will be available very soon!`);
-    });
-    dialog.addChoice(/no/i, (msg2) => {
-      msg2.reply('Woops. My mistake. Carry on++');
-    });
-    return false;
-    */
   }
 
   
-  const leveledUpUser = await databaseService.updateAccountLevelToTwo(user);
-  //Logger.debug('DB results', leveledUpUser);
+  const leveledUpUser = await databaseService.updateAccountLevelToTwo(teamId, user);
+  logger.debug('DB results', leveledUpUser);
 
-  //await say(`${user.name}, we are going to level up your account to Level 2! This means you will start getting ${helpers.capitalizeFirstLetter('qrafty')} Tokens as well as points!`);
+  await say(`${user.name}, we are going to level up your account to Level 2! This means you will start getting ${Helpers.capitalizeFirstLetter('qrafty')} Tokens as well as points!`);
 }
 
-async function botWalletCount({ context, say }) {
-  const botWallet: IBotToken = await databaseService.getBotWallet();
-  //Logger.debug(`Get the bot wallet by user ${message.user.name}, ${botWallet}`);
+async function levelUpToLevelThree({ action, body, logger, ack, say }) {
+  await ack();
+  logger.debug('do some dang level up to three things!');
+  await say(`We aren't quite ready for level three but we will note your response and get back to you asap: ${action.confirm_levelup}`);
+}
+
+async function botWalletCount({ message, context, logger, say }) {
+  const teamId = context.teamId;
+  const botWallet: IBotToken = await databaseService.getBotWallet(teamId);
+  logger.debug(`Get the bot wallet by user ${message.user.name}, ${botWallet}`);
   let gas;
   try {
     gas = await tokenBuddy.getBalance(botWallet.publicWalletAddress);
   } catch (e) {
     await say(`An error occurred getting ${'qrafty'}'s gas amount`);
   }
-  //Logger.debug(`Get the bot wallet by user ${message.user.name}, ${_.pick(JSON.stringify(botWallet), ['publicWalletAddress', 'name', 'token'])}`);
+  logger.debug(`Get the bot wallet by user ${message.user.name}, ${_.pick(JSON.stringify(botWallet), ['publicWalletAddress', 'name', 'token'])}`);
 
   const theBlocks = Message({ channel: context.channel, text: `${Helpers.capitalizeFirstLetter('qrafty')} Wallet:` })
       .blocks(

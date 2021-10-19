@@ -1,4 +1,4 @@
-import { Schema, Document, model, Model } from 'mongoose';
+import { Schema, Document, Model, Connection } from 'mongoose';
 
 export interface IScoreLog extends Document {
     from: string;
@@ -31,5 +31,5 @@ export interface ScoreLogInterfaceModelInterface extends Model<ScoreLogInterface
   // static methods
 }
 
-export const ScoreLog = model<ScoreLogInterface, ScoreLogInterfaceModelInterface>("scoreLog", ScoreLogSchema);
+export const ScoreLog = (conn: Connection) => conn.model<ScoreLogInterface, ScoreLogInterfaceModelInterface>("scoreLog", ScoreLogSchema);
 

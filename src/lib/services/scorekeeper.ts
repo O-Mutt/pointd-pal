@@ -1,5 +1,4 @@
 import { DatabaseService } from './database';
-import { Helpers } from '../helpers';
 import EventEmitter from 'events';
 import { IUser } from '../models/user';
 import { PlusPlusSpam, PlusPlusSpamEventName } from '../types/PlusPlusEvents';
@@ -22,7 +21,6 @@ export class ScoreKeeper {
     }
     this.spamMessage = params.spamMessage;
     this.databaseService = new DatabaseService(params);
-    this.databaseService.connect(); // this is async but it is just initializing the db connection, we let it run
   }
 
   /*
@@ -34,15 +32,15 @@ export class ScoreKeeper {
   * incrementValue - [number] the value to change the score by
   * return scoreObject - the new document for the user who received the score
   */
-  async incrementScore(toId: string, fromId: string, channel: string, reason: string, incrementValue: number) {
+  async incrementScore(teamId: string, toId: string, fromId: string, channel: string, reason: string, incrementValue: number) {
     try {
-      const toUser = await this.databaseService.getUser(toId);
-      const fromUser = await this.databaseService.getUser(fromId);
+      const toUser = await this.databaseService.getUser(teamId, toId);
+      const fromUser = await this.databaseService.getUser(teamId, fromId);
       if (fromUser.isBot === true) {
         throw new Error('Bots can\'t send points, silly.');
       }
 
-      if ((await this.isSpam(toUser, fromUser)) || this.isSendingToSelf(toUser, fromUser)) {
+      if ((await this.isSpam(teamId, toUser, fromUser)) || this.isSendingToSelf(toUser, fromUser)) {
         throw new Error(`I'm sorry <@${fromUser.slackId}>, I'm afraid I can't do that.`);
       }
       toUser.score = toUser.score + incrementValue;
@@ -54,7 +52,7 @@ export class ScoreKeeper {
       await this.databaseService.savePointsGiven(fromUser, toUser, incrementValue);
       await toUser.save();
       try {
-        await this.databaseService.savePlusPlusLog(toUser, fromUser, channel, reason, incrementValue);
+        await this.databaseService.savePlusPlusLog(teamId, toUser, fromUser, channel, reason, incrementValue);
       } catch (e) {
         //Logger.error(`failed saving spam log for user ${toUser.name} from ${from.name} in channel ${channel} because ${reason}`, e);
       }
@@ -69,10 +67,10 @@ export class ScoreKeeper {
     }
   }
 
-  async transferTokens(toId: string, fromId: string, channel: string, reason: string, numberOfTokens: number): Promise<{ toUser: IUser; fromUser: IUser; }> {
+  async transferTokens(teamId: string, toId: string, fromId: string, channel: string, reason: string, numberOfTokens: number): Promise<{ toUser: IUser; fromUser: IUser; }> {
     try {
-      const toUser = await this.databaseService.getUser(toId);
-      const fromUser = await this.databaseService.getUser(fromId);
+      const toUser = await this.databaseService.getUser(teamId, toId);
+      const fromUser = await this.databaseService.getUser(teamId, fromId);
       if (toUser.accountLevel < 2 && fromUser.accountLevel < 2) {
         // to or from is not level 2
         throw new Error(`In order to send tokens to ${toUser.name} you both must be, at least, level 2.`);
@@ -83,7 +81,7 @@ export class ScoreKeeper {
           throw new Error(`You don't have enough tokens to send ${numberOfTokens} to ${toUser.name}`);
       }
 
-      if ((await this.databaseService.isSpam(toUser, fromUser)) || this.isSendingToSelf(toUser, fromUser)) {
+      if ((await this.databaseService.isSpam(teamId, toUser, fromUser)) || this.isSendingToSelf(toUser, fromUser)) {
         throw new Error(`I'm sorry <@${fromUser.slackId}>, I'm afraid I can't do that.`);
       }
 
@@ -96,7 +94,7 @@ export class ScoreKeeper {
 
       await this.databaseService.savePointsGiven(fromUser, toUser, numberOfTokens);
       try {
-        await this.databaseService.savePlusPlusLog(toUser, fromUser, channel, reason, numberOfTokens);
+        await this.databaseService.savePlusPlusLog(teamId, toUser, fromUser, channel, reason, numberOfTokens);
       } catch (e) {
         //Logger.error(`failed saving spam log for user ${toUser.name} from ${from.name} in channel ${channel} because ${reason}`, e);
       }
@@ -112,20 +110,20 @@ export class ScoreKeeper {
     }
   }
 
-  async erase(user, from, channel, reason) {
+  async erase(teamId: string, user: IUser, from: IUser, channel: string, reason: string) {
     if (reason) {
       //Logger.error(`Erasing score for reason ${reason} for ${user} by ${from}`);
-      await this.databaseService.erase(user, reason);
+      await this.databaseService.erase(teamId, user, reason);
       return true;
     }
     //Logger.error(`Erasing all scores for ${user} by ${from}`);
-    await this.databaseService.erase(user, undefined);
+    await this.databaseService.erase(teamId, user, undefined);
 
     return true;
   }
 
-  async isSpam(to: IUser, from: IUser) {
-    const isSpam = await this.databaseService.isSpam(to, from);
+  async isSpam(teamId: string, to: IUser, from: IUser) {
+    const isSpam = await this.databaseService.isSpam(teamId, to, from);
     if (isSpam) {
       const spamEvent = new PlusPlusSpam({
         to,

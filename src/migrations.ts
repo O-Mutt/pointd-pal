@@ -1,13 +1,10 @@
-import { AllMiddlewareArgs, directMention, SlackEventMiddlewareArgs } from '@slack/bolt';
-
-
 import { DatabaseService } from './lib/services/database';
 import { Helpers } from './lib/helpers';
 
 import { app } from '../app';
-import { Db } from 'mongodb';
 import { Member } from '@slack/web-api/dist/response/UsersListResponse';
 import { IUser, User } from './lib/models/user';
+import { connectionFactory } from './lib/services/connectionsFactory';
 
 const procVars = Helpers.getProcessVariables(process.env);
 
@@ -26,8 +23,8 @@ async function mapUsersToDb({ message, context, client, logger, say }) {
     await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif <@${message.user}>`);
     return;
   }
+  const teamId = context.teamId;
   const databaseService = new DatabaseService({ ...procVars });
-  await databaseService.connect();
 
   const members: Member[] = (await client.users.list()).members;
 
@@ -35,7 +32,7 @@ async function mapUsersToDb({ message, context, client, logger, say }) {
   for (const member of members) {
     try {
       logger.debug('Map this member', JSON.stringify(member));
-      const localMember = await databaseService.getUser(member.id as string);
+      const localMember = await databaseService.getUser(teamId, member.id as string);
       mappings.push(`\`{ name: ${localMember.name}, slackId: ${localMember.slackId}, id: ${localMember._id} }\``);
       logger.debug(`Save the new member ${JSON.stringify(localMember)}`);
     } catch (er) {
@@ -52,14 +49,14 @@ async function mapMoreUserFieldsBySlackId({ message, context, client, logger, sa
     return;
   }
   const databaseService = new DatabaseService({ ...procVars });
-  await databaseService.connect();
+  const teamId = context.teamId;
 
   const members: Member[] = (await client.users.list()).members;
   for (const member of members) {
     if (member?.profile?.email) {
       try {
         logger.debug('Map this member', JSON.stringify(member));
-        const localMember = await databaseService.getUser(member.id as string);
+        const localMember = await databaseService.getUser(teamId, member.id as string);
         localMember.slackId = member.id as string;
         localMember.email = member.profile.email;
         await localMember.save();
@@ -84,12 +81,12 @@ async function mapSingleUserToDb({ message, context, client, logger, say }) {
 // do the mention dance
 const to = { slackId: 'drp', name: 'derrp' };
   const databaseService = new DatabaseService({ ...procVars });
-  await databaseService.connect();
+  const teamId = context.teamId;
 
   const { user } = await client.users.info({ user: to.slackId });
   try {
     logger.debug('Map this member', JSON.stringify(user));
-    const localMember = await databaseService.getUser(user);
+    const localMember = await databaseService.getUser(teamId, user);
     localMember.slackId = user.slackId;
     // eslint-disable-next-line no-underscore-dangle
     if (localMember._id) {
@@ -110,10 +107,10 @@ async function unmapUsersToDb({ message, context, logger, say }) {
     return;
   }
   const databaseService = new DatabaseService({ ...procVars });
-  await databaseService.connect();
+  const teamId = context.teamId;
 
   try {
-    await User.updateMany({}, { $unset: { slackId: 1 } }).exec();
+    await User(connectionFactory(teamId)).updateMany({}, { $unset: { slackId: 1 } }).exec();
   } catch (er) {
     logger.error('failed to unset all slack ids', er);
   }
@@ -128,10 +125,10 @@ async function mapSlackIdToEmail({message, context, logger, say, client}) {
   }
 
   const databaseService = new DatabaseService({ ...procVars });
-  await databaseService.connect();
-
+  const teamId = context.teamId;
+  
   try {
-    const missingEmailUsers: IUser[] = await User.find({ id: { $exists: true }, email: { $exists: false } }).exec();
+    const missingEmailUsers: IUser[] = await User(connectionFactory(teamId)).find({ id: { $exists: true }, email: { $exists: false } }).exec();
 
     for (const user of missingEmailUsers) {
       logger.debug('Map this member', user.slackId, user.name);

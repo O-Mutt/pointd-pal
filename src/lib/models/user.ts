@@ -1,5 +1,6 @@
-import { Schema, Document, model, Model } from 'mongoose';
+import { Schema, Document, Model, Connection } from 'mongoose';
 import { app } from '../../../app';
+import { connectionFactory } from '../services/connectionsFactory';
 
 export interface IUser extends Document {
     slackId: string;
@@ -57,7 +58,7 @@ export const UserSchema = new Schema({
   token: Number
 });
 
-UserSchema.statics.findOneBySlackIdOrCreate = async function (this: Model<any, any, any, any>, slackId): Promise<IUser> {
+UserSchema.statics.findOneBySlackIdOrCreate = async function (this: Model<any, any, any, any>, teamId: string, slackId: string): Promise<IUser> {
   const self = this;
   let user = await self.findOne({ slackId }, null, { sort: { score: -1 } }).exec()
   if (user) {
@@ -65,7 +66,8 @@ UserSchema.statics.findOneBySlackIdOrCreate = async function (this: Model<any, a
   }
 
   const { user: slackUser } = await app.client.users.info({ user: slackId });
-  user = new User({
+  const UserWithConnection = User(connectionFactory(teamId));
+  user = new UserWithConnection({
     slackId,
     score: 0,
     reasons: {},
@@ -91,5 +93,5 @@ export interface UserModelInterface extends Model<UserInterface> {
   findOneBySlackIdOrCreate(slackId: string): Promise<IUser>;
 }
 
-export const User = model<UserInterface, UserModelInterface>("score", UserSchema);
+export const User = (conn: Connection) => conn.model<UserInterface, UserModelInterface>("score", UserSchema);
 

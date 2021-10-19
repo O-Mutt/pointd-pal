@@ -42,9 +42,10 @@ import { DatabaseService } from './lib/services/database';
 import { Blocks, Message } from 'slack-block-builder';
 
 import { app } from '../app';
-import { directMention, SayFn, SlackEventMiddlewareArgs } from '@slack/bolt';
+import { AllMiddlewareArgs, AnyMiddlewareArgs, directMention, SayFn, SlackEventMiddlewareArgs } from '@slack/bolt';
 import { DirectionEnum, PlusPlus, PlusPlusEventName, PlusPlusFailure, PlusPlusFailureEventName, PlusPlusSpam } from './lib/types/PlusPlusEvents';
 import { IUser, User } from './lib/models/user';
+import { connectionFactory } from './lib/services/connectionsFactory';
 
 const procVars = Helpers.getProcessVariables(process.env);
 const scoreKeeper = new ScoreKeeper({ ...procVars });
@@ -52,6 +53,7 @@ const databaseService = new DatabaseService({ ...procVars });
 const emitter = new EventEmitter();
 
 if (procVars.magicIv && procVars.magicNumber) {
+  
   databaseService.getMagicSecretStringNumberValue().then((databaseMagicString: string) => {
     const magicMnumber = decrypt(procVars.magicIv, procVars.magicNumber, databaseMagicString);
     if (magicMnumber) {
@@ -88,14 +90,13 @@ app.message(RegExp(/(plusplus version|-v|--version)/, 'i'), async ({ message, co
 // directMention
 app.message(regExpCreator.createEraseUserScoreRegExp(), eraseUserScore);
 
-
-
 /**
  * Functions for responding to commands
  */
 async function upOrDownVote({ payload, message, context, logger, say }) {
   logger.error(message, context, payload)
   const fullText = context.matches.input;
+  const teamId = context.teamId;
   const { premessage, userId, operator, conjunction, reason } = context.matches.groups;
 
   if (Helpers.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
@@ -117,7 +118,7 @@ async function upOrDownVote({ payload, message, context, logger, say }) {
   logger.debug(`${increment} score for [${userId}] from [${fromId}]${cleanReason ? ` because ${cleanReason}` : ''} in [${channel}]`);
   let toUser; let fromUser;
   try {
-    ({ toUser, fromUser } = await scoreKeeper.incrementScore(userId, fromId, channel, cleanReason, increment));
+    ({ toUser, fromUser } = await scoreKeeper.incrementScore(teamId, userId, fromId, channel, cleanReason, increment));
   } catch (e: any) {
     await say(e.message);
     return;
@@ -142,6 +143,7 @@ async function upOrDownVote({ payload, message, context, logger, say }) {
 
 async function giveTokenBetweenUsers({ message, context, logger, say }) {
   const fullText = context.matches.input;
+  const teamId = context.teamId;
   const { premessage, userId, number, conjunction, reason } = context.matches.groups;
   if (!conjunction && reason) {
     // circuit break a plus plus
@@ -159,7 +161,7 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
   logger.debug(`${number} score for [${userId}] from [${from}]${cleanReason ? ` because ${cleanReason}` : ''} in [${channel}]`);
   let response;
   try {
-    response = await scoreKeeper.transferTokens(userId, from, channel, cleanReason, number);
+    response = await scoreKeeper.transferTokens(teamId, userId, from, channel, cleanReason, number);
   } catch (e: any) {
     await say(e.message);
     return;
@@ -188,6 +190,7 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
 
 async function multipleUsersVote({ message, context, logger, say }) {
   const fullText = context.matches.input;
+  const teamId = context.teamId;
   const { premessage, allUsers, operator, conjunction, reason } = context.matches.groups;
   if (!allUsers) {
     return;
@@ -222,12 +225,12 @@ async function multipleUsersVote({ message, context, logger, say }) {
   const from = message.user;
   let messages: string[] = [];
   let notificationMessage: string[] = [];
-  let sender: IUser = new User();
+  let sender: IUser | undefined = undefined;
   let to: IUser[] = [];
   for (const toUserId of cleanedIdArray) {
     let response: { toUser: IUser, fromUser: IUser };
     try {
-      response = await scoreKeeper.incrementScore(toUserId, from, channel, cleanReason, increment);
+      response = await scoreKeeper.incrementScore(teamId, toUserId, from, channel, cleanReason, increment);
     } catch (e: any) {
       await say(e.message);
       continue;
@@ -276,6 +279,7 @@ async function tellHowMuchPointsAreWorth({ payload, logger, message, context, sa
 async function eraseUserScore({ message, context, say }) {
   let erased;
   const fullText = context.matches.input;
+  const teamId = context.teamId;
   const  { premessage, userId, conjunction, reason } = context.matches
   const from = message.user;
   const { channel } = message;
@@ -288,7 +292,7 @@ async function eraseUserScore({ message, context, say }) {
     await say("Sorry, you don't have authorization to do that.");
     return;
   } else if (isAdmin) {
-    erased = await scoreKeeper.erase(userId, from, channel, cleanReason);
+    erased = await scoreKeeper.erase(teamId, userId, from, channel, cleanReason);
   }
 
   if (erased) {
