@@ -1,6 +1,5 @@
 import { Schema, Document, Model, Connection } from 'mongoose';
 import { app } from '../../../app';
-import { connectionFactory } from '../services/connectionsFactory';
 
 export interface IUser extends Document {
   slackId: string;
@@ -15,6 +14,8 @@ export interface IUser extends Document {
   email?: string;
   name?: string;
   token?: number;
+  bonuslyScoreOverride?: number;
+  bonuslyPrompt?: string;
 }
 
 export const UserSchema = new Schema({
@@ -54,6 +55,8 @@ export const UserSchema = new Schema({
   email: String,
   name: String,
   token: Number,
+  bonuslyScoreOverride: Number,
+  bonuslyPrompt: String,
 });
 
 UserSchema.statics.findOneBySlackIdOrCreate = async function (

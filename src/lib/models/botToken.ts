@@ -2,6 +2,7 @@ import { Schema, Document, model, Model } from 'mongoose';
 import { connectionFactory } from '../services/connectionsFactory';
 
 export interface IBotToken extends Document {
+  enabled: boolean;
   name: string;
   publicWalletAddress: string;
   token: number;
@@ -9,6 +10,7 @@ export interface IBotToken extends Document {
 }
 
 export const BotTokenSchema = new Schema({
+  enabled: Boolean,
   name: String,
   publicWalletAddress: String,
   token: Number,

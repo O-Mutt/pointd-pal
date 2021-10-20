@@ -6,6 +6,7 @@ export interface IBonuslyBotConfig extends Document {
   apiKey?: string;
   defaultReason?: string;
   defaultHashtag?: string;
+  scoreOverride?: number;
 }
 
 export const BonuslyBotConfigSchema = new Schema({
@@ -14,6 +15,7 @@ export const BonuslyBotConfigSchema = new Schema({
   apiKey: String,
   defaultReason: String,
   defaultHashtag: String,
+  scoreOverride: Number,
 });
 
 BonuslyBotConfigSchema.statics.findOneOrCreate = async function (
