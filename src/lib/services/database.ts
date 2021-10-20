@@ -29,7 +29,7 @@ export class DatabaseService {
    */
   async getUser(teamId: string, userId: string): Promise<IUser> {
     // Maybe this should include a migration path to keep the user object up to date with any changes?
-    const user = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, userId);
+    const user = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(userId);
     return user;
   }
 
