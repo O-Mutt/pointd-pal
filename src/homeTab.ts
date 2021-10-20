@@ -5,7 +5,7 @@ import { app } from '../app';
 import { BonuslyBotConfig, IBonuslyBotConfig } from './lib/models/bonusly';
 import { IUser, User } from './lib/models/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
-import { Settings } from './lib/types/settings';
+import { EnabledSettings, PromptSettings } from './lib/types/settings';
 
 app.event('app_home_opened', updateHomeTab);
 
@@ -19,17 +19,17 @@ async function updateHomeTab({ payload, event, logger, client }) {
     const bonusly = (await BonuslyBotConfig(connection).findOne({ enabled: true }).exec()) as IBonuslyBotConfig;
     const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
 
-    const derp: WebClient = client as WebClient;
     const hometab = HomeTab({ callbackId: 'homeTab' }).blocks(
-      Blocks.Header({
+      Blocks.Section({
         text: `${Md.emoji('wave')} Hey ${Md.user(userId)}, I'm Qrafty. I make it ${Md.italic(
           'super',
         )} easy to send a quick 
     ${Md.codeInline('++')} or ${Md.codeInline('--')} to your friends/coworkers via slack.`,
       }),
       ...getBonuslyAdminConfigSection(user, bonusly),
+      ...getBonuslyConfigSection(user, bonusly),
     );
-    const result = await derp.views.publish({ view: hometab.buildToObject() as View, user_id: userId });
+    const result = await client.views.publish({ view: hometab.buildToObject() as View, user_id: userId });
   } catch (e) {
     logger.error('error publishing hometab', e);
   }
@@ -47,8 +47,8 @@ function getBonuslyAdminConfigSection(user: IUser, bonusly: IBonuslyBotConfig): 
     Blocks.Section({ text: 'Bonusly Config' }),
     Blocks.Actions({ blockId: 'homeTab_bonuslyAdminConfig' }).elements(
       Elements.StaticSelect({ actionId: 'homeTab_bonuslyEnabled ' }).options(
-        Bits.Option({ text: 'Enabled', value: Settings.ENABLED }),
-        Bits.Option({ text: 'Disabled', value: Settings.DISABLED }),
+        Bits.Option({ text: 'Enabled', value: EnabledSettings.ENABLED }),
+        Bits.Option({ text: 'Disabled', value: EnabledSettings.DISABLED }),
       ),
     ),
     Blocks.Input({ label: 'Bonusly API Uri' }).element(
@@ -59,11 +59,40 @@ function getBonuslyAdminConfigSection(user: IUser, bonusly: IBonuslyBotConfig): 
     Blocks.Section({ text: 'Qrafty Token (Crypto)' }),
     Blocks.Actions({ blockId: 'homeTab_adminTokenConfig' }).elements(
       Elements.StaticSelect({ actionId: 'homeTab_qraftyTokenEnabled ' }).options(
-        Bits.Option({ text: 'Enabled', value: Settings.ENABLED }),
-        Bits.Option({ text: 'Disabled', value: Settings.DISABLED }),
+        Bits.Option({ text: 'Enabled', value: EnabledSettings.ENABLED }),
+        Bits.Option({ text: 'Disabled', value: EnabledSettings.DISABLED }),
       ),
     ),
+    Blocks.Divider(),
   );
 
+  return blocks;
+}
+
+function getBonuslyConfigSection(user: IUser, bonusly: IBonuslyBotConfig): Appendable<ViewBlockBuilder> {
+  const blocks: Appendable<ViewBlockBuilder> = [];
+  if (!bonusly.enabled) {
+    return blocks;
+  }
+
+  blocks.push(
+    Blocks.Header({ text: 'Bonusly Integration Settings' }),
+    Blocks.Divider(),
+    Blocks.Section({ text: 'Bonusly Config' }),
+    Blocks.Input({
+      label: `When sending a ${Md.codeInline('++')}
+       we can also send a bonusly bonus. We can always send one, prompt you every time, or never send a bonus.`,
+    }).element(
+      Elements.StaticSelect({ actionId: 'homeTab_bonuslyPrompt' }).options(
+        Bits.Option({ text: PromptSettings.ALWAYS, value: PromptSettings.ALWAYS }),
+        Bits.Option({ text: PromptSettings.PROMPT, value: PromptSettings.PROMPT }),
+        Bits.Option({ text: PromptSettings.NEVER, value: PromptSettings.NEVER }),
+      ),
+    ),
+    Blocks.Input({
+      label: `When we send a ${Md.codeInline('++')}
+    and a bonusly is included what is the default amount that you would like to send?`,
+    }).element(Elements.TextInput({ actionId: 'homeTab_bonuslyValue', initialValue: 1 })),
+  );
   return blocks;
 }
