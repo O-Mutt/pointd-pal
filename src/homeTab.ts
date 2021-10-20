@@ -8,6 +8,7 @@ import { Settings } from './lib/types/settings';
 app.event('app_home_opened', updateHomeTab);
 
 async function updateHomeTab({ event, logger, client }) {
+  logger.debug('app home was opened!');
   try {
     const userId = event.user;
     const teamId = event.view.team_id;
