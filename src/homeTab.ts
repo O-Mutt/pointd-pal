@@ -71,7 +71,7 @@ function getBonuslyAdminConfigSection(user: IUser, bonusly: IBonuslyBotConfig): 
 
 function getBonuslyConfigSection(user: IUser, bonusly: IBonuslyBotConfig): Appendable<ViewBlockBuilder> {
   const blocks: Appendable<ViewBlockBuilder> = [];
-  if (!bonusly.enabled) {
+  if (bonusly && bonusly.enabled !== true) {
     return blocks;
   }
 
