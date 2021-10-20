@@ -92,7 +92,7 @@ function getBonuslyConfigSection(user: IUser, bonusly: IBonuslyBotConfig): Appen
     Blocks.Input({
       label: `When we send a ${Md.codeInline('++')}
     and a bonusly is included what is the default amount that you would like to send?`,
-    }).element(Elements.TextInput({ actionId: 'homeTab_bonuslyValue', initialValue: 1 })),
+    }).element(Elements.TextInput({ actionId: 'homeTab_bonuslyValue', initialValue: '1' })),
   );
   return blocks;
 }
