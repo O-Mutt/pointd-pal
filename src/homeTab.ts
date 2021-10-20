@@ -17,7 +17,7 @@ async function updateHomeTab({ event, logger, client }) {
     const bonusly = (await BonuslyBotConfig(connection).findOne({ enabled: true }).exec()) as IBonuslyBotConfig;
     const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
 
-    const result = await client.vies.publish(
+    const result = await client.views.publish(
       HomeTab({ callbackId: 'homeTab' })
         .blocks(
           Blocks.Header({
@@ -26,7 +26,6 @@ async function updateHomeTab({ event, logger, client }) {
             )} easy to send a quick 
         ${Md.codeInline('++')} or ${Md.codeInline('--')} to your friends/coworkers via slack.`,
           }),
-          Blocks.Divider(),
           ...getBonuslyAdminConfigSection(user, bonusly),
         )
         .buildToJSON(),
@@ -42,6 +41,7 @@ function getBonuslyAdminConfigSection(user: IUser, bonusly: IBonuslyBotConfig): 
     return blocks; //empty section because the user isn't an admin
   }
   blocks.push(
+    Blocks.Divider(),
     Blocks.Header({ text: `Admin Configurations` }),
     Blocks.Divider(),
     Blocks.Section({ text: 'Bonusly Config' }),
