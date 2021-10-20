@@ -1,9 +1,8 @@
 import { Schema, Document, Model, Connection } from 'mongoose';
-import { Url } from 'url';
 
 export interface IBonuslyBotConfig extends Document {
   enabled: boolean;
-  url: Url;
+  url: URL;
   apiKey: string;
   defaultReason: string;
   defaultHashtag: string;
@@ -11,7 +10,7 @@ export interface IBonuslyBotConfig extends Document {
 
 export const BonuslyBotConfigSchema = new Schema({
   enabled: Boolean,
-  url: URL,
+  url: String,
   apiKey: String,
   defaultReason: String,
   defaultHashtag: String,
