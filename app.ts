@@ -11,7 +11,14 @@ export const app = new App({
   logLevel: process.env.LOG_LEVEL as LogLevel,
 });
 
-import './src';
+import './src/plusplus';
+import './src/migrations';
+import './src/wallet';
+import './src/scoreboard';
+import './src/eventHandlers';
+import './src/cronEvents';
+import './src/bonusly';
+import './src/homeTab';
 
 app.action('button_click', async ({ body, ack, say }) => {
   // Acknowledge the action
