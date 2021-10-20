@@ -1,4 +1,4 @@
-import { IUser } from "../models/user";
+import { IUser } from '../models/user';
 
 export const PlusPlusEventName = 'plus-plus';
 
@@ -12,7 +12,7 @@ export class PlusPlus {
   reason?: string;
 
   // https://stackoverflow.com/a/37682352/593154
-  constructor(init?:Partial<PlusPlus>) {
+  constructor(init?: Partial<PlusPlus>) {
     Object.assign(this, init);
   }
 }
@@ -34,7 +34,7 @@ export class PlusPlusSpam {
   from?: IUser;
   message?: string;
   reason?: string;
- 
+
   // https://stackoverflow.com/a/37682352/593154
   constructor(init?: Partial<PlusPlusSpam>) {
     Object.assign(this, init);
@@ -42,6 +42,6 @@ export class PlusPlusSpam {
 }
 
 export enum DirectionEnum {
-  PLUS = "++",
-  MINUS = "--"
-};
+  PLUS = '++',
+  MINUS = '--',
+}

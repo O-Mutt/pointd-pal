@@ -1,12 +1,12 @@
 import { Schema, Document, Model, Connection } from 'mongoose';
 
 export interface IScoreLog extends Document {
-    from: string;
-    to: string;
-    date: Date;
-    room: string;
-    reason: string;
-    scoreChange: number;
+  from: string;
+  to: string;
+  date: Date;
+  room: string;
+  reason: string;
+  scoreChange: number;
 }
 
 export const ScoreLogSchema = new Schema({
@@ -16,20 +16,18 @@ export const ScoreLogSchema = new Schema({
   reason: String,
   date: {
     type: Date,
-    default: new Date()
+    default: new Date(),
   },
-  scoreChange: Number
+  scoreChange: Number,
 });
 
-
-
 export interface ScoreLogInterface extends IScoreLog {
-// instance methods
+  // instance methods
 }
 
 export interface ScoreLogInterfaceModelInterface extends Model<ScoreLogInterface> {
   // static methods
 }
 
-export const ScoreLog = (conn: Connection) => conn.model<ScoreLogInterface, ScoreLogInterfaceModelInterface>("scoreLog", ScoreLogSchema);
-
+export const ScoreLog = (conn: Connection) =>
+  conn.model<ScoreLogInterface, ScoreLogInterfaceModelInterface>('scoreLog', ScoreLogSchema);

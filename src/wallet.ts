@@ -20,6 +20,10 @@ import { IBotToken } from './lib/models/botToken';
 
 const procVars = Helpers.getProcessVariables(process.env);
 const databaseService = new DatabaseService({ ...procVars });
+enum ConfirmOrCancel {
+  CONFIRM = 'confirm',
+  CANCEL = 'cancel',
+}
 
 // directMention()
 app.message(regExpCreator.getBotWallet(), botWalletCount);
@@ -40,28 +44,39 @@ async function levelUpAccount({ message, context, logger, say }) {
   if (user.accountLevel === 2) {
     const theBlocks = Message({ channel: context.channel, text: "Let's level you up!" })
       .blocks(
-        Blocks.Section({ text: `You are already Level 2, <@${user.slackId}>. It looks as if you are ready for Level 3 where you can deposit/withdraw ${Helpers.capitalizeFirstLetter('qrafty')} Tokens!`}),
-        Blocks.Actions()
-        .elements(
-          Elements.Button({ text: "Confirm", actionId: 'confirm_levelup' }).primary(),
-          Elements.Button({ text: "Cancel", actionId: 'cancel_levelup' }).danger()
-        )
-      ).asUser();
+        Blocks.Section({
+          text: `You are already Level 2, <@${
+            user.slackId
+          }>. It looks as if you are ready for Level 3 where you can deposit/withdraw ${Helpers.capitalizeFirstLetter(
+            'qrafty',
+          )} Tokens!`,
+        }),
+        Blocks.Actions().elements(
+          Elements.Button({ text: 'Confirm', actionId: 'levelUp', value: ConfirmOrCancel.CONFIRM }).primary(),
+          Elements.Button({ text: 'Cancel', actionId: 'levelUp', value: ConfirmOrCancel.CANCEL }).danger(),
+        ),
+      )
+      .asUser();
 
     await say({ blocks: theBlocks.getBlocks() });
   }
 
-  
   const leveledUpUser = await databaseService.updateAccountLevelToTwo(teamId, user);
   logger.debug('DB results', leveledUpUser);
 
-  await say(`${user.name}, we are going to level up your account to Level 2! This means you will start getting ${Helpers.capitalizeFirstLetter('qrafty')} Tokens as well as points!`);
+  await say(
+    `${
+      user.name
+    }, we are going to level up your account to Level 2! This means you will start getting ${Helpers.capitalizeFirstLetter(
+      'qrafty',
+    )} Tokens as well as points!`,
+  );
 }
 
 async function levelUpToLevelThree({ action, body, logger, ack, say }) {
   await ack();
   logger.debug('do some dang level up to three things!');
-  await say(`We aren't quite ready for level three but we will note your response and get back to you asap: ${action.confirm_levelup}`);
+  await say(`We aren't quite ready for level three but we will note your response and get back to you asap: ${action}`);
 }
 
 async function botWalletCount({ message, context, logger, say }) {
@@ -74,17 +89,23 @@ async function botWalletCount({ message, context, logger, say }) {
   } catch (e) {
     await say(`An error occurred getting ${'qrafty'}'s gas amount`);
   }
-  logger.debug(`Get the bot wallet by user ${message.user.name}, ${_.pick(JSON.stringify(botWallet), ['publicWalletAddress', 'name', 'token'])}`);
+  logger.debug(
+    `Get the bot wallet by user ${message.user.name}, ${_.pick(JSON.stringify(botWallet), [
+      'publicWalletAddress',
+      'name',
+      'token',
+    ])}`,
+  );
 
   const theBlocks = Message({ channel: context.channel, text: `${Helpers.capitalizeFirstLetter('qrafty')} Wallet:` })
-      .blocks(
-        Blocks.Section({ text: `${Helpers.capitalizeFirstLetter('qrafty')} Token Wallet Info:`}),
-        Blocks.Divider(),
-        Blocks.Section({ text: `Public Wallet Address: ${botWallet.publicWalletAddress}` }),
-        Blocks.Section({ text: `Tokens In Wallet: ${botWallet.token.toLocaleString()}` }),
-        Blocks.Section( gas ? { text: `Gas Available: ${gas.toLocaleString()}` } : undefined)
-      ).asUser();
+    .blocks(
+      Blocks.Section({ text: `${Helpers.capitalizeFirstLetter('qrafty')} Token Wallet Info:` }),
+      Blocks.Divider(),
+      Blocks.Section({ text: `Public Wallet Address: ${botWallet.publicWalletAddress}` }),
+      Blocks.Section({ text: `Tokens In Wallet: ${botWallet.token.toLocaleString()}` }),
+      Blocks.Section(gas ? { text: `Gas Available: ${gas.toLocaleString()}` } : undefined),
+    )
+    .asUser();
 
   await say({ blocks: theBlocks.getBlocks() });
 }
-

@@ -1,14 +1,11 @@
-
-
-import { Helpers } from "../helpers";
+import { Helpers } from '../helpers';
 import axios from 'axios';
-import { BonuslyBotConfig } from "../models/bonusly";
+import { BonuslyBotConfig } from '../models/bonusly';
 
 export class BonuslyService {
   procVars = Helpers.createProcVars(process.env);
 
-  constructor() {
-  }
+  constructor() {}
 
   /**
    *
@@ -16,8 +13,12 @@ export class BonuslyService {
    * @returns the user from the scores db, undefined if not found
    */
   async sendBonus(event) {
-    BonuslyBotConfig
-    this.robot.logger.debug(`Sending a bonusly bonus to ${JSON.stringify(event.recipient.slackEmail)} from ${JSON.stringify(event.sender.slackEmail)}`);
+    BonuslyBotConfig;
+    this.robot.logger.debug(
+      `Sending a bonusly bonus to ${JSON.stringify(event.recipient.slackEmail)} from ${JSON.stringify(
+        event.sender.slackEmail,
+      )}`,
+    );
     let reason = `point given through ${this.robot.name}`;
     if (event.reason) {
       const buff = new Buffer.from(event.reason, 'base64');

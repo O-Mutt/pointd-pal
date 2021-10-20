@@ -3,64 +3,66 @@ import { app } from '../../../app';
 import { connectionFactory } from '../services/connectionsFactory';
 
 export interface IUser extends Document {
-    slackId: string;
-    score: number;
-    reasons: object;
-    pointsGiven: object;
-    robotDay: Date;
-    accountLevel: number;
-    totalPointsGiven: number;
-    isAdmin: boolean;
-    isBot: boolean;
-    email?: string;
-    name?: string;
-    token?: number;
+  slackId: string;
+  score: number;
+  reasons: object;
+  pointsGiven: object;
+  robotDay: Date;
+  accountLevel: number;
+  totalPointsGiven: number;
+  isAdmin: boolean;
+  isBot: boolean;
+  email?: string;
+  name?: string;
+  token?: number;
 }
 
 export const UserSchema = new Schema({
   slackId: String,
   score: {
     type: Number,
-    default: 0
+    default: 0,
   },
   reasons: {
     type: Object,
-    default: {}
+    default: {},
   },
   pointsGiven: {
     type: Object,
-    default: {}
+    default: {},
   },
   robotDay: {
     type: Date,
-    default: new Date()
+    default: new Date(),
   },
-  accountLevel: 
-  {
+  accountLevel: {
     type: Number,
-    default: 1
+    default: 1,
   },
-  totalPointsGiven: 
-  {
+  totalPointsGiven: {
     type: Number,
-    default: 0
+    default: 0,
   },
   isAdmin: {
     type: Boolean,
-    default: false
+    default: false,
   },
   isBot: {
     type: Boolean,
-    default: false
+    default: false,
   },
   email: String,
   name: String,
-  token: Number
+  token: Number,
 });
 
-UserSchema.statics.findOneBySlackIdOrCreate = async function (this: Model<any, any, any, any>, teamId: string, slackId: string): Promise<IUser> {
+UserSchema.statics.findOneBySlackIdOrCreate = async function (
+  this: Model<any, any, any, any>,
+  teamId: string,
+  slackId: string,
+): Promise<IUser> {
   const self = this;
-  let user = await self.findOne({ slackId }, null, { sort: { score: -1 } }).exec()
+  let user = await self.findOne({ slackId }, null, { sort: { score: -1 } }).exec();
   if (user) {
     return user;
   }
@@ -79,11 +81,10 @@ UserSchema.statics.findOneBySlackIdOrCreate = async function (this: Model<any, a
     email: slackUser?.profile?.email,
     name: slackUser?.name,
     isAdmin: slackUser?.is_admin,
-    isBot: slackUser?.is_bot
+    isBot: slackUser?.is_bot,
   });
   return await self.create(user);
-}
-
+};
 
 export interface UserInterface extends IUser {
   // instance methods
@@ -94,5 +95,4 @@ export interface UserModelInterface extends Model<UserInterface> {
   findOneBySlackIdOrCreate(teamId: string, slackId: string): Promise<IUser>;
 }
 
-export const User = (conn: Connection) => conn.model<UserInterface, UserModelInterface>("score", UserSchema);
-
+export const User = (conn: Connection) => conn.model<UserInterface, UserModelInterface>('score', UserSchema);

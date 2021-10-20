@@ -8,9 +8,8 @@ export const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
   socketMode: true,
   appToken: process.env.SLACK_APP_TOKEN,
-  logLevel: process.env.LOG_LEVEL as LogLevel
+  logLevel: process.env.LOG_LEVEL as LogLevel,
 });
-
 
 import './src/plusplus';
 import './src/migrations';
@@ -18,7 +17,7 @@ import './src/wallet';
 import './src/scoreboard';
 import './src/eventHandlers';
 import './src/cronEvents';
-
+import './src/bonusly';
 
 app.action('button_click', async ({ body, ack, say }) => {
   // Acknowledge the action
@@ -27,7 +26,7 @@ app.action('button_click', async ({ body, ack, say }) => {
 });
 
 app.message(/.*/, async ({ message, context, logger }) => {
-  logger.debug("This is for logging all the things!", message, context);
+  logger.debug('This is for logging all the things!', message, context);
   //await say(context.matches.input);
 });
 

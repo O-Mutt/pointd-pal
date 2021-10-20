@@ -50,7 +50,9 @@ async function respondWithScore({ message, context, say }) {
   baseString += `\nTotal Points Given: ${user.totalPointsGiven}`;
   if (user[`${'qrafty'}Day`]) {
     const dateObj = new Date(user[`${'qrafty'}Day`]);
-    baseString += `\n:birthday: ${Helpers.capitalizeFirstLetter('qrafty')}day is ${moment(dateObj).format('MM-DD-yyyy')}`;
+    baseString += `\n:birthday: ${Helpers.capitalizeFirstLetter('qrafty')}day is ${moment(dateObj).format(
+      'MM-DD-yyyy',
+    )}`;
   }
   const keys = Object.keys(user.reasons);
   if (keys.length > 1) {
@@ -63,12 +65,16 @@ async function respondWithScore({ message, context, say }) {
       sampleReasons[reason] = value;
     } while (Object.keys(sampleReasons).length < maxReasons);
 
-    const reasonMap = _.reduce(sampleReasons, (memo, val, key) => {
-      const decodedKey = Helpers.decode(key);
-      const pointStr = val > 1 ? 'points' : 'point';
-      memo += `\n_${decodedKey}_: ${val} ${pointStr}`;
-      return memo;
-    }, '');
+    const reasonMap = _.reduce(
+      sampleReasons,
+      (memo, val, key) => {
+        const decodedKey = Helpers.decode(key);
+        const pointStr = val > 1 ? 'points' : 'point';
+        memo += `\n_${decodedKey}_: ${val} ${pointStr}`;
+        return memo;
+      },
+      '',
+    );
 
     return await say(`${baseString}\n\n:star: Here are some ${procVars.reasonsKeyword} :star:${reasonMap}`);
   }
@@ -76,7 +82,7 @@ async function respondWithScore({ message, context, say }) {
 }
 
 async function respondWithLeaderLoserBoard({ message, context, say }) {
-  const { topOrBottom, digits }: { topOrBottom: string, digits: number } = context.matches.groups;
+  const { topOrBottom, digits }: { topOrBottom: string; digits: number } = context.matches.groups;
   const topOrBottomString = Helpers.capitalizeFirstLetter(topOrBottom);
   const methodName = `get${topOrBottomString}Scores`;
   const tops = await databaseService[methodName](digits);
@@ -87,7 +93,11 @@ async function respondWithLeaderLoserBoard({ message, context, say }) {
       const person = tops[i].slackId ? `<@${tops[i].slackId}>` : tops[i].name;
       if (tops[i].accountLevel && tops[i].accountLevel > 1) {
         const tokenStr = tops[i].token > 1 ? 'Tokens' : 'Token';
-        messages.push(`${i + 1}. ${person}: ${tops[i].score} (*${tops[i].token} ${Helpers.capitalizeFirstLetter('qrafty')} ${tokenStr}*)`);
+        messages.push(
+          `${i + 1}. ${person}: ${tops[i].score} (*${tops[i].token} ${Helpers.capitalizeFirstLetter(
+            'qrafty',
+          )} ${tokenStr}*)`,
+        );
       } else {
         messages.push(`${i + 1}. ${person}: ${tops[i].score}`);
       }
@@ -103,7 +113,7 @@ async function respondWithLeaderLoserBoard({ message, context, say }) {
 }
 
 async function respondWithLeaderLoserTokenBoard({ message, context, say }) {
-  const { topOrBottom, digits }: { topOrBottom: string, digits: number } = context.matches.groups;
+  const { topOrBottom, digits }: { topOrBottom: string; digits: number } = context.matches.groups;
   const topOrBottomString = Helpers.capitalizeFirstLetter(topOrBottom);
   const methodName = `get${topOrBottomString}Tokens`;
   const tops = await databaseService[methodName](digits);
@@ -114,7 +124,11 @@ async function respondWithLeaderLoserTokenBoard({ message, context, say }) {
       const person = tops[i].slackId ? `<@${tops[i].slackId}>` : tops[i].name;
       const tokenStr = tops[i].token > 1 ? 'Tokens' : 'Token';
       const pointStr = tops[i].score > 1 ? 'points' : 'point';
-      messages.push(`${i + 1}. ${person}: *${tops[i].token} ${Helpers.capitalizeFirstLetter('qrafty')} ${tokenStr}* (${tops[i].score} ${pointStr})`);
+      messages.push(
+        `${i + 1}. ${person}: *${tops[i].token} ${Helpers.capitalizeFirstLetter('qrafty')} ${tokenStr}* (${
+          tops[i].score
+        } ${pointStr})`,
+      );
     }
   } else {
     messages.push('No scores to keep track of yet!');
@@ -127,7 +141,7 @@ async function respondWithLeaderLoserTokenBoard({ message, context, say }) {
 }
 
 async function getTopPointSenders({ message, context, say }) {
-  const { topOrBottom, digits }: { topOrBottom: string, digits: number } = context.matches.groups;
+  const { topOrBottom, digits }: { topOrBottom: string; digits: number } = context.matches.groups;
   const topOrBottomString = Helpers.capitalizeFirstLetter(topOrBottom);
   const methodName = `get${topOrBottomString}Sender`;
   const tops = await databaseService[methodName](digits);

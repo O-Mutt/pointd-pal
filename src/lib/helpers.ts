@@ -142,7 +142,7 @@ export class Helpers {
       cakeDayStr = `\n:birthday: Today is ${toTag}'s ${yearsAsString}${robotName}day! :birthday:`;
     }
     return `${scoreStr}${reasonStr}${cakeDayStr}\n_${fromTag} has ${from.token} token${Helpers.getEsOnEndOfWord(
-      from.token
+      from.token,
     )}_`;
   }
 
@@ -191,7 +191,9 @@ export class Helpers {
       spamMessage: env.HUBOT_SPAM_MESSAGE || 'Looks like you hit the spam filter. Please slow your roll.',
       spamTimeLimit: env.SPAM_TIME_LIMIT || 5,
       companyName: env.HUBOT_COMPANY_NAME || 'Company Name',
-      peerFeedbackUrl: env.HUBOT_PEER_FEEDBACK_URL || `praise in Lattice (https://${env.HUBOT_COMPANY_NAME || 'Company Name'}.latticehq.com/)`,
+      peerFeedbackUrl:
+        env.HUBOT_PEER_FEEDBACK_URL ||
+        `praise in Lattice (https://${env.HUBOT_COMPANY_NAME || 'Company Name'}.latticehq.com/)`,
       furtherFeedbackSuggestedScore: env.HUBOT_FURTHER_FEEDBACK_SCORE || 10,
       mongoUri: env.MONGO_URI || 'mongodb://localhost/plusPlus',
       cryptoRpcProvider: env.HUBOT_CRYPTO_RPC_PROVIDER || undefined,
@@ -207,22 +209,21 @@ export class Helpers {
   }
 }
 
-
 type ProcessVariable = {
-  reasonsKeyword: string,
-  spamMessage: string,
-  spamTimeLimit: number,
-  companyName: string,
-  peerFeedbackUrl: string,
-  furtherFeedbackSuggestedScore: number,
-  mongoUri: string,
-  cryptoRpcProvider: string,
-  magicNumber: string,
-  magicIv: string,
-  furtherHelpUrl: URL,
-  notificationsRoom: string,
-  falsePositiveNotificationsRoom: string,
-  monthlyScoreboardCron: string,
-  monthlyScoreboardDayOfWeek: number,
-  defaultDb: string
+  reasonsKeyword: string;
+  spamMessage: string;
+  spamTimeLimit: number;
+  companyName: string;
+  peerFeedbackUrl: string;
+  furtherFeedbackSuggestedScore: number;
+  mongoUri: string;
+  cryptoRpcProvider: string;
+  magicNumber: string;
+  magicIv: string;
+  furtherHelpUrl: URL;
+  notificationsRoom: string;
+  falsePositiveNotificationsRoom: string;
+  monthlyScoreboardCron: string;
+  monthlyScoreboardDayOfWeek: number;
+  defaultDb: string;
 };

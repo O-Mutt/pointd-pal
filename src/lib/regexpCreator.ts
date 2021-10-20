@@ -3,7 +3,7 @@ const reasonConjunctions = process.env.HUBOT_PLUSPLUS_CONJUNCTIONS || 'for|becau
 
 export class RegExpCreator {
   userObject = `<@(?<userId>[^>|]+)(?:\\|(?<label>[^>]+))?>`;
-  multiUserSeparator= `(?:\\,|\\s|(?:\\s)?\\:(?:\\s)?)`;
+  multiUserSeparator = `(?:\\,|\\s|(?:\\s)?\\:(?:\\s)?)`;
   // allow for spaces after the thing being upvoted (@user ++)
   allowSpacesAfterObject = `\\s*`;
   positiveOperators = `\\+\\+|:clap:(?::skin-tone-[0-9]:)?|:thumbsup:(?::skin-tone-[0-9]:)?|:thumbsup_all:|:\\+1:(?::skin-tone-[0-9]:)?`;
@@ -19,10 +19,10 @@ export class RegExpCreator {
    * user1-- cuz nope
    * billy @bob++
    */
-   createUpDownVoteRegExp(): RegExp {
+  createUpDownVoteRegExp(): RegExp {
     return new RegExp(
       `(?<premessage>.*)?${this.userObject}${this.allowSpacesAfterObject}${this.operator}${this.reasonForVote}${this.eol}`,
-      'i'
+      'i',
     );
   }
 
@@ -32,7 +32,7 @@ export class RegExpCreator {
 
     return new RegExp(
       `${multiUserVotedObject}${this.allowSpacesAfterObject}${this.operator}${this.reasonForVote}${this.eol}`,
-      'i'
+      'i',
     );
   }
 
@@ -47,14 +47,14 @@ export class RegExpCreator {
   createTopBottomTokenRegExp(): RegExp {
     return new RegExp(
       `${this.topOrBottom}${this.allowSpacesAfterObject}tokens${this.allowSpacesAfterObject}${this.digits}`,
-      'i'
+      'i',
     );
   }
 
   createTopPointGiversRegExp(): RegExp {
     return new RegExp(
       `${this.topOrBottom}${this.allowSpacesAfterObject}(?:point givers?|point senders?|givers?|senders?)${this.allowSpacesAfterObject}${this.digits}`,
-      'i'
+      'i',
     );
   }
 
@@ -64,7 +64,7 @@ export class RegExpCreator {
   createAskForScoreRegExp(): RegExp {
     return new RegExp(`(.*)?(?:${scoreKeyword})\\s(\\w+\\s)?${this.userObject}`, 'i');
   }
-  
+
   /**
    * botName erase user1
    * botName erase user2 because they quit and i don't like quitters
@@ -74,7 +74,7 @@ export class RegExpCreator {
 
     return new RegExp(
       `(?<premessage>.*)?${eraseClause}${this.allowSpacesAfterObject}${this.userObject}${this.allowSpacesAfterObject}${this.reasonForVote}${this.eol}`,
-      'i'
+      'i',
     );
   }
 
@@ -85,7 +85,7 @@ export class RegExpCreator {
   createGiveTokenRegExp(): RegExp {
     const reg = new RegExp(
       `(?<premessage>.*)?${this.userObject}${this.allowSpacesAfterObject}\\+${this.allowSpacesAfterObject}([0-9]{1,})${this.reasonForVote}${this.eol}`,
-      'i'
+      'i',
     );
     return reg;
   }

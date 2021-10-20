@@ -11,6 +11,7 @@
     "ngrok": "ngrok http 3000",
     "start": "ts-node app.ts",
     "start:dev": "ts-node-dev app.ts",
+    "lint": "eslint '*/**' --quiet --fix",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "license": "MIT",
@@ -31,7 +32,13 @@
   },
   "devDependencies": {
     "@types/node": "^16.10.3",
+    "@typescript-eslint/eslint-plugin": "^5.1.0",
+    "@typescript-eslint/parser": "^5.1.0",
+    "eslint": "^8.0.1",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
     "ngrok": "^4.2.2",
+    "prettier": "^2.4.1",
     "ts-node-dev": "^1.1.8"
   }
 }

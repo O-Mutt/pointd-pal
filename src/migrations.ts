@@ -15,11 +15,11 @@ app.message('try to map @.* to db users', mapSingleUserToDb);
 app.message('unmap all users', unmapUsersToDb);
 app.message('map all slackIds to slackEmail', mapSlackIdToEmail);
 
-const ALLOWED_ADMIN_IDS = [ 'ULKF78MG9', 'UD46NSKSM', 'U0231VDAB1B']
+const ALLOWED_ADMIN_IDS = ['ULKF78MG9', 'UD46NSKSM', 'U0231VDAB1B'];
 
 async function mapUsersToDb({ message, context, client, logger, say }) {
   if (!ALLOWED_ADMIN_IDS.includes(message.user)) {
-    logger.error('sorry, can\'t do that', message, context);
+    logger.error("sorry, can't do that", message, context);
     await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif <@${message.user}>`);
     return;
   }
@@ -44,7 +44,7 @@ async function mapUsersToDb({ message, context, client, logger, say }) {
 
 async function mapMoreUserFieldsBySlackId({ message, context, client, logger, say }) {
   if (!ALLOWED_ADMIN_IDS.includes(message.user)) {
-    logger.error('sorry, can\'t do that', message, context);
+    logger.error("sorry, can't do that", message, context);
     await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif <@${message.user}>`);
     return;
   }
@@ -71,15 +71,15 @@ async function mapMoreUserFieldsBySlackId({ message, context, client, logger, sa
 
 async function mapSingleUserToDb({ message, context, client, logger, say }) {
   if (!ALLOWED_ADMIN_IDS.includes(message.user)) {
-    logger.error('sorry, can\'t do that', message, context);
+    logger.error("sorry, can't do that", message, context);
     await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif <@${message.user}>`);
     return;
   }
 
   logger.debug(context);
 
-// do the mention dance
-const to = { slackId: 'drp', name: 'derrp' };
+  // do the mention dance
+  const to = { slackId: 'drp', name: 'derrp' };
   const databaseService = new DatabaseService({ ...procVars });
   const teamId = context.teamId;
 
@@ -91,7 +91,9 @@ const to = { slackId: 'drp', name: 'derrp' };
     // eslint-disable-next-line no-underscore-dangle
     if (localMember._id) {
       await localMember.save();
-      await say(`Mapping completed for ${to.name}: { name: ${localMember.name}, slackId: ${localMember.slackId}, id: ${localMember._id} }`);
+      await say(
+        `Mapping completed for ${to.name}: { name: ${localMember.name}, slackId: ${localMember.slackId}, id: ${localMember._id} }`,
+      );
       return;
     }
     logger.debug(`Save the new member ${JSON.stringify(localMember)}`);
@@ -102,7 +104,7 @@ const to = { slackId: 'drp', name: 'derrp' };
 
 async function unmapUsersToDb({ message, context, logger, say }) {
   if (!ALLOWED_ADMIN_IDS.includes(message.user)) {
-    logger.error('sorry, can\'t do that', message, context);
+    logger.error("sorry, can't do that", message, context);
     await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif <@${message.user}>`);
     return;
   }
@@ -110,25 +112,29 @@ async function unmapUsersToDb({ message, context, logger, say }) {
   const teamId = context.teamId;
 
   try {
-    await User(connectionFactory(teamId)).updateMany({}, { $unset: { slackId: 1 } }).exec();
+    await User(connectionFactory(teamId))
+      .updateMany({}, { $unset: { slackId: 1 } })
+      .exec();
   } catch (er) {
     logger.error('failed to unset all slack ids', er);
   }
   await say('Ding fries are done. We unmapped all users');
 }
 
-async function mapSlackIdToEmail({message, context, logger, say, client}) {
+async function mapSlackIdToEmail({ message, context, logger, say, client }) {
   if (!ALLOWED_ADMIN_IDS.includes(message.user)) {
-    logger.error('sorry, can\'t do that', message, context);
+    logger.error("sorry, can't do that", message, context);
     await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif <@${message.user}>`);
     return;
   }
 
   const databaseService = new DatabaseService({ ...procVars });
   const teamId = context.teamId;
-  
+
   try {
-    const missingEmailUsers: IUser[] = await User(connectionFactory(teamId)).find({ id: { $exists: true }, email: { $exists: false } }).exec();
+    const missingEmailUsers: IUser[] = await User(connectionFactory(teamId))
+      .find({ id: { $exists: true }, email: { $exists: false } })
+      .exec();
 
     for (const user of missingEmailUsers) {
       logger.debug('Map this member', user.slackId, user.name);
@@ -142,7 +148,9 @@ async function mapSlackIdToEmail({message, context, logger, say, client}) {
         user.email = slackUser.profile.email;
         await user.save();
       }
-      await say(`Mapping completed for ${user.name}: { name: ${user.name}, slackId: <@${user.slackId}>, email: ${user.email} }`);
+      await say(
+        `Mapping completed for ${user.name}: { name: ${user.name}, slackId: <@${user.slackId}>, email: ${user.email} }`,
+      );
     }
   } catch (er) {
     logger.error('Error processing users', er);
