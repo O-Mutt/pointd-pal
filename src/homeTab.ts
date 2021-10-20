@@ -1,3 +1,5 @@
+import { WebClient } from '@slack/web-api';
+import { View } from '@slack/types';
 import { Appendable, Bits, Blocks, Elements, HomeTab, Md, ViewBlockBuilder } from 'slack-block-builder';
 import { app } from '../app';
 import { BonuslyBotConfig, IBonuslyBotConfig } from './lib/models/bonusly';
@@ -17,19 +19,17 @@ async function updateHomeTab({ payload, event, logger, client }) {
     const bonusly = (await BonuslyBotConfig(connection).findOne({ enabled: true }).exec()) as IBonuslyBotConfig;
     const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
 
-    const result = await client.views.publish(
-      HomeTab({ callbackId: 'homeTab' })
-        .blocks(
-          Blocks.Header({
-            text: `${Md.emoji('wave')} Hey ${Md.user(userId)}, I'm Qrafty. I make it ${Md.italic(
-              'super',
-            )} easy to send a quick 
-        ${Md.codeInline('++')} or ${Md.codeInline('--')} to your friends/coworkers via slack.`,
-          }),
-          ...getBonuslyAdminConfigSection(user, bonusly),
-        )
-        .buildToJSON(),
+    const derp: WebClient = client as WebClient;
+    const hometab = HomeTab({ callbackId: 'homeTab' }).blocks(
+      Blocks.Header({
+        text: `${Md.emoji('wave')} Hey ${Md.user(userId)}, I'm Qrafty. I make it ${Md.italic(
+          'super',
+        )} easy to send a quick 
+    ${Md.codeInline('++')} or ${Md.codeInline('--')} to your friends/coworkers via slack.`,
+      }),
+      ...getBonuslyAdminConfigSection(user, bonusly),
     );
+    const result = await derp.views.publish({ view: hometab.buildToObject() as View, user_id: userId });
   } catch (e) {
     logger.error('error publishing hometab', e);
   }
