@@ -1,5 +1,7 @@
 import { app } from '../app';
 import { Helpers } from './lib/helpers';
+import { BonuslyBotConfig } from './lib/models/bonusly';
+import { connectionFactory } from './lib/services/connectionsFactory';
 
 const procVars = Helpers.getProcessVariables(process.env);
 
@@ -16,9 +18,23 @@ const procVars = Helpers.getProcessVariables(process.env);
 
 app.message(regExpCreator.createBonuslySettings(), adminBonuslySettings);*/
 
-app.action(/homeTab_bonusly.*/, handleHomeTabSettings);
+app.action('homeTab_bonuslyEnabled', handleBonuslyEnabled);
+app.action('homeTab_bonuslyUri', handleBonuslyUri);
 
-async function handleHomeTabSettings({ body, client, logger, ack }) {
+async function handleBonuslyEnabled({ body, client, logger, ack }) {
   await ack();
-  logger.debug('caught the hometab_bonusly action', body);
+  body.actions;
+  const teamId = body.team.id;
+  const bonusly = await BonuslyBotConfig(connectionFactory(teamId)).findOneOrCreate();
+  bonusly.enabled = true;
+  bonusly.save();
+}
+
+async function handleBonuslyUri({ body, client, logger, ack }) {
+  await ack();
+  const teamId = body.team.id;
+  // body.action.homeTab_bonuslyUri.value;
+  logger.debug('handle bonusly uri', body);
+  const bonusly = await BonuslyBotConfig(connectionFactory(teamId)).findOneOrCreate();
+  bonusly.enabled = true;
 }

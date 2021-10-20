@@ -16,8 +16,8 @@ async function updateHomeTab({ payload, event, logger, client }) {
     const teamId = payload.team_id;
 
     const connection = connectionFactory(teamId);
-    const bonusly = (await BonuslyBotConfig(connection).findOne({ enabled: true }).exec()) as IBonuslyBotConfig;
-    const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
+    const bonusly = await BonuslyBotConfig(connection).findOne({}).exec();
+    const user = await User(connection).findOneBySlackIdOrCreate(userId);
 
     const hometab = HomeTab({ callbackId: 'homeTab' }).blocks(
       Blocks.Section({
@@ -35,18 +35,19 @@ async function updateHomeTab({ payload, event, logger, client }) {
   }
 }
 
-function getBonuslyAdminConfigSection(user: IUser, bonusly: IBonuslyBotConfig): Appendable<ViewBlockBuilder> {
+function getBonuslyAdminConfigSection(user: IUser, bonusly: IBonuslyBotConfig | null): Appendable<ViewBlockBuilder> {
   const blocks: Appendable<ViewBlockBuilder> = [];
+  console.log(user);
   if (!user.isAdmin) {
     return blocks; //empty section because the user isn't an admin
   }
   blocks.push(
     Blocks.Divider(),
-    Blocks.Header({ text: `Admin Configurations` }),
+    Blocks.Header({ text: `Admin Configuration ${Md.emoji('gear')}` }),
     Blocks.Divider(),
-    Blocks.Section({ text: 'Bonusly Config' }),
+    Blocks.Header({ text: 'Bonusly Config' }),
     Blocks.Actions({ blockId: 'homeTab_bonuslyAdminConfig' }).elements(
-      Elements.StaticSelect({ actionId: 'homeTab_bonuslyEnabled ' }).options(
+      Elements.StaticSelect({ actionId: 'homeTab_bonuslyEnabled' }).options(
         Bits.Option({ text: 'Enabled', value: EnabledSettings.ENABLED }),
         Bits.Option({ text: 'Disabled', value: EnabledSettings.DISABLED }),
       ),
@@ -56,7 +57,7 @@ function getBonuslyAdminConfigSection(user: IUser, bonusly: IBonuslyBotConfig): 
     ),
     Blocks.Input({ label: 'Bonusly API Key' }).element(Elements.TextInput({ actionId: 'homeTab_bonuslyAPIKey' })),
     Blocks.Divider(),
-    Blocks.Section({ text: 'Qrafty Token (Crypto)' }),
+    Blocks.Header({ text: 'Qrafty Token (Crypto)' }),
     Blocks.Actions({ blockId: 'homeTab_adminTokenConfig' }).elements(
       Elements.StaticSelect({ actionId: 'homeTab_qraftyTokenEnabled ' }).options(
         Bits.Option({ text: 'Enabled', value: EnabledSettings.ENABLED }),
@@ -69,7 +70,7 @@ function getBonuslyAdminConfigSection(user: IUser, bonusly: IBonuslyBotConfig): 
   return blocks;
 }
 
-function getBonuslyConfigSection(user: IUser, bonusly: IBonuslyBotConfig): Appendable<ViewBlockBuilder> {
+function getBonuslyConfigSection(user: IUser, bonusly: IBonuslyBotConfig | null): Appendable<ViewBlockBuilder> {
   const blocks: Appendable<ViewBlockBuilder> = [];
   if (bonusly && bonusly.enabled !== true) {
     return blocks;
@@ -80,8 +81,8 @@ function getBonuslyConfigSection(user: IUser, bonusly: IBonuslyBotConfig): Appen
     Blocks.Divider(),
     Blocks.Section({ text: 'Bonusly Config' }),
     Blocks.Input({
-      label: `When sending a ${Md.codeInline('++')}
-       we can also send a bonusly bonus. We can always send one, prompt you every time, or never send a bonus.`,
+      label: `When sending a ${Md.codeInline('++')} \
+we can also send a bonusly bonus. We can always send one, prompt you every time, or never send a bonus.`,
     }).element(
       Elements.StaticSelect({ actionId: 'homeTab_bonuslyPrompt' }).options(
         Bits.Option({ text: PromptSettings.ALWAYS, value: PromptSettings.ALWAYS }),
@@ -90,8 +91,8 @@ function getBonuslyConfigSection(user: IUser, bonusly: IBonuslyBotConfig): Appen
       ),
     ),
     Blocks.Input({
-      label: `When we send a ${Md.codeInline('++')}
-    and a bonusly is included what is the default amount that you would like to send?`,
+      label: `When we send a ${Md.codeInline('++')} \
+and a bonusly is included what is the default amount that you would like to send?`,
     }).element(Elements.TextInput({ actionId: 'homeTab_bonuslyValue', initialValue: '1' })),
   );
   return blocks;
