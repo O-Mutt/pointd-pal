@@ -363,12 +363,12 @@ async function respondWithHelpGuidance({ message, context, say }) {
     .blocks(
       Blocks.Header().text(`Need help with ${'Qrafty'}?`),
       Blocks.Section().text(`_Commands_:`),
-      Blocks.Divider(),
       Blocks.Section().text(helpMessage),
-      Blocks.Section().text(
-        procVars.furtherHelpUrl !== undefined ? `For further help please visit ${procVars.furtherHelpUrl}` : undefined,
-      ),
     )
     .asUser();
+  if (procVars.furtherHelpUrl !== undefined) {
+    var furtherInfoMessage = `For further help please visit ${procVars.furtherHelpUrl}`;
+    theMessage.blocks(Blocks.Section().text(furtherInfoMessage));
+  }
   await say({ blocks: theMessage.getBlocks() });
 }
