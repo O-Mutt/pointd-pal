@@ -359,15 +359,16 @@ async function respondWithHelpGuidance({ message, context, say }) {
     .concat(`\`@${'qrafty'} level me up\` - Level up your account for some additional ${'qrafty'}iness \n`)
     .concat('`how much are <point_type> points worth` - Shows how much <point_type> points are worth\n');
 
+  var furtherInformationMessage =
+    procVars.furtherHelpUrl !== undefined ? `For further help please visit ${procVars.furtherHelpUrl}` : 'Thanks!';
+
   const theMessage = Message({ channel: context.channel, text: 'Help menu for Qrafty' })
     .blocks(
       Blocks.Header().text(`Need help with ${'Qrafty'}?`),
       Blocks.Section().text(`_Commands_:`),
       Blocks.Divider(),
       Blocks.Section().text(helpMessage),
-      Blocks.Section().text(
-        procVars.furtherHelpUrl !== undefined ? `For further help please visit ${procVars.furtherHelpUrl}` : undefined,
-      ),
+      Blocks.Section().text(furtherInformationMessage),
     )
     .asUser();
   await say({ blocks: theMessage.getBlocks() });
