@@ -37,13 +37,10 @@ export interface BonuslyBotConfigInterface extends IBonuslyBotConfig {
   // instance methods
 }
 
-export interface BonuslyBotConfigInterfaceModelInterface extends Model<BonuslyBotConfigInterface> {
+export interface BonuslyBotConfigModelInterface extends Model<BonuslyBotConfigInterface> {
   // static methods
   findOneOrCreate(): Promise<IBonuslyBotConfig>;
 }
 
 export const BonuslyBotConfig = (conn: Connection) =>
-  conn.model<BonuslyBotConfigInterface, BonuslyBotConfigInterfaceModelInterface>(
-    'bonuslyBotConfig',
-    BonuslyBotConfigSchema,
-  );
+  conn.model<BonuslyBotConfigInterface, BonuslyBotConfigModelInterface>('bonuslyBotConfig', BonuslyBotConfigSchema);

@@ -39,10 +39,9 @@ import { Helpers } from './lib/helpers';
 import * as token from './lib/token.json';
 import { decrypt } from './lib/services/decrypt';
 import { DatabaseService } from './lib/services/database';
-import { Blocks, Message } from 'slack-block-builder';
+import { Blocks, Md, Message } from 'slack-block-builder';
 
 import { app } from '../app';
-import { AllMiddlewareArgs, AnyMiddlewareArgs, directMention, SayFn, SlackEventMiddlewareArgs } from '@slack/bolt';
 import {
   DirectionEnum,
   PlusPlus,
@@ -53,6 +52,7 @@ import {
 } from './lib/types/PlusPlusEvents';
 import { IUser, User } from './lib/models/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
+import { ChatPostMessageArguments, WebClient } from '@slack/web-api';
 
 const procVars = Helpers.getProcessVariables(process.env);
 const scoreKeeper = new ScoreKeeper({ ...procVars });
@@ -61,7 +61,7 @@ const emitter = new EventEmitter();
 
 if (procVars.magicIv && procVars.magicNumber) {
   databaseService.getMagicSecretStringNumberValue().then((databaseMagicString: string) => {
-    const magicMnumber = decrypt(procVars.magicIv, procVars.magicNumber, databaseMagicString);
+    const magicMnumber = decrypt(procVars.magicIv as string, procVars.magicNumber as string, databaseMagicString);
     if (magicMnumber) {
       tokenBuddy
         .init({
@@ -346,7 +346,7 @@ async function eraseUserScore({ message, context, say }) {
   }
 }
 
-async function respondWithHelpGuidance({ message, context, say }) {
+async function respondWithHelpGuidance({ client, message, say }) {
   const helpMessage = ''
     .concat('`<name>++ [<reason>]` - Increment score for a name (for a reason)\n')
     .concat('`<name>-- [<reason>]` - Decrement score for a name (for a reason)\n')
@@ -359,16 +359,23 @@ async function respondWithHelpGuidance({ message, context, say }) {
     .concat(`\`@${'qrafty'} level me up\` - Level up your account for some additional ${'qrafty'}iness \n`)
     .concat('`how much are <point_type> points worth` - Shows how much <point_type> points are worth\n');
 
-  const theMessage = Message({ channel: context.channel, text: 'Help menu for Qrafty' })
+  const theMessage = Message({ channel: message.channel, text: 'Help menu for Qrafty' })
     .blocks(
-      Blocks.Header().text(`Need help with ${'Qrafty'}?`),
-      Blocks.Section().text(`_Commands_:`),
-      Blocks.Section().text(helpMessage),
+      Blocks.Header({ text: `Need help with ${'Qrafty'}?` }),
+      Blocks.Section({ text: `_Commands_:` }),
+      Blocks.Section({ text: helpMessage }),
+      procVars.furtherHelpUrl
+        ? Blocks.Section({
+            text: `For further help please visit ${Md.link(procVars.furtherHelpUrl.toString(), 'Help Page')}`,
+          })
+        : undefined,
     )
-    .asUser();
-  if (procVars.furtherHelpUrl !== undefined) {
-    var furtherInfoMessage = `For further help please visit ${procVars.furtherHelpUrl}`;
-    theMessage.blocks(Blocks.Section().text(furtherInfoMessage));
+    .asUser()
+    .buildToObject();
+
+  try {
+    const result = await client.chat.postMessage(theMessage as ChatPostMessageArguments);
+  } catch (e: any) {
+    console.error('error', e.data.response_metadata.message);
   }
-  await say({ blocks: theMessage.getBlocks() });
 }

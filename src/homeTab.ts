@@ -17,9 +17,11 @@ async function updateHomeTab({ payload, event, logger, client }) {
     const teamId = payload.team_id;
 
     const connection = connectionFactory(teamId);
-    const bonusly = await BonuslyBotConfig(connection).findOne({}).exec();
-    const qraftyConfig = await BotToken().findOne({}).exec();
+    const bonusly = await BonuslyBotConfig(connection).findOne().exec();
+    console.log('main query', bonusly?.enabled);
+
     const user = await User(connection).findOneBySlackIdOrCreate(userId);
+    const qraftyConfig = await BotToken().findOne().exec();
 
     const hometab = HomeTab({ callbackId: 'homeTab' }).blocks(
       Blocks.Section({
@@ -45,6 +47,7 @@ function getBonuslyAdminConfigSection(
   qraftyConfig: IBotToken | null,
 ): Appendable<ViewBlockBuilder> {
   const blocks: Appendable<ViewBlockBuilder> = [];
+  console.log(bonusly?.enabled);
   /*if (!user.isAdmin) {
     return blocks; //empty section because the user isn't an admin
   }*/
@@ -52,7 +55,7 @@ function getBonuslyAdminConfigSection(
     Blocks.Divider(),
     Blocks.Header({ text: `${Md.emoji('gear')} Admin Configuration` }),
     Blocks.Divider(),
-    Blocks.Header({ text: `${Md.emoji('rocket')} Bonusly Enabled` }),
+    Blocks.Header({ text: `${Md.emoji('rocket')} Bonusly Integration` }),
     Blocks.Actions().elements(
       Elements.StaticSelect({ actionId: 'homeTab_bonuslyEnabled' })
         .initialOption(
