@@ -26,7 +26,7 @@ QraftyConfigSchema.statics.findOneOrCreate = async function (this: Model<any, an
   return await self.create(qraftyConfig);
 };
 
-export interface QraftyConfigInterface extends IBonuslyBotConfig {
+export interface QraftyConfigInterface extends IQraftyConfig {
   // instance methods
 }
 
