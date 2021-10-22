@@ -1,17 +1,25 @@
 import { Schema, Document, Model, Connection } from 'mongoose';
 import { BonuslyBotConfigSchema, IBonuslyBotConfig } from './bonusly';
 
+export const DefaultNotificationRoomName = 'qrafty-plusplus-notifications';
 export interface IQraftyConfig extends Document {
+  slackToken?: string;
   notificationRoom?: string;
   falsePositiveRoom?: string;
+  formalFeedbackUrl?: string;
+  formalFeedbackModulo: number;
+  reasonsKeyword?: string;
+  companyName?: string;
   bonuslyConfig?: IBonuslyBotConfig;
-  slackToken?: string;
 }
 
 export const QraftyConfigSchema = new Schema({
   slackToken: String,
   notificationRoom: String,
   falsePositiveRoom: String,
+  formalFeedbackUrl: String,
+  formalFeedbackModulo: Number,
+  companyName: String,
   bonuslyConfig: BonuslyBotConfigSchema,
 });
 

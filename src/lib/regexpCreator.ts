@@ -1,5 +1,5 @@
-const scoreKeyword = process.env.HUBOT_PLUSPLUS_KEYWORD || 'score|scores|karma';
-const reasonConjunctions = process.env.HUBOT_PLUSPLUS_CONJUNCTIONS || 'for|because|cause|cuz|as|porque|just|thanks for';
+import { Helpers } from './helpers';
+const { reasonConjunctions, scoreKeyword } = Helpers.getProcessVariables(process.env);
 
 export class RegExpCreator {
   userObject = `<@(?<userId>[^>|]+)(?:\\|(?<label>[^>]+))?>`;

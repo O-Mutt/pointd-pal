@@ -1,4 +1,3 @@
-import { Helpers } from './lib/helpers';
 import { app } from '../app';
 import { EventEmitter } from 'events';
 import {
@@ -9,45 +8,45 @@ import {
   PlusPlusSpam,
   PlusPlusSpamEventName,
 } from './lib/types/PlusPlusEvents';
+import { connectionFactory } from './lib/services/connectionsFactory';
+import { QraftyConfig } from './lib/models/botConfig';
+import { SlackService } from './lib/services/slack';
 
 const events = new EventEmitter();
-const procVars = Helpers.getProcessVariables(process.env);
 
 events.on(PlusPlusEventName, sendPlusPlusNotification);
 events.on(PlusPlusFailureEventName, sendPlusPlusFalsePositiveNotification);
 events.on(PlusPlusSpamEventName, logAndNotifySpam);
 
-async function sendPlusPlusNotification({
-  notificationMessage,
-  sender,
-  recipients,
-  direction,
-  amount,
-  channel,
-  reason,
-}: PlusPlus) {
-  if (procVars.notificationsRoom) {
-    try {
-      const result = await app.client.chat.postMessage({
-        channel: procVars.notificationsRoom,
-        text: notificationMessage,
-      });
-    } catch (error) {
-      // logger.error(error);
-    }
+async function sendPlusPlusNotification(plusPlusEvent: PlusPlus) {
+  const config = await QraftyConfig(connectionFactory(plusPlusEvent.teamId)).findOne().exec();
+  const channelId = await SlackService.findOrCreateConversation(config?.notificationRoom);
+  if (!channelId) {
+    return;
+  }
+  try {
+    const result = await app.client.chat.postMessage({
+      channel: channelId,
+      text: plusPlusEvent.notificationMessage,
+    });
+  } catch (error) {
+    // logger.error(error);
   }
 }
 
-async function sendPlusPlusFalsePositiveNotification({ notificationMessage, channel }: PlusPlusFailure) {
-  if (procVars.falsePositiveNotificationsRoom) {
-    try {
-      const result = await app.client.chat.postMessage({
-        channel: procVars.notificationsRoom,
-        text: notificationMessage,
-      });
-    } catch (error) {
-      // logger.error(error);
-    }
+async function sendPlusPlusFalsePositiveNotification(plusPlusFailureEvent: PlusPlusFailure) {
+  const config = await QraftyConfig(connectionFactory(plusPlusFailureEvent.teamId)).findOne().exec();
+  const channelId = await SlackService.findOrCreateConversation(config?.falsePositiveRoom);
+  if (!channelId) {
+    return;
+  }
+  try {
+    const result = await app.client.chat.postMessage({
+      channel: channelId,
+      text: plusPlusFailureEvent.notificationMessage,
+    });
+  } catch (error) {
+    // logger.error(error);
   }
 }
 

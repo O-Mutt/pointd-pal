@@ -7,12 +7,22 @@ import { app } from '../app';
 
 import { Helpers } from './lib/helpers';
 import { DatabaseService } from './lib/services/database';
+import { QraftyConfig } from './lib/models/botConfig';
+import { connectionFactory } from './lib/services/connectionsFactory';
+import { SlackService } from './lib/services/slack';
 
 const procVars = Helpers.getProcessVariables(process.env);
 const databaseService = new DatabaseService({ ...procVars });
 
-(() => {
-  if (!procVars.notificationsRoom) {
+(async () => {
+  // somehow we need a team id... maybe loop all the teams for the cron? Cron per instance?
+  /* const config = await QraftyConfig(connectionFactory(teamId)).findOne().exec();
+  const channelId = await SlackService.findOrCreateConversation(config?.notificationRoom);
+  if (!channelId) {
+    return;
+  } */
+  const channelId = '123';
+  if (true) {
     return;
   }
 
@@ -41,7 +51,7 @@ const databaseService = new DatabaseService({ ...procVars });
         messages.splice(0, 0, `:tada: The top 10 ${'qrafty'} point senders over the last month! :tada:`);
 
         await app.client.chat.postMessage({
-          channel: procVars.notificationsRoom,
+          channel: channelId,
           text: messages.join('\n'),
         });
 
@@ -62,7 +72,7 @@ const databaseService = new DatabaseService({ ...procVars });
         messages.splice(0, 0, clark(_.take(_.map(topRecipient, 'scoreChange'), graphSize)));
         messages.splice(0, 0, `:tada: The top 10 ${'qrafty'} point recipients over the last month! :tada:`);
         await app.client.chat.postMessage({
-          channel: procVars.notificationsRoom,
+          channel: channelId,
           text: messages.join('\n'),
         });
 
@@ -83,7 +93,7 @@ const databaseService = new DatabaseService({ ...procVars });
         messages.splice(0, 0, clark(_.take(_.map(topRoom, 'scoreChange'), graphSize)));
         messages.splice(0, 0, `:tada: The top 3 rooms that sent ${'qrafty'} point(s) over the last month! :tada:`);
         await app.client.chat.postMessage({
-          channel: procVars.notificationsRoom,
+          channel: channelId,
           text: messages.join('\n'),
         });
       }

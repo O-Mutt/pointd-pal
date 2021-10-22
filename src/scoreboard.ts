@@ -76,7 +76,7 @@ async function respondWithScore({ message, context, say }) {
       '',
     );
 
-    return await say(`${baseString}\n\n:star: Here are some ${procVars.reasonsKeyword} :star:${reasonMap}`);
+    return await say(`${baseString}\n\n:star: Here are some reasons :star:${reasonMap}`);
   }
   return await say(`${baseString}`);
 }

@@ -185,44 +185,37 @@ export class Helpers {
     return falsePositive;
   }
 
-  static getProcessVariables(env): ProcessVariable {
+  static getProcessVariables(env: { [key: string]: string | undefined }): ProcessVariable {
     return {
-      reasonsKeyword: env.HUBOT_PLUSPLUS_REASONS || 'reasons',
+      scoreKeyword: env.HUBOT_PLUSPLUS_KEYWORD || 'score|scores|karma',
+      reasonConjunctions: env.HUBOT_PLUSPLUS_CONJUNCTIONS || 'for|because|cause|cuz|as|porque|just|thanks for',
       spamMessage: env.HUBOT_SPAM_MESSAGE || 'Looks like you hit the spam filter. Please slow your roll.',
-      spamTimeLimit: env.SPAM_TIME_LIMIT || 5,
-      companyName: env.HUBOT_COMPANY_NAME || 'Company Name',
-      peerFeedbackUrl:
-        env.HUBOT_PEER_FEEDBACK_URL ||
-        `praise in Lattice (https://${env.HUBOT_COMPANY_NAME || 'Company Name'}.latticehq.com/)`,
-      furtherFeedbackSuggestedScore: env.HUBOT_FURTHER_FEEDBACK_SCORE || 10,
+      spamTimeLimit: (env.SPAM_TIME_LIMIT && parseInt(env.SPAM_TIME_LIMIT, 10)) || 5,
       mongoUri: env.MONGO_URI || 'mongodb://localhost/plusPlus',
       cryptoRpcProvider: env.HUBOT_CRYPTO_RPC_PROVIDER || undefined,
       magicNumber: env.HUBOT_UNIMPORTANT_MAGIC_NUMBER || undefined,
       magicIv: env.HUBOT_UNIMPORTANT_MAGIC_IV || undefined,
-      furtherHelpUrl: env.HUBOT_CRYPTO_FURTHER_HELP_URL || undefined,
-      notificationsRoom: env.HUBOT_PLUSPLUS_NOTIFICATION_ROOM || undefined,
-      falsePositiveNotificationsRoom: env.HUBOT_PLUSPLUS_FALSE_POSITIVE_NOTIFICATION_ROOM || undefined,
+      furtherHelpUrl: (env.HUBOT_CRYPTO_FURTHER_HELP_URL && new URL(env.HUBOT_CRYPTO_FURTHER_HELP_URL)) || undefined,
       monthlyScoreboardCron: env.HUBOT_PLUSPLUS_MONTHLY_SCOREBOARD_CRON || '0 10 1-7 * *',
-      monthlyScoreboardDayOfWeek: env.HUBOT_PLUSPLUS_MONTHLY_SCOREBOARD_DAY_OF_WEEK || 1, // 0-6 (Sun - Sat)
+      monthlyScoreboardDayOfWeek:
+        (env.HUBOT_PLUSPLUS_MONTHLY_SCOREBOARD_DAY_OF_WEEK &&
+          parseInt(env.HUBOT_PLUSPLUS_MONTHLY_SCOREBOARD_DAY_OF_WEEK, 10)) ||
+        1, // 0-6 (Sun - Sat)
       defaultDb: env.DEFAULT_DB_NAME || undefined,
     };
   }
 }
 
 type ProcessVariable = {
-  reasonsKeyword: string;
+  scoreKeyword: string;
+  reasonConjunctions: string;
   spamMessage: string;
   spamTimeLimit: number;
-  companyName: string;
-  peerFeedbackUrl: string;
-  furtherFeedbackSuggestedScore: number;
   mongoUri: string;
   cryptoRpcProvider?: string;
   magicNumber?: string;
   magicIv?: string;
   furtherHelpUrl?: URL;
-  notificationsRoom?: string;
-  falsePositiveNotificationsRoom?: string;
   monthlyScoreboardCron: string;
   monthlyScoreboardDayOfWeek: number;
   defaultDb?: string;
