@@ -18,7 +18,7 @@ import './src/scoreboard';
 import './src/eventHandlers';
 import './src/cronEvents';
 import './src/bonusly';
-import './src/homeTab';
+import './src/hometab';
 
 app.action('button_click', async ({ body, ack, say }) => {
   // Acknowledge the action

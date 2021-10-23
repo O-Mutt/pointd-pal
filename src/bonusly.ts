@@ -20,14 +20,9 @@ const procVars = Helpers.getProcessVariables(process.env);
 
 app.message(regExpCreator.createBonuslySettings(), adminBonuslySettings);*/
 
-// admin config
-app.action('homeTab_bonuslyEnabled', handleBonuslyEnabled);
-app.action('homeTab_bonuslyUri', handleBonuslyUri);
-app.action('homeTab_bonuslyAPIKey', handleBonuslyApiKey);
-
 // user config
-app.action('homeTab_bonuslyScoreOverride', handleUserBonusScoreOverride);
-app.action('homeTab_bonuslyPrompt', handleUserBonusPrompt);
+app.action('hometab_bonuslyScoreOverride', handleUserBonusScoreOverride);
+app.action('hometab_bonuslyPrompt', handleUserBonusPrompt);
 
 async function handleBonuslyEnabled({ body, client, logger, ack }) {
   await ack();

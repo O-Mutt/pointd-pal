@@ -8,3 +8,10 @@ export enum PromptSettings {
   PROMPT = 'Prompt',
   NEVER = 'Never',
 }
+
+export enum ReadyState {
+  DISCONNECTED = 0,
+  CONNECTED = 1,
+  CONNECTING = 2,
+  DISCONNECTING = 3,
+}
