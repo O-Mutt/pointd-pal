@@ -1,28 +1,13 @@
-// Description:
-//  Hubot scoreboard for hubot-plusplus-expanded.
-//
-// Commands:
-//  @hubot score for @user - displays a snap shot of the user requested
-//  @hubot top scores 10 - displays top 10 (or any number) scores of all time
-//  @hubot bottom scores 5 - displays bottom 5 (or any number) scores of all time
-//  @hubot top tokens 7 - displays top 7 (or any number) tokens of all time
-//  @hubot bottom tokens 2 - displays top 2 (or any number) tokens of all time
-//  @hubot top scores 10 - displays top 10 scores of all time
-//  @hubot top scores 10 - displays top 10 scores of all time
-//
-// Author:
-//  O'Mutt (Matt@OKeefe.dev)
-
-import moment from 'moment';
 import clark from 'clark';
 import _ from 'lodash';
-
-import { Helpers } from './lib/helpers';
-import { DatabaseService } from './lib/services/database';
-import { regExpCreator } from './lib/regexpCreator';
+import moment from 'moment';
 
 import { directMention } from '@slack/bolt';
+
 import { app } from '../app';
+import { Helpers } from './lib/helpers';
+import { regExpCreator } from './lib/regexpCreator';
+import { DatabaseService } from './lib/services/database';
 
 const procVars = Helpers.getProcessVariables(process.env);
 const databaseService = new DatabaseService({ ...procVars });
@@ -125,8 +110,7 @@ async function respondWithLeaderLoserTokenBoard({ message, context, say }) {
       const tokenStr = tops[i].token > 1 ? 'Tokens' : 'Token';
       const pointStr = tops[i].score > 1 ? 'points' : 'point';
       messages.push(
-        `${i + 1}. ${person}: *${tops[i].token} ${Helpers.capitalizeFirstLetter('qrafty')} ${tokenStr}* (${
-          tops[i].score
+        `${i + 1}. ${person}: *${tops[i].token} ${Helpers.capitalizeFirstLetter('qrafty')} ${tokenStr}* (${tops[i].score
         } ${pointStr})`,
       );
     }

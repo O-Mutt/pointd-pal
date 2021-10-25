@@ -19,6 +19,8 @@ import './src/eventHandlers';
 import './src/cronEvents';
 import './src/bonusly';
 import './src/hometab';
+import './src/hometab.actions';
+import './src/hometab.views';
 
 app.action('button_click', async ({ body, ack, say }) => {
   // Acknowledge the action

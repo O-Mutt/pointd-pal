@@ -1,22 +1,14 @@
-// Description:
-//  Hubot crypto wallet. This is used to manage the users wallet within the hubot-plusplus-expanded module
-//
-// Commands:
-//  @hubot hot wallet - displays info for hubot's 'hot wallet'
-//  @hubot level up my account - moves the user's account up 1 level (e.g. 1->2) to allow them to start receiving crypto
-//
-// Author:
-//  O'Mutt (Matt@OKeefe.dev)
 import _ from 'lodash';
+import { Blocks, Elements, Message } from 'slack-block-builder';
 import tokenBuddy from 'token-buddy';
-import { directMention, Logger } from '@slack/bolt';
-import { Message, Blocks, Elements } from 'slack-block-builder';
-import { app } from '../app';
 
+import { directMention, Logger } from '@slack/bolt';
+
+import { app } from '../app';
 import { Helpers } from './lib/helpers';
+import { IBotToken } from './lib/models/botToken';
 import { regExpCreator } from './lib/regexpCreator';
 import { DatabaseService } from './lib/services/database';
-import { IBotToken } from './lib/models/botToken';
 
 const procVars = Helpers.getProcessVariables(process.env);
 const databaseService = new DatabaseService({ ...procVars });
@@ -45,11 +37,10 @@ async function levelUpAccount({ message, context, logger, say }) {
     const theBlocks = Message({ channel: context.channel, text: "Let's level you up!" })
       .blocks(
         Blocks.Section({
-          text: `You are already Level 2, <@${
-            user.slackId
-          }>. It looks as if you are ready for Level 3 where you can deposit/withdraw ${Helpers.capitalizeFirstLetter(
-            'qrafty',
-          )} Tokens!`,
+          text: `You are already Level 2, <@${user.slackId
+            }>. It looks as if you are ready for Level 3 where you can deposit/withdraw ${Helpers.capitalizeFirstLetter(
+              'qrafty',
+            )} Tokens!`,
         }),
         Blocks.Actions().elements(
           Elements.Button({ text: 'Confirm', actionId: 'levelUp', value: ConfirmOrCancel.CONFIRM }).primary(),
@@ -65,8 +56,7 @@ async function levelUpAccount({ message, context, logger, say }) {
   logger.debug('DB results', leveledUpUser);
 
   await say(
-    `${
-      user.name
+    `${user.name
     }, we are going to level up your account to Level 2! This means you will start getting ${Helpers.capitalizeFirstLetter(
       'qrafty',
     )} Tokens as well as points!`,

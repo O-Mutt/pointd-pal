@@ -1,8 +1,9 @@
 import { Schema, Document, Model, Connection } from 'mongoose';
+import { AuditTags } from './auditTags';
 import { BonuslyBotConfigSchema, IBonuslyBotConfig } from './bonusly';
 
 export const DefaultNotificationRoomName = 'qrafty-plusplus-notifications';
-export interface IQraftyConfig extends Document {
+export interface IQraftyConfig extends Document, AuditTags {
   slackToken?: string;
   notificationRoom?: string;
   falsePositiveRoom?: string;
@@ -10,6 +11,7 @@ export interface IQraftyConfig extends Document {
   formalFeedbackModulo: number;
   reasonsKeyword?: string;
   companyName?: string;
+  qryptoEnabled?: boolean;
   bonuslyConfig?: IBonuslyBotConfig;
 }
 
@@ -20,6 +22,10 @@ export const QraftyConfigSchema = new Schema({
   formalFeedbackUrl: String,
   formalFeedbackModulo: Number,
   companyName: String,
+  qryptoEnabled: {
+    type: Boolean,
+    default: false
+  },
   bonuslyConfig: BonuslyBotConfigSchema,
 });
 
@@ -38,10 +44,10 @@ export interface QraftyConfigInterface extends IQraftyConfig {
   // instance methods
 }
 
-export interface QraftyBotConfigModelInterface extends Model<QraftyConfigInterface> {
+export interface QraftyConfigModelInterface extends Model<QraftyConfigInterface> {
   // static methods
-  findOneOrCreate(): Promise<IBonuslyBotConfig>;
+  findOneOrCreate(): Promise<IQraftyConfig>;
 }
 
 export const QraftyConfig = (conn: Connection) =>
-  conn.model<QraftyConfigInterface, QraftyBotConfigModelInterface>('qraftyConfig', QraftyConfigSchema);
+  conn.model<QraftyConfigInterface, QraftyConfigModelInterface>('qraftyConfig', QraftyConfigSchema);

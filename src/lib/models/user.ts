@@ -1,7 +1,10 @@
-import { Schema, Document, Model, Connection } from 'mongoose';
-import { app } from '../../../app';
+import { Connection, Document, Model, Schema } from 'mongoose';
 
-export interface IUser extends Document {
+import { app } from '../../../app';
+import { PromptSettings } from '../types/Enums';
+import { AuditTags } from './auditTags';
+
+export interface IUser extends Document, AuditTags {
   slackId: string;
   score: number;
   reasons: object;
@@ -16,6 +19,7 @@ export interface IUser extends Document {
   token?: number;
   bonuslyScoreOverride?: number;
   bonuslyPrompt?: string;
+  walletAddress?: string;
 }
 
 export const UserSchema = new Schema({
@@ -54,16 +58,27 @@ export const UserSchema = new Schema({
   },
   email: String,
   name: String,
-  token: Number,
-  bonuslyScoreOverride: Number,
-  bonuslyPrompt: String,
+  token: {
+    type: Number,
+    default: 0,
+  },
+  bonuslyScoreOverride: {
+    type: Number,
+    default: 1,
+  },
+  bonuslyPrompt: {
+    type: String,
+    enum: PromptSettings,
+    default: PromptSettings.PROMPT,
+  },
+  walletAddress: String,
 });
 
 UserSchema.statics.findOneBySlackIdOrCreate = async function (
-  this: Model<any, any, any, any>,
+  this: Model<UserInterface, UserModelInterface>,
   slackId: string,
 ): Promise<IUser> {
-  const self = this;
+  const self: Model<UserInterface, UserModelInterface> = this;
   let user = await self.findOne({ slackId }, null, { sort: { score: -1 } }).exec();
   if (user) {
     return user;
@@ -83,6 +98,8 @@ UserSchema.statics.findOneBySlackIdOrCreate = async function (
     name: slackUser?.name,
     isAdmin: slackUser?.is_admin,
     isBot: slackUser?.is_bot,
+    updatedBy: slackId,
+    updatedAt: new Date(),
   });
   return await self.create(user);
 };

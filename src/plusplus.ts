@@ -1,58 +1,25 @@
-// Description:
-//   Give or take away points. Keeps track and even prints out graphs.
-//
-//
-// Configuration:
-//   HUBOT_PLUSPLUS_KEYWORD: the keyword that will make hubot give the
-//   score for a name and the reasons. For example you can set this to
-//   "score|karma" so hubot will answer to both keywords.
-//   If not provided will default to 'score'.
-//
-//   HUBOT_PLUSPLUS_REASON_CONJUNCTIONS: a pipe separated list of conjunctions to
-//   be used when specifying reasons. The default value is
-//   "for|because|cause|cuz|as|porque", so it can be used like:
-//   "foo++ for being awesome" or "foo++ cuz they are awesome".
-//
-// Commands:
-//   <name>++ [<reason>] - Increment score for a name (for a reason)
-//   <name>-- [<reason>] - Decrement score for a name (for a reason)
-//   {name1, name2, name3}++ [<reason>] - Increment score for all names (for a reason)
-//   {name1, name2, name3}-- [<reason>] - Decrement score for all names (for a reason)
-//   hubot score <name> - Display the score for a name and some of the reasons
-//   hubot top <amount> - Display the top scoring <amount>
-//   hubot bottom <amount> - Display the bottom scoring <amount>
-//   hubot erase <name> [<reason>] - Remove the score for a name (for a reason)
-//   how much are hubot points worth (how much point) - Shows how much hubot points are worth
-//
-//
-// Author: O-Mutt
-
 import axios from 'axios';
 import { EventEmitter } from 'events';
+import { Blocks, Md, Message } from 'slack-block-builder';
 import tokenBuddy from 'token-buddy';
 
-import * as pjson from '../package.json';
-import { regExpCreator } from './lib/regexpCreator';
-import { ScoreKeeper } from './lib/services/scorekeeper';
-import { Helpers } from './lib/helpers';
-// this may need to move or be generic...er
-import * as token from './lib/token.json';
-import { decrypt } from './lib/services/decrypt';
-import { DatabaseService } from './lib/services/database';
-import { Blocks, Md, Message } from 'slack-block-builder';
+import { ChatPostMessageArguments, WebClient } from '@slack/web-api';
 
 import { app } from '../app';
-import {
-  DirectionEnum,
-  PlusPlus,
-  PlusPlusEventName,
-  PlusPlusFailure,
-  PlusPlusFailureEventName,
-  PlusPlusSpam,
-} from './lib/types/PlusPlusEvents';
+import * as pjson from '../package.json';
+import { Helpers } from './lib/helpers';
 import { IUser, User } from './lib/models/user';
+import { regExpCreator } from './lib/regexpCreator';
 import { connectionFactory } from './lib/services/connectionsFactory';
-import { ChatPostMessageArguments, WebClient } from '@slack/web-api';
+import { DatabaseService } from './lib/services/database';
+import { decrypt } from './lib/services/decrypt';
+import { ScoreKeeper } from './lib/services/scorekeeper';
+// this may need to move or be generic...er
+import * as token from './lib/token.json';
+import {
+  DirectionEnum, PlusPlus, PlusPlusEventName, PlusPlusFailure, PlusPlusFailureEventName,
+  PlusPlusSpam
+} from './lib/types/PlusPlusEvents';
 
 const procVars = Helpers.getProcessVariables(process.env);
 const scoreKeeper = new ScoreKeeper({ ...procVars });
@@ -110,9 +77,8 @@ async function upOrDownVote({ payload, message, context, logger, say }) {
   if (Helpers.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
     // circuit break a plus plus
     const failureEvent = new PlusPlusFailure({
-      notificationMessage: `False positive detected in <#${message.channel}> from <@${
-        message.user
-      }>:\nPre-Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText}`,
+      notificationMessage: `False positive detected in <#${message.channel}> from <@${message.user
+        }>:\nPre-Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText}`,
       channel: message.channel,
     });
 
@@ -126,8 +92,7 @@ async function upOrDownVote({ payload, message, context, logger, say }) {
   const fromId = message.user;
 
   logger.debug(
-    `${increment} score for [${userId}] from [${fromId}]${
-      cleanReason ? ` because ${cleanReason}` : ''
+    `${increment} score for [${userId}] from [${fromId}]${cleanReason ? ` because ${cleanReason}` : ''
     } in [${channel}]`,
   );
   let toUser;
@@ -144,11 +109,9 @@ async function upOrDownVote({ payload, message, context, logger, say }) {
   if (theMessage) {
     await say(theMessage);
     const plusPlusEvent = new PlusPlus({
-      notificationMessage: `<@${fromUser.slackId}> ${
-        operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
-      } a ${Helpers.capitalizeFirstLetter('qrafty')} point ${
-        operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'
-      } <@${toUser.slackId}> in <#${channel}>`,
+      notificationMessage: `<@${fromUser.slackId}> ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
+        } a ${Helpers.capitalizeFirstLetter('qrafty')} point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'
+        } <@${toUser.slackId}> in <#${channel}>`,
       sender: fromUser,
       recipients: [toUser],
       direction: operator,
@@ -167,9 +130,8 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
   if (!conjunction && reason) {
     // circuit break a plus plus
     const failureEvent = new PlusPlusFailure({
-      notificationMessage: `False positive detected in <#${message.channel}> from <@${
-        message.user
-      }>:\nPre-Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText}`,
+      notificationMessage: `False positive detected in <#${message.channel}> from <@${message.user
+        }>:\nPre-Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText}`,
       channel: message.channel,
     });
     emitter.emit(PlusPlusFailureEventName, failureEvent);
@@ -225,9 +187,8 @@ async function multipleUsersVote({ message, context, logger, say }) {
   if (Helpers.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
     // circuit break a plus plus
     const failureEvent = new PlusPlusFailure({
-      notificationMessage: `False positive detected in <#${message.channel}> from <@${
-        message.user
-      }>:\nPre-Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText}`,
+      notificationMessage: `False positive detected in <#${message.channel}> from <@${message.user
+        }>:\nPre-Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText}`,
       channel: message.channel,
     });
     emitter.emit(PlusPlusFailureEventName, failureEvent);
@@ -272,10 +233,8 @@ async function multipleUsersVote({ message, context, logger, say }) {
       messages.push(Helpers.getMessageForNewScore(response.toUser, cleanReason, 'qrafty'));
       to.push(response.toUser);
       notificationMessage.push(
-        `<@${response.fromUser.slackId}> ${
-          operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
-        } a ${Helpers.capitalizeFirstLetter('qrafty')} point ${
-          operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'
+        `<@${response.fromUser.slackId}> ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
+        } a ${Helpers.capitalizeFirstLetter('qrafty')} point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'
         } <@${response.toUser.slackId}> in <#${channel}>`,
       );
     }
@@ -366,8 +325,8 @@ async function respondWithHelpGuidance({ client, message, say }) {
       Blocks.Section({ text: helpMessage }),
       procVars.furtherHelpUrl
         ? Blocks.Section({
-            text: `For further help please visit ${Md.link(procVars.furtherHelpUrl.toString(), 'Help Page')}`,
-          })
+          text: `For further help please visit ${Md.link(procVars.furtherHelpUrl.toString(), 'Help Page')}`,
+        })
         : undefined,
     )
     .asUser()

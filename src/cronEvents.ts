@@ -1,14 +1,13 @@
 import clark from 'clark';
-import moment from 'moment';
-import _ from 'lodash';
 import { CronJob } from 'cron';
+import _ from 'lodash';
+import moment from 'moment';
 
 import { app } from '../app';
-
 import { Helpers } from './lib/helpers';
-import { DatabaseService } from './lib/services/database';
-import { QraftyConfig } from './lib/models/botConfig';
+import { QraftyConfig } from './lib/models/qraftyConfig';
 import { connectionFactory } from './lib/services/connectionsFactory';
+import { DatabaseService } from './lib/services/database';
 import { SlackService } from './lib/services/slack';
 
 const procVars = Helpers.getProcessVariables(process.env);

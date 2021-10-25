@@ -1,10 +1,10 @@
-import { DatabaseService } from './lib/services/database';
-import { Helpers } from './lib/helpers';
+import { Member } from '@slack/web-api/dist/response/UsersListResponse';
 
 import { app } from '../app';
-import { Member } from '@slack/web-api/dist/response/UsersListResponse';
+import { Helpers } from './lib/helpers';
 import { IUser, User } from './lib/models/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
+import { DatabaseService } from './lib/services/database';
 
 const procVars = Helpers.getProcessVariables(process.env);
 

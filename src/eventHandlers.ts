@@ -1,16 +1,13 @@
-import { app } from '../app';
 import { EventEmitter } from 'events';
-import {
-  PlusPlus,
-  PlusPlusEventName,
-  PlusPlusFailure,
-  PlusPlusFailureEventName,
-  PlusPlusSpam,
-  PlusPlusSpamEventName,
-} from './lib/types/PlusPlusEvents';
+
+import { app } from '../app';
+import { QraftyConfig } from './lib/models/qraftyConfig';
 import { connectionFactory } from './lib/services/connectionsFactory';
-import { QraftyConfig } from './lib/models/botConfig';
 import { SlackService } from './lib/services/slack';
+import {
+  PlusPlus, PlusPlusEventName, PlusPlusFailure, PlusPlusFailureEventName, PlusPlusSpam,
+  PlusPlusSpamEventName
+} from './lib/types/PlusPlusEvents';
 
 const events = new EventEmitter();
 

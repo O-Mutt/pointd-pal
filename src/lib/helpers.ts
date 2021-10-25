@@ -116,9 +116,8 @@ export class Helpers {
     const toTag = to.slackId ? `<@${to.slackId}>` : to.name;
     const fromTag = from.slackId ? `<@${from.slackId}>` : from.name;
 
-    const scoreStr = `${fromTag} transferred *${number}* ${robotName} Tokens to ${toTag}.\n${toTag} now has ${
-      to.token
-    } token${Helpers.getEsOnEndOfWord(to.token)}`;
+    const scoreStr = `${fromTag} transferred *${number}* ${robotName} Tokens to ${toTag}.\n${toTag} now has ${to.token
+      } token${Helpers.getEsOnEndOfWord(to.token)}`;
     let reasonStr = '.';
     let cakeDayStr = '';
 
@@ -187,8 +186,6 @@ export class Helpers {
 
   static getProcessVariables(env: { [key: string]: string | undefined }): ProcessVariable {
     return {
-      scoreKeyword: env.HUBOT_PLUSPLUS_KEYWORD || 'score|scores|karma',
-      reasonConjunctions: env.HUBOT_PLUSPLUS_CONJUNCTIONS || 'for|because|cause|cuz|as|porque|just|thanks for',
       spamMessage: env.HUBOT_SPAM_MESSAGE || 'Looks like you hit the spam filter. Please slow your roll.',
       spamTimeLimit: (env.SPAM_TIME_LIMIT && parseInt(env.SPAM_TIME_LIMIT, 10)) || 5,
       mongoUri: env.MONGO_URI || 'mongodb://localhost/plusPlus',
@@ -207,8 +204,6 @@ export class Helpers {
 }
 
 type ProcessVariable = {
-  scoreKeyword: string;
-  reasonConjunctions: string;
   spamMessage: string;
   spamTimeLimit: number;
   mongoUri: string;

@@ -1,4 +1,6 @@
-import { Schema, Document, Model, Connection } from 'mongoose';
+import { Connection, Document, Model, Schema } from 'mongoose';
+
+import { AuditTags } from './auditTags';
 
 export interface IBonuslyBotConfig extends Document {
   enabled: boolean;
@@ -6,9 +8,6 @@ export interface IBonuslyBotConfig extends Document {
   apiKey?: string;
   defaultReason?: string;
   defaultHashtag?: string;
-  scoreOverride?: number;
-  updatedBy?: string;
-  updatedAt?: Date;
 }
 
 export const BonuslyBotConfigSchema = new Schema({
@@ -18,8 +17,6 @@ export const BonuslyBotConfigSchema = new Schema({
   defaultReason: String,
   defaultHashtag: String,
   scoreOverride: Number,
-  updatedBy: String,
-  updatedAt: Date,
 });
 
 BonuslyBotConfigSchema.statics.findOneOrCreate = async function (
