@@ -21,19 +21,25 @@ app.action(
     const teamId = actionArgs.context.teamId;
     const userId = actionArgs.body.user.id;
     const connection = connectionFactory(teamId);
-    const bonusly = await BonuslyBotConfig(connection).findOne().exec();
+    const bonusly = await BonuslyBotConfig(connection).findOneOrCreate();
     const user = await User(connection).findOneBySlackIdOrCreate(userId);
-    const qraftyConfig = await QraftyConfig(connection).findOne().exec();
+    const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId as string);
 
-    /*if (!user.isAdmin) {
-    return; //empty section because the user isn't an admin
-  }*/
+    if (!user.isAdmin) {
+      return; //empty section because the user isn't an admin
+    }
     const adminSettingsModal = Modal({
       title: `${Md.emoji('gear')} Qrafty Settings`,
       submit: 'Update Settings',
       callbackId: actions.hometab.admin_settings_submit,
     }).blocks(
       Blocks.Header({ text: 'Basic Settings' }),
+      Blocks.Input({ label: 'Qrafty Admins' }).element(
+        Elements.UserMultiSelect({
+          actionId: 'hometab_qraftyAdmins',
+          placeholder: 'Additional bot admins',
+        }).initialUsers(qraftyConfig?.qraftyAdmins || []),
+      ),
       Blocks.Input({ label: 'Company Name' }).element(
         Elements.TextInput({
           actionId: 'hometab_qraftyCompanyName',
@@ -64,8 +70,8 @@ app.action(
         Elements.StaticSelect({ actionId: 'hometab_bonuslyEnabled' })
           .initialOption(
             Bits.Option({
-              text: bonusly?.enabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
-              value: bonusly?.enabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
+              text: bonusly.enabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
+              value: bonusly.enabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
             }),
           )
           .options(
@@ -78,14 +84,14 @@ app.action(
           actionId: 'hometab_bonuslyUri',
           placeholder: 'https://bonus.ly/api/v1',
           minLength: 8,
-          initialValue: bonusly?.url?.toString() || '',
+          initialValue: bonusly.url?.toString() || '',
         }),
       ),
       Blocks.Input({ label: `${Md.emoji('key')} Bonusly API Key` }).element(
         Elements.TextInput({
           actionId: 'hometab_bonuslyAPIKey',
           minLength: 5,
-          initialValue: bonusly?.apiKey || '',
+          initialValue: bonusly.apiKey || '',
         }),
       ),
       Blocks.Divider(),
@@ -191,3 +197,28 @@ for you to be able to withdraw your crypto. What is your public BEP20 wallet add
     });
   },
 );
+
+app.action(
+  actions.hometab.sync_admins,
+  async (actionArgs: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
+    await actionArgs.ack();
+    const teamId = actionArgs.body.team?.id;
+    const userId = actionArgs.body.user.id;
+    const connection = connectionFactory(teamId);
+    const user = await User(connection).findOneBySlackIdOrCreate(userId);
+    const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId as string);
+
+    if (!user.isAdmin) {
+      return;
+    }
+
+    const { members } = await app.client.users.list({ team_id: teamId });
+    const admins: string[] = members?.filter((user) => user.is_admin === true).map((admin) => admin.id as string) as string[];
+    const users = await User(connection).find({ isAdmin: true }).exec();
+    const adminUsers = users.map((admin) => admin.slackId);
+    adminUsers.concat(admins);
+    qraftyConfig.qraftyAdmins = adminUsers;
+    await qraftyConfig.save();
+    return;
+  }
+)

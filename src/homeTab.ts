@@ -5,7 +5,7 @@ import { View } from '@slack/types';
 
 import { app } from '../app';
 import { BonuslyBotConfig, IBonuslyBotConfig } from './lib/models/bonusly';
-import { QraftyConfig } from './lib/models/qraftyConfig';
+import { IQraftyConfig, QraftyConfig } from './lib/models/qraftyConfig';
 import { IUser, User } from './lib/models/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { actions } from './lib/types/Actions';
@@ -19,11 +19,8 @@ async function updateHomeTab(args: SlackEventMiddlewareArgs<'app_home_opened'> &
     const teamId = args.context.teamId;
 
     const connection = connectionFactory(teamId);
-    const bonusly = await BonuslyBotConfig(connection).findOne().exec();
-    console.log('main query bonusly', teamId, bonusly?.enabled);
-
     const user = await User(connection).findOneBySlackIdOrCreate(userId);
-    const qraftyConfig = await QraftyConfig(connection).findOne().exec();
+    const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId as string);
 
     const hometab = HomeTab({ callbackId: 'hometab' }).blocks(
       Blocks.Section({
@@ -35,7 +32,7 @@ async function updateHomeTab(args: SlackEventMiddlewareArgs<'app_home_opened'> &
       }),
       Blocks.Divider(),
       ...getAdminConfigSection(user),
-      ...getUserConfigSection(user, bonusly),
+      ...getUserConfigSection(user, qraftyConfig),
 
       //...getBonuslyAdminConfigSection(user, bonusly, qraftyConfig),
     );
@@ -58,12 +55,17 @@ function getAdminConfigSection(user: IUser): Appendable<ViewBlockBuilder> {
     }).accessory(
       Elements.Button({ text: 'Qrafty App Admin Settings', actionId: actions.hometab.admin_settings }).primary(),
     ),
+    Blocks.Section({
+      text: `${Md.emoji('recycle')} Sync Admins`,
+    }).accessory(
+      Elements.Button({ text: 'Sync', actionId: actions.hometab.sync_admins }).primary(),
+    ),
     Blocks.Divider(),
   );
   return blocks;
 }
 
-function getUserConfigSection(user: IUser, bonusly: IBonuslyBotConfig | null): Appendable<ViewBlockBuilder> {
+function getUserConfigSection(user: IUser, qraftyConfig: IQraftyConfig | null): Appendable<ViewBlockBuilder> {
   const blocks: Appendable<ViewBlockBuilder> = [];
 
   blocks.push(

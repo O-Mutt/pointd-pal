@@ -16,14 +16,25 @@ app.view(
     const userId = args.body.user.id;
     const connection = connectionFactory(teamId);
     const bonusly = await BonuslyBotConfig(connection).findOneOrCreate();
-    const qrafty = await QraftyConfig(connection).findOneOrCreate();
+    const qrafty = await QraftyConfig(connection).findOneOrCreate(teamId as string);
     for (const option in args.view.state.values) {
       for (const key in args.view.state.values[option]) {
-        const value: string = (args.view.state.values[option][key].value ||
-          args.view.state.values[option][key].selected_option?.value) as string;
+        const state = args.view.state.values[option][key];
+        const value = (state.value || state.selected_option?.value) as string;
+        const selectedUsers = state.selected_users as string[];
         switch (key) {
           case 'hometab_qraftyCompanyName': {
             qrafty.companyName = value;
+            break;
+          }
+          case 'hometab_qraftyAdmins': {
+            qrafty.qraftyAdmins = selectedUsers;
+            for (const newAdminId of selectedUsers) {
+              console.log(newAdminId);
+              const user = await User(connection).findOneBySlackIdOrCreate(newAdminId);
+              user.isAdmin = true;
+              await user.save();
+            }
             break;
           }
           case 'hometab_qraftyNotifications': {

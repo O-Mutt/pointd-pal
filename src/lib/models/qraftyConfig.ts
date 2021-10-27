@@ -1,4 +1,5 @@
 import { Schema, Document, Model, Connection } from 'mongoose';
+import { app } from '../../../app';
 import { AuditTags } from './auditTags';
 import { BonuslyBotConfigSchema, IBonuslyBotConfig } from './bonusly';
 
@@ -11,6 +12,7 @@ export interface IQraftyConfig extends Document, AuditTags {
   reasonsKeyword?: string;
   companyName?: string;
   qryptoEnabled?: boolean;
+  qraftyAdmins?: string[];
   bonuslyConfig?: IBonuslyBotConfig;
 }
 
@@ -25,17 +27,22 @@ export const QraftyConfigSchema = new Schema({
     type: Boolean,
     default: false
   },
+  qraftyAdmins: [String],
   bonuslyConfig: BonuslyBotConfigSchema,
 });
 
-QraftyConfigSchema.statics.findOneOrCreate = async function (this: Model<any, any, any, any>): Promise<IQraftyConfig> {
+QraftyConfigSchema.statics.findOneOrCreate = async function (this: Model<QraftyConfigInterface, QraftyConfigModelInterface>, teamId: string): Promise<IQraftyConfig> {
   const self = this;
   let qraftyConfig = await self.findOne().exec();
   if (qraftyConfig) {
     return qraftyConfig;
   }
 
-  qraftyConfig = new self({});
+  const { members } = await app.client.users.list({ team_id: teamId });
+  const admins = members?.filter((user) => user.is_admin === true);
+  qraftyConfig = new self({
+    qraftyAdmins: admins
+  });
   return await self.create(qraftyConfig);
 };
 
@@ -45,7 +52,7 @@ export interface QraftyConfigInterface extends IQraftyConfig {
 
 export interface QraftyConfigModelInterface extends Model<QraftyConfigInterface> {
   // static methods
-  findOneOrCreate(): Promise<IQraftyConfig>;
+  findOneOrCreate(teamId: string): Promise<IQraftyConfig>;
 }
 
 export const QraftyConfig = (conn: Connection) =>

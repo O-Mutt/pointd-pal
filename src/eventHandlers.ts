@@ -13,7 +13,7 @@ eventBus.on(PlusPlusFailureEventName, sendPlusPlusFalsePositiveNotification);
 eventBus.on(PlusPlusSpamEventName, logAndNotifySpam);
 
 async function sendPlusPlusNotification(plusPlusEvent: PlusPlus) {
-  const config = await QraftyConfig(connectionFactory(plusPlusEvent.teamId)).findOne().exec();
+  const config = await QraftyConfig(connectionFactory(plusPlusEvent.teamId)).findOneOrCreate(plusPlusEvent.teamId);
   if (!config?.notificationRoom) {
     return;
   }
@@ -32,7 +32,7 @@ async function sendPlusPlusNotification(plusPlusEvent: PlusPlus) {
 }
 
 async function sendPlusPlusFalsePositiveNotification(plusPlusFailureEvent: PlusPlusFailure) {
-  const config = await QraftyConfig(connectionFactory(plusPlusFailureEvent.teamId)).findOne().exec();
+  const config = await QraftyConfig(connectionFactory(plusPlusFailureEvent.teamId)).findOneOrCreate(plusPlusFailureEvent.teamId);
   if (!config?.falsePositiveRoom) {
     return;
   }
