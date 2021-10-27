@@ -1,10 +1,11 @@
 import { IUser } from '../models/user';
+import { DirectionEnum } from './Enums';
 
 abstract class EventWithTeamId {
-  teamId?: string;
+  teamId: string;
 
-  constructor(init?: Partial<EventWithTeamId>) {
-    Object.assign(this, init);
+  constructor(init: EventWithTeamId) {
+    this.teamId = init.teamId;
   }
 }
 
@@ -19,7 +20,7 @@ export class PlusPlus extends EventWithTeamId {
   reason?: string;
 
   // https://stackoverflow.com/a/37682352/593154
-  constructor(init?: Partial<PlusPlus>) {
+  constructor(init: Partial<PlusPlus> & EventWithTeamId) {
     super(init);
     Object.assign(this, init);
   }
@@ -31,7 +32,7 @@ export class PlusPlusFailure extends EventWithTeamId {
   channel?: string;
 
   // https://stackoverflow.com/a/37682352/593154
-  constructor(init?: Partial<PlusPlusFailure>) {
+  constructor(init: Partial<PlusPlusFailure> & EventWithTeamId) {
     super(init);
     Object.assign(this, init);
   }
@@ -45,13 +46,8 @@ export class PlusPlusSpam extends EventWithTeamId {
   reason?: string;
 
   // https://stackoverflow.com/a/37682352/593154
-  constructor(init?: Partial<PlusPlusSpam>) {
+  constructor(init: Partial<PlusPlusSpam> & EventWithTeamId) {
     super(init);
     Object.assign(this, init);
   }
-}
-
-export enum DirectionEnum {
-  PLUS = '++',
-  MINUS = '--',
 }

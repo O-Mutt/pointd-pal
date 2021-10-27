@@ -1,4 +1,5 @@
 import { Member } from '@slack/web-api/dist/response/UsersListResponse';
+import { Md } from 'slack-block-builder';
 
 import { app } from '../app';
 import { Helpers } from './lib/helpers';
@@ -20,7 +21,7 @@ const ALLOWED_ADMIN_IDS = ['ULKF78MG9', 'UD46NSKSM', 'U0231VDAB1B'];
 async function mapUsersToDb({ message, context, client, logger, say }) {
   if (!ALLOWED_ADMIN_IDS.includes(message.user)) {
     logger.error("sorry, can't do that", message, context);
-    await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif <@${message.user}>`);
+    await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
     return;
   }
   const teamId = context.teamId;
@@ -45,7 +46,7 @@ async function mapUsersToDb({ message, context, client, logger, say }) {
 async function mapMoreUserFieldsBySlackId({ message, context, client, logger, say }) {
   if (!ALLOWED_ADMIN_IDS.includes(message.user)) {
     logger.error("sorry, can't do that", message, context);
-    await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif <@${message.user}>`);
+    await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
     return;
   }
   const databaseService = new DatabaseService({ ...procVars });
@@ -72,7 +73,7 @@ async function mapMoreUserFieldsBySlackId({ message, context, client, logger, sa
 async function mapSingleUserToDb({ message, context, client, logger, say }) {
   if (!ALLOWED_ADMIN_IDS.includes(message.user)) {
     logger.error("sorry, can't do that", message, context);
-    await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif <@${message.user}>`);
+    await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
     return;
   }
 
@@ -105,7 +106,7 @@ async function mapSingleUserToDb({ message, context, client, logger, say }) {
 async function unmapUsersToDb({ message, context, logger, say }) {
   if (!ALLOWED_ADMIN_IDS.includes(message.user)) {
     logger.error("sorry, can't do that", message, context);
-    await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif <@${message.user}>`);
+    await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
     return;
   }
   const databaseService = new DatabaseService({ ...procVars });
@@ -124,7 +125,7 @@ async function unmapUsersToDb({ message, context, logger, say }) {
 async function mapSlackIdToEmail({ message, context, logger, say, client }) {
   if (!ALLOWED_ADMIN_IDS.includes(message.user)) {
     logger.error("sorry, can't do that", message, context);
-    await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif <@${message.user}>`);
+    await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
     return;
   }
 
@@ -149,7 +150,7 @@ async function mapSlackIdToEmail({ message, context, logger, say, client }) {
         await user.save();
       }
       await say(
-        `Mapping completed for ${user.name}: { name: ${user.name}, slackId: <@${user.slackId}>, email: ${user.email} }`,
+        `Mapping completed for ${user.name}: { name: ${user.name}, slackId: ${Md.user(user.slackId)}, email: ${user.email} }`,
       );
     }
   } catch (er) {

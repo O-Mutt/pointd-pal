@@ -2,6 +2,7 @@ import clark from 'clark';
 import { CronJob } from 'cron';
 import _ from 'lodash';
 import moment from 'moment';
+import { Md } from 'slack-block-builder';
 
 import { app } from '../app';
 import { Helpers } from './lib/helpers';
@@ -37,9 +38,8 @@ const databaseService = new DatabaseService({ ...procVars });
         let messages: string[] = [];
         if (topSenders.length > 0) {
           for (let i = 0, end = topSenders.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
-            const person = `<@${topSenders[i].slackId}>`;
             const pointStr = topSenders[i].scoreChange > 1 ? 'points given' : 'point given';
-            messages.push(`${i + 1}. ${person} (${topSenders[i].scoreChange} ${pointStr})`);
+            messages.push(`${i + 1}. ${Md.user(topSenders[i].slackId)} (${topSenders[i].scoreChange} ${pointStr})`);
           }
         } else {
           messages.push('No scores to keep track of yet!');
@@ -59,9 +59,8 @@ const databaseService = new DatabaseService({ ...procVars });
         messages = [];
         if (topRecipient.length > 0) {
           for (let i = 0, end = topRecipient.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
-            const person = `<@${topRecipient[i].slackId}>`;
             const pointStr = topRecipient[i].scoreChange > 1 ? 'points received' : 'point received';
-            messages.push(`${i + 1}. ${person} (${topRecipient[i].scoreChange} ${pointStr})`);
+            messages.push(`${i + 1}. ${Md.user(topRecipient[i].slackId)} (${topRecipient[i].scoreChange} ${pointStr})`);
           }
         } else {
           messages.push('No scores to keep track of yet!');
@@ -80,9 +79,8 @@ const databaseService = new DatabaseService({ ...procVars });
         messages = [];
         if (topRoom.length > 0) {
           for (let i = 0, end = topRoom.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
-            const person = `<#${topRoom[i].slackId}>`;
             const pointStr = topRoom[i].scoreChange > 1 ? 'points given' : 'point given';
-            messages.push(`${i + 1}. ${person} (${topRoom[i].scoreChange} ${pointStr})`);
+            messages.push(`${i + 1}. ${Md.channel(topRoom[i].slackId)} (${topRoom[i].scoreChange} ${pointStr})`);
           }
         } else {
           messages.push('No scores to keep track of yet!');

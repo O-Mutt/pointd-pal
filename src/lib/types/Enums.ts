@@ -15,3 +15,14 @@ export enum ReadyState {
   CONNECTING = 2,
   DISCONNECTING = 3,
 }
+
+export enum ConfirmOrCancel {
+  CONFIRM = 'Confirm',
+  CANCEL = 'Cancel',
+}
+
+
+export enum DirectionEnum {
+  PLUS = '++',
+  MINUS = '--',
+}

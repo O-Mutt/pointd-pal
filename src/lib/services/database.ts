@@ -1,6 +1,5 @@
 /* eslint-disable no-restricted-syntax */
 import moment from 'moment';
-import EventEmitter from 'events';
 
 import { app } from '../../../app';
 
@@ -8,9 +7,10 @@ import { User, IUser } from '../models/user';
 import { ScoreLog } from '../models/scoreLog';
 import { BotToken, IBotToken } from '../models/botToken';
 import { connectionFactory } from './connectionsFactory';
+import { eventBus } from './eventBus';
+import { Md } from 'slack-block-builder';
 
 export class DatabaseService {
-  private eventEmitter: EventEmitter;
   furtherFeedbackScore: number;
   peerFeedbackUrl: string;
   spamTimeLimit: number;
@@ -20,7 +20,6 @@ export class DatabaseService {
     this.furtherFeedbackScore = params.furtherFeedbackSuggestedScore;
     this.peerFeedbackUrl = params.peerFeedbackUrl;
     this.spamTimeLimit = params.spamTimeLimit;
-    this.eventEmitter = new EventEmitter();
     this.spamMessage = params.spamMessage;
   }
 
@@ -82,16 +81,16 @@ export class DatabaseService {
    * score - the number of score that is being sent
    */
   async savePointsGiven(from: IUser, to: IUser, score: number) {
-    const oldScore = from.pointsGiven[to.slackId] ? from.pointsGiven[to.slackId] : 0;
+    const newScore: number = (from.pointsGiven.get(to.slackId) || 0) + 1;
     // even if they are down voting them they should still get a tally (e.g. + 1) as they ++/-- the same person
-    from.pointsGiven[to.slackId] = oldScore + 1;
+    from.pointsGiven.set(to.slackId, newScore);
     await from.save();
 
-    if (from.pointsGiven[to.slackId] % this.furtherFeedbackScore === 0) {
+    if (newScore % this.furtherFeedbackScore === 0) {
       //Logger.debug(`${from.name} has sent a lot of points to ${to.name} suggesting further feedback ${score}`);
       await app.client.chat.postMessage({
         channel: from.slackId,
-        text: `Looks like you've given <@${to.slackId}> quite a few points, maybe you should look at submitting ${this.peerFeedbackUrl}`,
+        text: `Looks like you've given ${Md.user(to.slackId)} quite a few points, maybe you should look at submitting ${this.peerFeedbackUrl}`,
       });
     }
   }
@@ -162,8 +161,8 @@ export class DatabaseService {
 
   async erase(teamId: string, user: IUser, reason?: string): Promise<void> {
     if (reason) {
-      const reasonScore: number = user.reasons[reason];
-      delete user.reasons[reason];
+      const reasonScore: number = user.reasons.get(reason) || 0;
+      user.reasons.delete(reason);
       user.score = user.score - reasonScore;
       await user.save();
     } else {
@@ -179,7 +178,7 @@ export class DatabaseService {
     await BotToken()
       .findOneAndUpdate({}, { $inc: { token: -user.token } })
       .exec();
-    this.eventEmitter.emit('plusplus-tokens');
+    eventBus.emit('plusplus-tokens');
     return;
   }
 

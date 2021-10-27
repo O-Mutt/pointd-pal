@@ -1,11 +1,11 @@
 import { DatabaseService } from './database';
-import EventEmitter from 'events';
 import { IUser } from '../models/user';
 import { PlusPlusSpam, PlusPlusSpamEventName } from '../types/PlusPlusEvents';
+import { eventBus } from './eventBus';
+import { Md } from 'slack-block-builder';
 
 export class ScoreKeeper {
   databaseService: DatabaseService;
-  eventEmitter: EventEmitter;
   spamMessage: string;
   /*
   * params.robot
@@ -15,7 +15,6 @@ export class ScoreKeeper {
   * params.mongoUri
   */
   constructor(params) {
-    this.eventEmitter = new EventEmitter();
     for (const key in params) {
       this[key] = params[key];
     }
@@ -40,13 +39,13 @@ export class ScoreKeeper {
         throw new Error('Bots can\'t send points, silly.');
       }
 
-      if ((await this.isSpam(teamId, toUser, fromUser)) || this.isSendingToSelf(toUser, fromUser)) {
-        throw new Error(`I'm sorry <@${fromUser.slackId}>, I'm afraid I can't do that.`);
+      if ((await this.isSpam(teamId, toUser, fromUser)) || this.isSendingToSelf(teamId, toUser, fromUser)) {
+        throw new Error(`I'm sorry ${Md.user(fromUser.slackId)}, I'm afraid I can't do that.`);
       }
       toUser.score = toUser.score + incrementValue;
       if (reason) {
-        const oldReasonScore = toUser.reasons[`${reason}`] ? toUser.reasons[`${reason}`] : 0;
-        toUser.reasons[`${reason}`] = oldReasonScore + incrementValue;
+        const newReasonScore = (toUser.reasons.get(reason) || 0) + incrementValue;
+        toUser.reasons.set(reason, newReasonScore);
       }
 
       await this.databaseService.savePointsGiven(fromUser, toUser, incrementValue);
@@ -73,23 +72,23 @@ export class ScoreKeeper {
       const fromUser = await this.databaseService.getUser(teamId, fromId);
       if (toUser.accountLevel < 2 && fromUser.accountLevel < 2) {
         // to or from is not level 2
-        throw new Error(`In order to send tokens to ${toUser.name} you both must be, at least, level 2.`);
+        throw new Error(`In order to send tokens to ${Md.user(toUser.slackId)} you both must be, at least, level 2.`);
       }
 
       if (fromUser.token && fromUser.token >= numberOfTokens) {
-          // from has too few tokens to send that many
-          throw new Error(`You don't have enough tokens to send ${numberOfTokens} to ${toUser.name}`);
+        // from has too few tokens to send that many
+        throw new Error(`You don't have enough tokens to send ${numberOfTokens} to ${Md.user(toUser.slackId)}`);
       }
 
-      if ((await this.databaseService.isSpam(teamId, toUser, fromUser)) || this.isSendingToSelf(toUser, fromUser)) {
-        throw new Error(`I'm sorry <@${fromUser.slackId}>, I'm afraid I can't do that.`);
+      if ((await this.isSpam(teamId, toUser, fromUser)) || this.isSendingToSelf(teamId, toUser, fromUser)) {
+        throw new Error(`I'm sorry ${Md.user(fromUser.slackId)}, I'm afraid I can't do that.`);
       }
 
       fromUser.token = fromUser.token || 0 - numberOfTokens;
       toUser.token = toUser.token || 0 + numberOfTokens;
       if (reason) {
-        const oldReasonScore = toUser.reasons[`${reason}`] ? toUser.reasons[`${reason}`] : 0;
-        toUser.reasons[`${reason}`] = oldReasonScore + numberOfTokens;
+        const newReasonScore = (toUser.reasons.get(reason) || 0) + numberOfTokens;
+        toUser.reasons.set(reason, newReasonScore);
       }
 
       await this.databaseService.savePointsGiven(fromUser, toUser, numberOfTokens);
@@ -129,15 +128,16 @@ export class ScoreKeeper {
         to,
         from,
         message: this.spamMessage,
-        reason: `You recently sent <@${to.slackId}> a point.`
+        reason: `You recently sent ${Md.user(to.slackId)} a point.`,
+        teamId,
       });
 
-      this.eventEmitter.emit(PlusPlusSpamEventName, spamEvent);
+      eventBus.emit(PlusPlusSpamEventName, spamEvent);
     }
     return isSpam;
   }
 
-  isSendingToSelf(to: IUser, from: IUser) {
+  isSendingToSelf(teamId: string, to: IUser, from: IUser) {
     //Logger.debug(`Checking if is to self. To [${to.name}] From [${from.name}], Valid: ${to.name !== from.name}`);
     const isToSelf = to.slackId === from.slackId;
     if (isToSelf) {
@@ -145,9 +145,10 @@ export class ScoreKeeper {
         to,
         from,
         message: this.spamMessage,
-        reason: 'Looks like you may be trying to send a point to yourself.'
+        reason: 'Looks like you may be trying to send a point to yourself.',
+        teamId
       });
-      this.eventEmitter.emit(PlusPlusSpamEventName, spamEvent);
+      eventBus.emit(PlusPlusSpamEventName, spamEvent);
     }
     return isToSelf;
   }

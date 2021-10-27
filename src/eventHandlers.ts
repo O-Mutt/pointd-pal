@@ -1,23 +1,23 @@
-import { EventEmitter } from 'events';
-
 import { app } from '../app';
 import { QraftyConfig } from './lib/models/qraftyConfig';
 import { connectionFactory } from './lib/services/connectionsFactory';
+import { eventBus } from './lib/services/eventBus';
 import { SlackService } from './lib/services/slack';
 import {
   PlusPlus, PlusPlusEventName, PlusPlusFailure, PlusPlusFailureEventName, PlusPlusSpam,
   PlusPlusSpamEventName
 } from './lib/types/PlusPlusEvents';
 
-const events = new EventEmitter();
-
-events.on(PlusPlusEventName, sendPlusPlusNotification);
-events.on(PlusPlusFailureEventName, sendPlusPlusFalsePositiveNotification);
-events.on(PlusPlusSpamEventName, logAndNotifySpam);
+eventBus.on(PlusPlusEventName, sendPlusPlusNotification);
+eventBus.on(PlusPlusFailureEventName, sendPlusPlusFalsePositiveNotification);
+eventBus.on(PlusPlusSpamEventName, logAndNotifySpam);
 
 async function sendPlusPlusNotification(plusPlusEvent: PlusPlus) {
   const config = await QraftyConfig(connectionFactory(plusPlusEvent.teamId)).findOne().exec();
-  const channelId = await SlackService.findOrCreateConversation(config?.notificationRoom);
+  if (!config?.notificationRoom) {
+    return;
+  }
+  const channelId = await SlackService.findOrCreateConversation(plusPlusEvent.teamId, config?.notificationRoom);
   if (!channelId) {
     return;
   }
@@ -33,7 +33,10 @@ async function sendPlusPlusNotification(plusPlusEvent: PlusPlus) {
 
 async function sendPlusPlusFalsePositiveNotification(plusPlusFailureEvent: PlusPlusFailure) {
   const config = await QraftyConfig(connectionFactory(plusPlusFailureEvent.teamId)).findOne().exec();
-  const channelId = await SlackService.findOrCreateConversation(config?.falsePositiveRoom);
+  if (!config?.falsePositiveRoom) {
+    return;
+  }
+  const channelId = await SlackService.findOrCreateConversation(plusPlusFailureEvent.teamId, config?.falsePositiveRoom);
   if (!channelId) {
     return;
   }

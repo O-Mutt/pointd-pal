@@ -21,11 +21,12 @@ import './src/bonusly';
 import './src/hometab';
 import './src/hometab.actions';
 import './src/hometab.views';
+import { Md } from 'slack-block-builder';
 
 app.action('button_click', async ({ body, ack, say }) => {
   // Acknowledge the action
   await ack();
-  await say(`<@${body.user.id}> clicked the button`);
+  await say(`${Md.user(body.user.id)} clicked the button`);
 });
 
 app.message(/.*/, async ({ message, context, logger }) => {

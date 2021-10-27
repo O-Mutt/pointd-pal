@@ -1,4 +1,5 @@
 import moment from 'moment';
+import { Md } from 'slack-block-builder';
 import { IUser } from './models/user';
 import { regExpCreator } from './regexpCreator';
 
@@ -10,16 +11,16 @@ export class Helpers {
     return 's';
   }
 
-  static capitalizeFirstLetter(str: string) {
-    if (typeof str !== 'string') {
+  static capitalizeFirstLetter(str: string): string {
+    if (!str) {
       return '';
     }
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
 
-  static decode(str: string) {
+  static decode(str: string): string | undefined {
     if (!str) {
-      return undefined;
+      return;
     }
 
     const buff = Buffer.from(str, 'base64');
@@ -27,7 +28,7 @@ export class Helpers {
     return text;
   }
 
-  static isCakeDay(dateObject: Date) {
+  static isCakeDay(dateObject: Date): boolean {
     try {
       const robotDay = moment(dateObject);
       const today = moment();
@@ -40,7 +41,7 @@ export class Helpers {
     return false;
   }
 
-  static getYearsAsString(dateObj: Date) {
+  static getYearsAsString(dateObj: Date): string {
     const robotDay = new Date(dateObj);
     const today = new Date();
     const years = today.getFullYear() - robotDay.getFullYear();
@@ -64,8 +65,7 @@ export class Helpers {
     if (!user) {
       return '';
     }
-    const username = user.slackId ? `<@${user.slackId}>` : user.name;
-    let scoreStr = `${username} has ${user.score} point${Helpers.getEsOnEndOfWord(user.score)}`;
+    let scoreStr = `${Md.user(user.slackId)} has ${user.score} point${Helpers.getEsOnEndOfWord(user.score)}`;
     let reasonStr = '.';
     let cakeDayStr = '';
 
@@ -89,63 +89,61 @@ export class Helpers {
 
     if (reason) {
       const decodedReason = Helpers.decode(reason);
-      if (user.reasons[reason] === 1 || user.reasons[reason] === -1) {
+      if (user.reasons.get(reason) === 1 || user.reasons.get(reason) === -1) {
         if (user.score === 1 || user.score === -1) {
           reasonStr = ` for ${decodedReason}.`;
         } else {
-          reasonStr = `, ${user.reasons[reason]} of which is for ${decodedReason}.`;
+          reasonStr = `, ${user.reasons.get(reason)} of which is for ${decodedReason}.`;
         }
-      } else if (user.reasons[reason] === 0) {
+      } else if (user.reasons.get(reason) === 0) {
         reasonStr = `, none of which are for ${decodedReason}.`;
       } else {
-        reasonStr = `, ${user.reasons[reason]} of which are for ${decodedReason}.`;
+        reasonStr = `, ${user.reasons.get(reason)} of which are for ${decodedReason}.`;
       }
     }
 
     if (Helpers.isCakeDay(user.robotDay)) {
       const yearsAsString = Helpers.getYearsAsString(user.robotDay);
-      cakeDayStr = `\n:birthday: Today is ${username}'s ${yearsAsString}${'qrafty'}day! :birthday:`;
+      cakeDayStr = `\n:birthday: Today is ${Md.user(user.slackId)}'s ${yearsAsString}${'qrafty'}day! :birthday:`;
     }
     return `${scoreStr}${reasonStr}${cakeDayStr}`;
   }
 
-  static getMessageForTokenTransfer(robotName, to, from, number, reason) {
+  static getMessageForTokenTransfer(robotName: string, to: IUser, from: IUser, number: number, reason: string | undefined) {
     if (!to) {
       return '';
     }
-    const toTag = to.slackId ? `<@${to.slackId}>` : to.name;
-    const fromTag = from.slackId ? `<@${from.slackId}>` : from.name;
 
-    const scoreStr = `${fromTag} transferred *${number}* ${robotName} Tokens to ${toTag}.\n${toTag} now has ${to.token
-      } token${Helpers.getEsOnEndOfWord(to.token)}`;
+    const scoreStr = `${Md.user(from.slackId)} transferred *${number}* ${robotName} Tokens to ${Md.user(to.slackId)}.\n${Md.user(to.slackId)} now has ${to.token
+      } token${Helpers.getEsOnEndOfWord(to.token || 0)}`;
     let reasonStr = '.';
     let cakeDayStr = '';
 
     if (reason) {
       const decodedReason = Helpers.decode(reason);
-      if (to.reasons[reason] === 1 || to.reasons[reason] === -1) {
+      if (to.reasons.get(reason) === 1 || to.reasons.get(reason) === -1) {
         if (to.score === 1 || to.score === -1) {
           reasonStr = ` for ${decodedReason}.`;
         } else {
-          reasonStr = `, ${to.reasons[reason]} of which is for ${decodedReason}.`;
+          reasonStr = `, ${to.reasons.get(reason)} of which is for ${decodedReason}.`;
         }
-      } else if (to.reasons[reason] === 0) {
+      } else if (to.reasons.get(reason) === 0) {
         reasonStr = `, none of which are for ${decodedReason}.`;
       } else {
-        reasonStr = `, ${to.reasons[reason]} of which are for ${decodedReason}.`;
+        reasonStr = `, ${to.reasons.get(reason)} of which are for ${decodedReason}.`;
       }
     }
 
     if (Helpers.isCakeDay(to[`robotDay`])) {
       const yearsAsString = Helpers.getYearsAsString(to[`${robotName}Day`]);
-      cakeDayStr = `\n:birthday: Today is ${toTag}'s ${yearsAsString}${robotName}day! :birthday:`;
+      cakeDayStr = `\n:birthday: Today is ${Md.user(to.slackId)}'s ${yearsAsString}${robotName}day! :birthday:`;
     }
-    return `${scoreStr}${reasonStr}${cakeDayStr}\n_${fromTag} has ${from.token} token${Helpers.getEsOnEndOfWord(
-      from.token,
+    return `${scoreStr}${reasonStr}${cakeDayStr}\n_${Md.user(from.slackId)} has ${from.token} token${Helpers.getEsOnEndOfWord(
+      from.token || 0,
     )}_`;
   }
 
-  static cleanName(name) {
+  static cleanName(name: string): string {
     if (name) {
       let trimmedName = name.trim().toLowerCase();
       if (trimmedName.charAt(0) === ':') {
@@ -158,7 +156,7 @@ export class Helpers {
     return name;
   }
 
-  static cleanAndEncode(str): string {
+  static cleanAndEncode(str: string): string {
     if (!str) {
       return '';
     }
@@ -174,7 +172,7 @@ export class Helpers {
    * checks if the message is in DM
    * channel - {string} name of the channel
    */
-  static isPrivateMessage(channel) {
+  static isPrivateMessage(channel: string): boolean {
     // "Shell" is the adapter for running in the terminal
     return channel[0] === 'D' || channel === 'Shell';
   }

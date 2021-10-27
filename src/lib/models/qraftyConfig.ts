@@ -2,7 +2,6 @@ import { Schema, Document, Model, Connection } from 'mongoose';
 import { AuditTags } from './auditTags';
 import { BonuslyBotConfigSchema, IBonuslyBotConfig } from './bonusly';
 
-export const DefaultNotificationRoomName = 'qrafty-plusplus-notifications';
 export interface IQraftyConfig extends Document, AuditTags {
   slackToken?: string;
   notificationRoom?: string;

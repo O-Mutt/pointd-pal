@@ -1,14 +1,17 @@
 import { app } from '../../../app';
 
 export class SlackService {
-  static async findOrCreateConversation(channelName?: string): Promise<string | undefined> {
-    if (!channelName) {
+  static async findOrCreateConversation(teamId: string, channelName: string): Promise<string | undefined> {
+    let result;
+    try {
+      result = await app.client.conversations.list();
+    } catch (e) {
+      // logger.error(e)
       return;
     }
 
-    const result = await app.client.conversations.list();
     const foundChannel = result.channels?.filter((channel) => {
-      channel.name === channelName;
+      return channel.name === channelName;
     });
 
     if (foundChannel && foundChannel.length === 1) {
@@ -16,10 +19,10 @@ export class SlackService {
     }
 
     try {
-      const { channel } = await app.client.conversations.create({ name: channelName });
+      const { channel } = await app.client.conversations.create({ team_id: teamId, name: channelName });
       return channel?.id;
     } catch (e) {
-      // logger error (e)
+      // logger.error(e)
       return;
     }
   }

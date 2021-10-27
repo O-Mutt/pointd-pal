@@ -5,4 +5,8 @@ export const actions = {
     user_settings: 'HOMETAB_USER_SETTINGS',
     user_settings_submit: 'HOMETAB_USER_SETTINGS_SUBMIT',
   },
+  wallet: {
+    level_up_confirm: 'LEVEL_UP_COFIRM',
+    level_up_cancel: 'LEVEL_UP_CANCEL',
+  }
 };

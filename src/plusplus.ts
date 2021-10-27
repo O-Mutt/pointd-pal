@@ -1,9 +1,8 @@
 import axios from 'axios';
-import { EventEmitter } from 'events';
 import { Blocks, Md, Message } from 'slack-block-builder';
 import tokenBuddy from 'token-buddy';
 
-import { ChatPostMessageArguments, WebClient } from '@slack/web-api';
+import { ChatPostMessageArguments } from '@slack/web-api';
 
 import { app } from '../app';
 import * as pjson from '../package.json';
@@ -12,19 +11,18 @@ import { IUser } from './lib/models/user';
 import { regExpCreator } from './lib/regexpCreator';
 import { DatabaseService } from './lib/services/database';
 import { decrypt } from './lib/services/decrypt';
+import { eventBus } from './lib/services/eventBus';
 import { ScoreKeeper } from './lib/services/scorekeeper';
 // this may need to move or be generic...er
 import * as token from './lib/token.json';
+import { DirectionEnum } from './lib/types/Enums';
 import {
-  DirectionEnum, PlusPlus, PlusPlusEventName, PlusPlusFailure, PlusPlusFailureEventName,
-  PlusPlusSpam
+  PlusPlus, PlusPlusEventName, PlusPlusFailure, PlusPlusFailureEventName, PlusPlusSpam
 } from './lib/types/PlusPlusEvents';
-import { AllMiddlewareArgs, AnyMiddlewareArgs, GenericMessageEvent, SlackEventMiddlewareArgs } from '@slack/bolt';
 
 const procVars = Helpers.getProcessVariables(process.env);
 const scoreKeeper = new ScoreKeeper({ ...procVars });
 const databaseService = new DatabaseService({ ...procVars });
-const emitter = new EventEmitter();
 
 if (procVars.magicIv && procVars.magicNumber) {
   databaseService.getMagicSecretStringNumberValue().then((databaseMagicString: string) => {
@@ -79,9 +77,10 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
     const failureEvent = new PlusPlusFailure({
       notificationMessage: `False positive detected in ${Md.channel(channel)} from ${Md.user(from)}: \nPre - Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText} `,
       channel: channel,
+      teamId: teamId,
     });
-
-    emitter.emit(PlusPlusFailureEventName, failureEvent);
+    console.log('emit an event', PlusPlusFailureEventName, failureEvent)
+    eventBus.emit(PlusPlusFailureEventName, failureEvent);
     return;
   }
   const increment = operator.match(regExpCreator.positiveOperators) ? 1 : -1;
@@ -107,17 +106,18 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
   if (theMessage) {
     await args.say(theMessage);
     const plusPlusEvent = new PlusPlus({
-      notificationMessage: `<@${fromUser.slackId}> ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
+      notificationMessage: `${Md.user(fromUser.slackId)} ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
         } a ${Helpers.capitalizeFirstLetter('qrafty')} point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'
-        } <@${toUser.slackId}> in <#${channel} > `,
+        } ${Md.user(toUser.slackId)} in ${Md.channel(channel)}`,
       sender: fromUser,
       recipients: [toUser],
       direction: operator,
       amount: 1,
       channel,
       reason: cleanReason,
+      teamId: teamId,
     });
-    emitter.emit(PlusPlusEventName, plusPlusEvent);
+    eventBus.emit(PlusPlusEventName, plusPlusEvent);
   }
 }
 
@@ -129,11 +129,12 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
   if (!conjunction && reason) {
     // circuit break a plus plus
     const failureEvent = new PlusPlusFailure({
-      notificationMessage: `False positive detected in <#${channel} > from <@${from
-        }>: \nPre - Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText} `,
+      notificationMessage: `False positive detected in ${Md.channel(channel)} from ${Md.user(from)
+        }: \nPre - Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText} `,
       channel: channel,
+      teamId: teamId,
     });
-    emitter.emit(PlusPlusFailureEventName, failureEvent);
+    eventBus.emit(PlusPlusFailureEventName, failureEvent);
     return;
   }
   const cleanReason = Helpers.cleanAndEncode(reason);
@@ -160,18 +161,19 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
   if (message) {
     await say(theMessage);
     const plusPlusEvent = new PlusPlus({
-      notificationMessage: `<@${response.fromUser.slackId}> sent ${number} ${Helpers.capitalizeFirstLetter(
+      notificationMessage: `${Md.user(response.fromUser.slackId)} sent ${number} ${Helpers.capitalizeFirstLetter(
         'qrafty',
       )
-        } point${parseInt(number, 10) > 1 ? 's' : ''} to <@${response.toUser.slackId}> in <#${channel} > `,
+        } point${parseInt(number, 10) > 1 ? 's' : ''} to ${Md.user(response.toUser.slackId)} in ${Md.channel(channel)}`,
       recipients: [response.toUser],
       sender: response.fromUser,
       direction: DirectionEnum.PLUS,
       amount: number,
       channel,
       reason: cleanReason,
+      teamId: teamId,
     });
-    emitter.emit(PlusPlusEventName, plusPlusEvent);
+    eventBus.emit(PlusPlusEventName, plusPlusEvent);
   }
 }
 
@@ -186,11 +188,12 @@ async function multipleUsersVote({ message, context, logger, say }) {
   if (Helpers.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
     // circuit break a plus plus
     const failureEvent = new PlusPlusFailure({
-      notificationMessage: `False positive detected in <#${channel} > from <@${from
-        }>: \nPre - Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText} `,
+      notificationMessage: `False positive detected in ${Md.channel(channel)} from ${Md.user(from)
+        }: \nPre - Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText} `,
       channel: channel,
+      teamId: teamId,
     });
-    emitter.emit(PlusPlusFailureEventName, failureEvent);
+    eventBus.emit(PlusPlusFailureEventName, failureEvent);
     return;
   }
 
@@ -224,14 +227,14 @@ async function multipleUsersVote({ message, context, logger, say }) {
     sender = response.fromUser;
     if (response.toUser) {
       logger.debug(
-        `clean names map[${toUserId}]: ${response.toUser.score}, the reason ${response.toUser.reasons[cleanReason]} `,
+        `clean names map[${toUserId}]: ${response.toUser.score}, the reason ${response.toUser.reasons.get(cleanReason)} `,
       );
       messages.push(Helpers.getMessageForNewScore(response.toUser, cleanReason, 'qrafty'));
       to.push(response.toUser);
       notificationMessage.push(
-        `<@${response.fromUser.slackId}> ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
+        `${Md.user(response.fromUser.slackId)} ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
         } a ${Helpers.capitalizeFirstLetter('qrafty')} point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'
-        } <@${response.toUser.slackId}> in <#${channel} > `,
+        } ${Md.user(response.toUser.slackId)} in ${Md.channel(channel)} `,
       );
     }
   }
@@ -244,9 +247,10 @@ async function multipleUsersVote({ message, context, logger, say }) {
     amount: 1,
     channel,
     reason: cleanReason,
+    teamId: teamId,
   });
 
-  emitter.emit(PlusPlusEventName, plusPlusEvent);
+  eventBus.emit(PlusPlusEventName, plusPlusEvent);
 
   logger.debug(`These are the messages \n ${messages.join(' ')} `);
   await say(messages.join('\n'));
@@ -294,8 +298,8 @@ async function eraseUserScore({ message, context, say }) {
   if (erased) {
     const decodedReason = Helpers.decode(cleanReason);
     const message = !decodedReason
-      ? `Erased the following reason from <@${userId}>: ${decodedReason} `
-      : `Erased points for <@${userId}> `;
+      ? `Erased the following reason from ${Md.user(userId)}: ${decodedReason} `
+      : `Erased points for ${Md.user(userId)} `;
     await say(message);
   }
 }

@@ -26,6 +26,14 @@ app.view(
             qrafty.companyName = value;
             break;
           }
+          case 'hometab_qraftyNotifications': {
+            qrafty.notificationRoom = value.toLowerCase();
+            break;
+          }
+          case 'hometab_qraftyFalsePositiveRoom': {
+            qrafty.falsePositiveRoom = value.toLowerCase();
+            break;
+          }
           case 'hometab_bonuslyEnabled': {
             bonusly.enabled = value === EnabledSettings.ENABLED;
             break;

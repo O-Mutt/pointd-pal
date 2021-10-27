@@ -42,6 +42,22 @@ app.action(
           initialValue: qraftyConfig?.companyName || '',
         }),
       ),
+      Blocks.Input({ label: 'Notifications Channel' }).element(
+        Elements.TextInput({
+          actionId: 'hometab_qraftyNotifications',
+          placeholder: '#qrafty-plusplus',
+          minLength: 2,
+          initialValue: qraftyConfig?.notificationRoom || '',
+        }),
+      ),
+      Blocks.Input({ label: 'False Positive Notifications Channel' }).element(
+        Elements.TextInput({
+          actionId: 'hometab_qraftyFalsePositiveRoom',
+          placeholder: '#qrafty-plusplus-fail',
+          minLength: 2,
+          initialValue: qraftyConfig?.falsePositiveRoom || '',
+        }),
+      ),
       Blocks.Divider(),
       Blocks.Header({ text: `${Md.emoji('rocket')} Bonusly Integration` }),
       Blocks.Input({ label: 'Bonusly Enabled' }).element(
