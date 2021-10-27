@@ -8,9 +8,8 @@ import { ChatPostMessageArguments, WebClient } from '@slack/web-api';
 import { app } from '../app';
 import * as pjson from '../package.json';
 import { Helpers } from './lib/helpers';
-import { IUser, User } from './lib/models/user';
+import { IUser } from './lib/models/user';
 import { regExpCreator } from './lib/regexpCreator';
-import { connectionFactory } from './lib/services/connectionsFactory';
 import { DatabaseService } from './lib/services/database';
 import { decrypt } from './lib/services/decrypt';
 import { ScoreKeeper } from './lib/services/scorekeeper';
@@ -20,6 +19,7 @@ import {
   DirectionEnum, PlusPlus, PlusPlusEventName, PlusPlusFailure, PlusPlusFailureEventName,
   PlusPlusSpam
 } from './lib/types/PlusPlusEvents';
+import { AllMiddlewareArgs, AnyMiddlewareArgs, GenericMessageEvent, SlackEventMiddlewareArgs } from '@slack/bolt';
 
 const procVars = Helpers.getProcessVariables(process.env);
 const scoreKeeper = new ScoreKeeper({ ...procVars });
@@ -68,50 +68,48 @@ app.message(regExpCreator.createEraseUserScoreRegExp(), eraseUserScore);
 /**
  * Functions for responding to commands
  */
-async function upOrDownVote({ payload, message, context, logger, say }) {
-  logger.error(message, context, payload);
-  const fullText = context.matches.input;
-  const teamId = context.teamId;
-  const { premessage, userId, operator, conjunction, reason } = context.matches.groups;
+async function upOrDownVote(args) { // Ignoring types right now because the event is missing user -> : SlackEventMiddlewareArgs<'message'> & AllMiddlewareArgs) {
+  const fullText = args.context.matches.input;
+  const teamId = args.body.team_id;
+  const { channel, user: from } = args.message;
+  const { premessage, userId, operator, conjunction, reason } = args.context.matches.groups;
 
   if (Helpers.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
     // circuit break a plus plus
     const failureEvent = new PlusPlusFailure({
-      notificationMessage: `False positive detected in <#${message.channel}> from <@${message.user
-        }>:\nPre-Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText}`,
-      channel: message.channel,
+      notificationMessage: `False positive detected in ${Md.channel(channel)} from ${Md.user(from)}: \nPre - Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText} `,
+      channel: channel,
     });
 
     emitter.emit(PlusPlusFailureEventName, failureEvent);
     return;
   }
   const increment = operator.match(regExpCreator.positiveOperators) ? 1 : -1;
-  const { channel } = message;
+
 
   const cleanReason = Helpers.cleanAndEncode(reason);
-  const fromId = message.user;
 
-  logger.debug(
-    `${increment} score for [${userId}] from [${fromId}]${cleanReason ? ` because ${cleanReason}` : ''
+  args.logger.debug(
+    `${increment} score for [${userId}] from[${from}]${cleanReason ? ` because ${cleanReason}` : ''
     } in [${channel}]`,
   );
   let toUser;
   let fromUser;
   try {
-    ({ toUser, fromUser } = await scoreKeeper.incrementScore(teamId, userId, fromId, channel, cleanReason, increment));
+    ({ toUser, fromUser } = await scoreKeeper.incrementScore(teamId, userId, from, channel, cleanReason, increment));
   } catch (e: any) {
-    await say(e.message);
+    await args.say(e.message);
     return;
   }
 
   const theMessage = Helpers.getMessageForNewScore(toUser, cleanReason, 'qrafty');
 
   if (theMessage) {
-    await say(theMessage);
+    await args.say(theMessage);
     const plusPlusEvent = new PlusPlus({
       notificationMessage: `<@${fromUser.slackId}> ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
         } a ${Helpers.capitalizeFirstLetter('qrafty')} point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'
-        } <@${toUser.slackId}> in <#${channel}>`,
+        } <@${toUser.slackId}> in <#${channel} > `,
       sender: fromUser,
       recipients: [toUser],
       direction: operator,
@@ -127,22 +125,21 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
   const fullText = context.matches.input;
   const teamId = context.teamId;
   const { premessage, userId, number, conjunction, reason } = context.matches.groups;
+  const { channel, user: from } = message;
   if (!conjunction && reason) {
     // circuit break a plus plus
     const failureEvent = new PlusPlusFailure({
-      notificationMessage: `False positive detected in <#${message.channel}> from <@${message.user
-        }>:\nPre-Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText}`,
-      channel: message.channel,
+      notificationMessage: `False positive detected in <#${channel} > from <@${from
+        }>: \nPre - Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText} `,
+      channel: channel,
     });
     emitter.emit(PlusPlusFailureEventName, failureEvent);
     return;
   }
-  const { channel } = message;
   const cleanReason = Helpers.cleanAndEncode(reason);
-  const from = message.user;
 
   logger.debug(
-    `${number} score for [${userId}] from [${from}]${cleanReason ? ` because ${cleanReason}` : ''} in [${channel}]`,
+    `${number} score for [${userId}] from[${from}]${cleanReason ? ` because ${cleanReason}` : ''} in [${channel}]`,
   );
   let response;
   try {
@@ -165,7 +162,8 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
     const plusPlusEvent = new PlusPlus({
       notificationMessage: `<@${response.fromUser.slackId}> sent ${number} ${Helpers.capitalizeFirstLetter(
         'qrafty',
-      )} point${parseInt(number, 10) > 1 ? 's' : ''} to <@${response.toUser.slackId}> in <#${channel}>`,
+      )
+        } point${parseInt(number, 10) > 1 ? 's' : ''} to <@${response.toUser.slackId}> in <#${channel} > `,
       recipients: [response.toUser],
       sender: response.fromUser,
       direction: DirectionEnum.PLUS,
@@ -181,15 +179,16 @@ async function multipleUsersVote({ message, context, logger, say }) {
   const fullText = context.matches.input;
   const teamId = context.teamId;
   const { premessage, allUsers, operator, conjunction, reason } = context.matches.groups;
+  const { channel, user: from } = message;
   if (!allUsers) {
     return;
   }
   if (Helpers.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
     // circuit break a plus plus
     const failureEvent = new PlusPlusFailure({
-      notificationMessage: `False positive detected in <#${message.channel}> from <@${message.user
-        }>:\nPre-Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText}`,
-      channel: message.channel,
+      notificationMessage: `False positive detected in <#${channel} > from <@${from
+        }>: \nPre - Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText} `,
+      channel: channel,
     });
     emitter.emit(PlusPlusFailureEventName, failureEvent);
     return;
@@ -197,8 +196,6 @@ async function multipleUsersVote({ message, context, logger, say }) {
 
   const idArray = allUsers.trim().split(new RegExp(regExpCreator.multiUserSeparator)).filter(Boolean);
   logger.debug("We pulled all the user ids from the 'allUsers' regexp group", idArray.join(','));
-
-  const { channel } = context;
 
   const cleanReason = Helpers.cleanAndEncode(reason);
   const increment = operator.match(regExpCreator.positiveOperators) ? 1 : -1;
@@ -212,7 +209,6 @@ async function multipleUsersVote({ message, context, logger, say }) {
     .filter((id, pos, self) => self.indexOf(id) === pos);
 
   logger.debug('We filtered out empty items and removed "self"', cleanedIdArray.join(','));
-  const from = message.user;
   let messages: string[] = [];
   let notificationMessage: string[] = [];
   let sender: IUser | undefined = undefined;
@@ -228,14 +224,14 @@ async function multipleUsersVote({ message, context, logger, say }) {
     sender = response.fromUser;
     if (response.toUser) {
       logger.debug(
-        `clean names map [${toUserId}]: ${response.toUser.score}, the reason ${response.toUser.reasons[cleanReason]}`,
+        `clean names map[${toUserId}]: ${response.toUser.score}, the reason ${response.toUser.reasons[cleanReason]} `,
       );
       messages.push(Helpers.getMessageForNewScore(response.toUser, cleanReason, 'qrafty'));
       to.push(response.toUser);
       notificationMessage.push(
         `<@${response.fromUser.slackId}> ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
         } a ${Helpers.capitalizeFirstLetter('qrafty')} point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'
-        } <@${response.toUser.slackId}> in <#${channel}>`,
+        } <@${response.toUser.slackId}> in <#${channel} > `,
       );
     }
   }
@@ -252,7 +248,7 @@ async function multipleUsersVote({ message, context, logger, say }) {
 
   emitter.emit(PlusPlusEventName, plusPlusEvent);
 
-  logger.debug(`These are the messages \n ${messages.join(' ')}`);
+  logger.debug(`These are the messages \n ${messages.join(' ')} `);
   await say(messages.join('\n'));
 }
 
@@ -267,7 +263,7 @@ async function tellHowMuchPointsAreWorth({ payload, logger, message, context, sa
     const ars = resp.data.bpi.ARS.rate_float;
     const satoshi = bitcoin / 1e8;
     return say(
-      `A bitcoin is worth ${bitcoin} USD right now (${ars} ARS), a satoshi is about ${satoshi}, and qrafty points are worth nothing!`,
+      `A bitcoin is worth ${bitcoin} USD right now(${ars} ARS), a satoshi is about ${satoshi}, and qrafty points are worth nothing!`,
     );
   } catch (e: any) {
     return await say(
@@ -281,8 +277,7 @@ async function eraseUserScore({ message, context, say }) {
   const fullText = context.matches.input;
   const teamId = context.teamId;
   const { premessage, userId, conjunction, reason } = context.matches;
-  const from = message.user;
-  const { channel } = message;
+  const { channel, user: from } = message;
 
   const cleanReason = Helpers.cleanAndEncode(reason);
 
@@ -299,19 +294,19 @@ async function eraseUserScore({ message, context, say }) {
   if (erased) {
     const decodedReason = Helpers.decode(cleanReason);
     const message = !decodedReason
-      ? `Erased the following reason from <@${userId}>: ${decodedReason}`
-      : `Erased points for <@${userId}>`;
+      ? `Erased the following reason from <@${userId}>: ${decodedReason} `
+      : `Erased points for <@${userId}> `;
     await say(message);
   }
 }
 
 async function respondWithHelpGuidance({ client, message, say }) {
   const helpMessage = ''
-    .concat('`<name>++ [<reason>]` - Increment score for a name (for a reason)\n')
-    .concat('`<name>-- [<reason>]` - Decrement score for a name (for a reason)\n')
-    .concat('`{name1, name2, name3}++ [<reason>]` - Increment score for all names (for a reason)\n')
-    .concat('`{name1, name2, name3}-- [<reason>]` - Decrement score for all names (for a reason) \n')
-    .concat('`{name1, name2, name3}-- [<reason>]` - Decrement score for all names (for a reason) \n')
+    .concat('`< name > ++[<reason>]` - Increment score for a name (for a reason)\n')
+    .concat('`< name > --[<reason>]` - Decrement score for a name (for a reason)\n')
+    .concat('`{ name1, name2, name3 } ++[<reason>]` - Increment score for all names (for a reason)\n')
+    .concat('`{ name1, name2, name3 } --[<reason>]` - Decrement score for all names (for a reason) \n')
+    .concat('`{ name1, name2, name3 } --[<reason>]` - Decrement score for all names (for a reason) \n')
     .concat(`\`@${'qrafty'} score <name>\` - Display the score for a name and some of the reasons\n`)
     .concat(`\`@${'qrafty'} top <amount>\` - Display the top scoring <amount>\n`)
     .concat(`\`@${'qrafty'} erase <name> [<reason>]\` - Remove the score for a name (for a reason) \n`)

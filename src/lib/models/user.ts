@@ -1,4 +1,5 @@
 import { Connection, Document, Model, Schema } from 'mongoose';
+import { ESMap } from 'typescript';
 
 import { app } from '../../../app';
 import { PromptSettings } from '../types/Enums';
@@ -7,8 +8,8 @@ import { AuditTags } from './auditTags';
 export interface IUser extends Document, AuditTags {
   slackId: string;
   score: number;
-  reasons: object;
-  pointsGiven: object;
+  reasons: ESMap<string, number>;
+  pointsGiven: ESMap<string, number>;
   robotDay: Date;
   accountLevel: number;
   totalPointsGiven: number;
@@ -29,11 +30,13 @@ export const UserSchema = new Schema({
     default: 0,
   },
   reasons: {
-    type: Object,
+    type: Map,
+    of: Number,
     default: {},
   },
   pointsGiven: {
-    type: Object,
+    type: Map,
+    of: Number,
     default: {},
   },
   robotDay: {

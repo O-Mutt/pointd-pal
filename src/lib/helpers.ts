@@ -103,7 +103,7 @@ export class Helpers {
     }
 
     if (Helpers.isCakeDay(user.robotDay)) {
-      const yearsAsString = Helpers.getYearsAsString(user[`${'qrafty'}Day`]);
+      const yearsAsString = Helpers.getYearsAsString(user.robotDay);
       cakeDayStr = `\n:birthday: Today is ${username}'s ${yearsAsString}${'qrafty'}day! :birthday:`;
     }
     return `${scoreStr}${reasonStr}${cakeDayStr}`;

@@ -33,8 +33,8 @@ async function respondWithScore({ message, context, say }) {
   let baseString = `<@${user.slackId}> has ${user.score} ${scoreStr}${tokenString}`;
   baseString += `\nAccount Level: ${user.accountLevel}`;
   baseString += `\nTotal Points Given: ${user.totalPointsGiven}`;
-  if (user[`${'qrafty'}Day`]) {
-    const dateObj = new Date(user[`${'qrafty'}Day`]);
+  if (user.robotDay) {
+    const dateObj = new Date(user.robotDay);
     baseString += `\n:birthday: ${Helpers.capitalizeFirstLetter('qrafty')}day is ${moment(dateObj).format(
       'MM-DD-yyyy',
     )}`;
