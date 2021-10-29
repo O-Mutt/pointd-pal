@@ -4,25 +4,14 @@ import { QraftyInstallStore } from './src/lib/services/qraftyInstallStore';
 
 require('dotenv').config();
 
-export let app;
-if (process.env.NODE === 'production') {
-  // Initializes your app with your bot token and app token
-  app = new App({
-    signingSecret: process.env.SLACK_SIGNING_SECRET,
-    clientId: process.env.SLACK_CLIENT_ID,
-    clientSecret: process.env.SLACK_CLIENT_SECRET,
-    stateSecret: process.env.SLACK_STATE_SECRET,
-    logLevel: process.env.LOG_LEVEL as LogLevel,
-    installationStore: QraftyInstallStore,
-  });
-} else {
-  app = new App({
-    token: process.env.SLACK_BOT_TOKEN,
-    socketMode: true,
-    appToken: process.env.SLACK_APP_TOKEN,
-    logLevel: process.env.LOG_LEVEL as LogLevel,
-  });
-}
+export let app = new App({
+  signingSecret: process.env.SLACK_SIGNING_SECRET,
+  clientId: process.env.SLACK_CLIENT_ID,
+  clientSecret: process.env.SLACK_CLIENT_SECRET,
+  stateSecret: process.env.SLACK_STATE_SECRET,
+  logLevel: process.env.LOG_LEVEL as LogLevel,
+  installationStore: QraftyInstallStore,
+});
 
 import './src/actions.bonusly';
 import './src/messages.plusplus';
