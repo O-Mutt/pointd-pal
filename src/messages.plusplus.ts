@@ -17,6 +17,7 @@ import { DirectionEnum } from './lib/types/Enums';
 import {
   PlusPlus, PlusPlusEventName, PlusPlusFailure, PlusPlusFailureEventName, PlusPlusSpam
 } from './lib/types/Events';
+import { directMention } from '@slack/bolt';
 
 const procVars = Helpers.getProcessVariables(process.env);
 const scoreKeeper = new ScoreKeeper({ ...procVars });

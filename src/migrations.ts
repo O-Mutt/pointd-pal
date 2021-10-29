@@ -1,5 +1,7 @@
-import { Member } from '@slack/web-api/dist/response/UsersListResponse';
 import { Md } from 'slack-block-builder';
+
+import { directMention } from '@slack/bolt';
+import { Member } from '@slack/web-api/dist/response/UsersListResponse';
 
 import { app } from '../app';
 import { Helpers } from './lib/helpers';
@@ -10,11 +12,11 @@ import { DatabaseService } from './lib/services/database';
 const procVars = Helpers.getProcessVariables(process.env);
 
 // we should use `directMention() once the code "works"
-app.message('try to map all slack users to db users', mapUsersToDb);
-app.message('try to map more data to all slack users to db users', mapMoreUserFieldsBySlackId);
-app.message('try to map @.* to db users', mapSingleUserToDb);
-app.message('unmap all users', unmapUsersToDb);
-app.message('map all slackIds to slackEmail', mapSlackIdToEmail);
+app.message('try to map all slack users to db users', directMention(), mapUsersToDb);
+app.message('try to map more data to all slack users to db users', directMention(), mapMoreUserFieldsBySlackId);
+app.message('try to map @.* to db users', directMention(), mapSingleUserToDb);
+app.message('unmap all users', directMention(), unmapUsersToDb);
+app.message('map all slackIds to slackEmail', directMention(), mapSlackIdToEmail);
 
 const ALLOWED_ADMIN_IDS = ['ULKF78MG9', 'UD46NSKSM', 'U0231VDAB1B'];
 

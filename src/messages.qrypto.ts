@@ -7,10 +7,10 @@ import { directMention, Logger } from '@slack/bolt';
 import { app } from '../app';
 import { Helpers } from './lib/helpers';
 import { IBotToken } from './lib/models/botToken';
-import { regExpCreator } from './lib/regexpCreator';
-import { DatabaseService } from './lib/services/database';
-import { connectionFactory } from './lib/services/connectionsFactory';
 import { User } from './lib/models/user';
+import { regExpCreator } from './lib/regexpCreator';
+import { connectionFactory } from './lib/services/connectionsFactory';
+import { DatabaseService } from './lib/services/database';
 import { actions } from './lib/types/Actions';
 import { ConfirmOrCancel } from './lib/types/Enums';
 
@@ -18,11 +18,11 @@ const procVars = Helpers.getProcessVariables(process.env);
 const databaseService = new DatabaseService({ ...procVars });
 
 // directMention()
-app.message(regExpCreator.getBotWallet(), botWalletCount);
+app.message(regExpCreator.getBotWallet(), directMention(), botWalletCount);
 
 // DM only
 // directMention()
-app.message(regExpCreator.createLevelUpAccount(), levelUpAccount);
+app.message(regExpCreator.createLevelUpAccount(), directMention(), levelUpAccount);
 
 app.action('confirm_levelup', levelUpToLevelThree);
 

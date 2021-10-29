@@ -14,11 +14,10 @@ import { ChatPostMessageArguments } from '@slack/web-api';
 const procVars = Helpers.getProcessVariables(process.env);
 const databaseService = new DatabaseService({ ...procVars });
 
-// all of these: directMention()
-app.message(regExpCreator.createAskForScoreRegExp(), respondWithScore);
-app.message(regExpCreator.createTopBottomRegExp(), respondWithLeaderLoserBoard);
-app.message(regExpCreator.createTopBottomTokenRegExp(), respondWithLeaderLoserTokenBoard);
-app.message(regExpCreator.createTopPointGiversRegExp(), getTopPointSenders);
+app.message(regExpCreator.createAskForScoreRegExp(), directMention(), respondWithScore);
+app.message(regExpCreator.createTopBottomRegExp(), directMention(), respondWithLeaderLoserBoard);
+app.message(regExpCreator.createTopBottomTokenRegExp(), directMention(), respondWithLeaderLoserTokenBoard);
+app.message(regExpCreator.createTopPointGiversRegExp(), directMention(), getTopPointSenders);
 
 async function respondWithScore({ message, context, say }) {
   const { userId } = context.matches.groups;
