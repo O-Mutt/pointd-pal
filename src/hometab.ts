@@ -36,7 +36,7 @@ async function updateHomeTab(args: SlackEventMiddlewareArgs<'app_home_opened'> &
 
       //...getBonuslyAdminConfigSection(user, bonusly, qraftyConfig),
     );
-    const result = await args.client.views.publish({ view: hometab.buildToObject() as View, user_id: userId });
+    const result = await args.client.views.publish({ token: args.context.botToken, view: hometab.buildToObject() as View, user_id: userId });
   } catch (e) {
     args.logger.error('error publishing hometab', e);
   }
