@@ -1,4 +1,4 @@
-import { InstallationStore, OrgInstallation } from "@slack/oauth";
+import { InstallationStore, Installation as OAuthInstallation } from "@slack/oauth";
 import { Installation } from "../models/installation"
 
 
@@ -34,7 +34,7 @@ export const QraftyInstallStore: InstallationStore = {
       if (!result) {
         throw new Error('Failed fetching installation');
       }
-      return result.installation as OrgInstallation;
+      return result.installation as OAuthInstallation<"v1" | "v2", boolean>;
     }
     if (installQuery.teamId !== undefined) {
       // single team app installation lookup
@@ -43,7 +43,7 @@ export const QraftyInstallStore: InstallationStore = {
       if (!result) {
         throw new Error('Failed fetching installation');
       }
-      return result.installation as OrgInstallation;
+      return result.installation as OAuthInstallation<"v1" | "v2", boolean>;
     }
     throw new Error('Failed fetching installation');
   },
