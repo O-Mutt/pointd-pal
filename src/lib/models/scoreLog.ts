@@ -17,9 +17,12 @@ export const ScoreLogSchema = new Schema({
   date: {
     type: Date,
     default: new Date(),
+    index: -1
   },
   scoreChange: Number,
 });
+
+ScoreLogSchema.index({ to: 1, from: 1, date: -1 });
 
 export interface ScoreLogInterface extends IScoreLog {
   // instance methods

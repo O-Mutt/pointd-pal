@@ -1,23 +1,27 @@
 import { App } from '@slack/bolt';
 import { LogLevel } from '@slack/logger';
+import { QraftyInstallStore } from './src/lib/services/qraftyInstallStore';
 
 require('dotenv').config();
 
 // Initializes your app with your bot token and app token
 export const app = new App({
-  token: process.env.SLACK_BOT_TOKEN,
-  socketMode: true,
-  appToken: process.env.SLACK_APP_TOKEN,
+  signingSecret: process.env.SLACK_SIGNING_SECRET,
+  clientId: process.env.SLACK_CLIENT_ID,
+  clientSecret: process.env.SLACK_CLIENT_SECRET,
+  stateSecret: process.env.SLACK_STATE_SECRET,
   logLevel: process.env.LOG_LEVEL as LogLevel,
+  installationStore: QraftyInstallStore,
 });
 
-import './src/plusplus';
+import './src/actions.bonusly';
+import './src/messages.plusplus';
 import './src/migrations';
-import './src/wallet';
-import './src/scoreboard';
-import './src/eventHandlers';
-import './src/cronEvents';
-import './src/bonusly';
+import './src/messages.qrypto';
+import './src/messages.scoreboard';
+import './src/events';
+import './src/events.bonusly';
+import './src/monthlyScoreboardCron';
 import './src/hometab';
 import './src/hometab.actions';
 import './src/hometab.views';

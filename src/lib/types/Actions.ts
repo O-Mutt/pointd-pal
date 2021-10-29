@@ -9,5 +9,9 @@ export const actions = {
   wallet: {
     level_up_confirm: 'LEVEL_UP_COFIRM',
     level_up_cancel: 'LEVEL_UP_CANCEL',
+  },
+  bonusly: {
+    prompt_confirm: 'BONUSLY_PROMPT_CONFIRM',
+    prompt_cancel: 'BONUSLY_PROMPT_CANCEL',
   }
 };

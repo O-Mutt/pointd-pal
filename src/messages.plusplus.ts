@@ -5,7 +5,6 @@ import tokenBuddy from 'token-buddy';
 import { ChatPostMessageArguments } from '@slack/web-api';
 
 import { app } from '../app';
-import * as pjson from '../package.json';
 import { Helpers } from './lib/helpers';
 import { IUser } from './lib/models/user';
 import { regExpCreator } from './lib/regexpCreator';
@@ -18,7 +17,7 @@ import * as token from './lib/token.json';
 import { DirectionEnum } from './lib/types/Enums';
 import {
   PlusPlus, PlusPlusEventName, PlusPlusFailure, PlusPlusFailureEventName, PlusPlusSpam
-} from './lib/types/PlusPlusEvents';
+} from './lib/types/Events';
 
 const procVars = Helpers.getProcessVariables(process.env);
 const scoreKeeper = new ScoreKeeper({ ...procVars });
@@ -52,12 +51,7 @@ app.message(regExpCreator.createMultiUserVoteRegExp(), multipleUsersVote);
 
 // listen for bot tag/ping
 app.message(regExpCreator.createGiveTokenRegExp(), giveTokenBetweenUsers);
-//directMention()
-app.message(regExpCreator.getHelp(), respondWithHelpGuidance);
-// directMention
-app.message(RegExp(/(plusplus version|-v|--version)/, 'i'), async ({ message, context, say }) => {
-  await say(`${Helpers.capitalizeFirstLetter('qrafty')} ${pjson.name}, version: ${pjson.version}`);
-});
+
 
 // admin
 // directMention
@@ -71,6 +65,12 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
   const teamId = args.body.team_id;
   const { channel, user: from } = args.message;
   const { premessage, userId, operator, conjunction, reason } = args.context.matches.groups;
+
+  if (userId.charAt(0).toLowerCase() === 's') {
+    const { users } = await args.client.usergroups.users.list({ team_id: teamId, usergroup: userId });
+    args.context.matches.groups.userId = users.join(',');
+    return await multipleUsersVote(args);
+  }
 
   if (Helpers.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
     // circuit break a plus plus
@@ -304,36 +304,4 @@ async function eraseUserScore({ message, context, say }) {
   }
 }
 
-async function respondWithHelpGuidance({ client, message, say }) {
-  const helpMessage = ''
-    .concat('`< name > ++[<reason>]` - Increment score for a name (for a reason)\n')
-    .concat('`< name > --[<reason>]` - Decrement score for a name (for a reason)\n')
-    .concat('`{ name1, name2, name3 } ++[<reason>]` - Increment score for all names (for a reason)\n')
-    .concat('`{ name1, name2, name3 } --[<reason>]` - Decrement score for all names (for a reason) \n')
-    .concat('`{ name1, name2, name3 } --[<reason>]` - Decrement score for all names (for a reason) \n')
-    .concat(`\`@${'qrafty'} score <name>\` - Display the score for a name and some of the reasons\n`)
-    .concat(`\`@${'qrafty'} top <amount>\` - Display the top scoring <amount>\n`)
-    .concat(`\`@${'qrafty'} erase <name> [<reason>]\` - Remove the score for a name (for a reason) \n`)
-    .concat(`\`@${'qrafty'} level me up\` - Level up your account for some additional ${'qrafty'}iness \n`)
-    .concat('`how much are <point_type> points worth` - Shows how much <point_type> points are worth\n');
 
-  const theMessage = Message({ channel: message.channel, text: 'Help menu for Qrafty' })
-    .blocks(
-      Blocks.Header({ text: `Need help with ${'Qrafty'}?` }),
-      Blocks.Section({ text: `_Commands_:` }),
-      Blocks.Section({ text: helpMessage }),
-      procVars.furtherHelpUrl
-        ? Blocks.Section({
-          text: `For further help please visit ${Md.link(procVars.furtherHelpUrl.toString(), 'Help Page')}`,
-        })
-        : undefined,
-    )
-    .asUser()
-    .buildToObject();
-
-  try {
-    const result = await client.chat.postMessage(theMessage as ChatPostMessageArguments);
-  } catch (e: any) {
-    console.error('error', e.data.response_metadata.message);
-  }
-}

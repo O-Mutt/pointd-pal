@@ -1,48 +1,49 @@
-import { Helpers } from '../helpers';
 import axios from 'axios';
-import { BonuslyBotConfig } from '../models/bonusly';
+import { QraftyConfig } from '../models/qraftyConfig';
+import { IUser } from '../models/user';
+import { connectionFactory } from './connectionsFactory';
 
 export class BonuslyService {
-  procVars = Helpers.createProcVars(process.env);
-
-  constructor() {}
+  constructor() { }
 
   /**
    *
    * @param {string} slackId the slack id of the user to find
    * @returns the user from the scores db, undefined if not found
    */
-  async sendBonus(event) {
-    BonuslyBotConfig;
-    this.robot.logger.debug(
-      `Sending a bonusly bonus to ${JSON.stringify(event.recipient.slackEmail)} from ${JSON.stringify(
-        event.sender.slackEmail,
-      )}`,
-    );
-    let reason = `point given through ${this.robot.name}`;
-    if (event.reason) {
-      const buff = new Buffer.from(event.reason, 'base64');
-      reason = buff.toString('UTF-8');
+  static async sendBonus(teamId: string, sender: IUser, recipients: IUser[], amount: number, reason?: string) {
+    const qraftyConfig = await QraftyConfig(connectionFactory(teamId)).findOneOrCreate(teamId);
+    //logger.debug(`Sending a bonusly bonus to ${JSON.stringify(event.recipient.slackEmail)} from ${JSON.stringify(event.sender.slackEmail)}`);
+    if (!reason) {
+      reason = `point given through qrafty`;
+    } else {
+      const buff = Buffer.from(reason, 'base64');
+      reason = buff.toString('utf-8');
     }
 
-    let hashtag = this.defaultReason;
+    let hashtag = qraftyConfig.bonuslyConfig?.defaultReason;
+    // check if the reason has a hashtag already in it
     if (reason && /(#\w+)/i.test(reason)) {
       const match = reason.match(/(#\w+)/i);
-      hashtag = match ? match[0] : this.defaultReason;
+      hashtag = match ? match[0] : qraftyConfig.bonuslyConfig?.defaultReason;
     }
 
-    let data;
-    try {
-      ({ data } = await axios.post('/api/v1/bonuses', {
-        giver_email: event.sender.slackEmail,
-        receiver_email: event.recipient.slackEmail,
-        amount: event.amount,
-        hashtag,
-        reason,
-      }));
-    } catch (e) {
-      this.robot.logger.error('Error sending bonusly bonus', e);
-      data = e.response.data;
+    let data: any[] = [];
+
+    for (const recipient of recipients) {
+      try {
+        const response = await axios.post('/api/v1/bonuses', {
+          giver_email: sender.email,
+          receiver_email: recipient.email,
+          amount: amount,
+          hashtag,
+          reason,
+        });
+        data.push(response.data);
+      } catch (e: any) {
+        //logger.error('Error sending bonusly bonus', e);
+        data.push(e.response.data);
+      }
     }
 
     return data;

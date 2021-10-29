@@ -1,22 +1,22 @@
-import { IUser } from '../models/user';
+import { IUser, UserInterface } from '../models/user';
 import { DirectionEnum } from './Enums';
 
 abstract class EventWithTeamId {
   teamId: string;
 
   constructor(init: EventWithTeamId) {
-    this.teamId = init.teamId;
+    Object.assign(this, init);
   }
 }
 
 export const PlusPlusEventName = 'plus-plus';
 export class PlusPlus extends EventWithTeamId {
+  sender: IUser;
+  recipients: IUser[];
+  channel: string;
+  amount: number;
+  direction: DirectionEnum;
   notificationMessage?: string;
-  sender?: IUser;
-  recipients?: IUser[];
-  direction?: DirectionEnum;
-  amount?: number;
-  channel?: string;
   reason?: string;
 
   // https://stackoverflow.com/a/37682352/593154
@@ -28,6 +28,8 @@ export class PlusPlus extends EventWithTeamId {
 
 export const PlusPlusFailureEventName = 'plus-plus-fail';
 export class PlusPlusFailure extends EventWithTeamId {
+  sender: IUser;
+  recipient: IUser;
   notificationMessage?: string;
   channel?: string;
 
@@ -40,8 +42,8 @@ export class PlusPlusFailure extends EventWithTeamId {
 
 export const PlusPlusSpamEventName = 'plus-plus-spam';
 export class PlusPlusSpam extends EventWithTeamId {
-  to?: IUser;
-  from?: IUser;
+  sender: IUser;
+  recipient: IUser;
   message?: string;
   reason?: string;
 
@@ -51,3 +53,5 @@ export class PlusPlusSpam extends EventWithTeamId {
     Object.assign(this, init);
   }
 }
+
+export const PlusPlusBonuslyEventName = 'plus-plus-bonusly-sent';

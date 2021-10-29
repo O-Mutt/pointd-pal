@@ -21,10 +21,14 @@ export interface IUser extends Document, AuditTags {
   bonuslyScoreOverride?: number;
   bonuslyPrompt?: string;
   walletAddress?: string;
+  bonuslyPointsDMResponse?: boolean
 }
 
 export const UserSchema = new Schema({
-  slackId: String,
+  slackId: {
+    type: String,
+    index: true
+  },
   score: {
     type: Number,
     default: 0,
@@ -75,6 +79,10 @@ export const UserSchema = new Schema({
     default: PromptSettings.PROMPT,
   },
   walletAddress: String,
+  bonuslyPointsDMResponse: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 UserSchema.statics.findOneBySlackIdOrCreate = async function (

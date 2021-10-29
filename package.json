@@ -9,6 +9,7 @@
   },
   "scripts": {
     "ngrok": "ngrok http 3000",
+    "build": "tsc -p tsconfig.json",
     "start": "ts-node app.ts",
     "start:dev": "ts-node-dev app.ts",
     "lint": "eslint '*/**' --quiet --fix",
@@ -29,9 +30,10 @@
     "slack-block-builder": "^2.2.0",
     "token-buddy": "^1.0.0",
     "ts-node": "^10.2.1",
-    "typescript": "^4.4.3"
+    "typescript": "^4.4.4"
   },
   "devDependencies": {
+    "@types/lodash": "^4.14.176",
     "@types/node": "^16.10.3",
     "@typescript-eslint/eslint-plugin": "^5.1.0",
     "@typescript-eslint/parser": "^5.1.0",

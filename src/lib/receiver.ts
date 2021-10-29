@@ -1,4 +1,4 @@
-const iStore = {
+/* const iStore = {
   storeInstallation: async (installation) => {
     functions.logger.log('in store installataion TOP');
     // change the lines below so they save to your database
@@ -50,3 +50,4 @@ const iStore = {
     throw new Error('Failed to delete installation');
   },
 };
+ */
