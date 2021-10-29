@@ -11,7 +11,7 @@ export let app = new App({
   signingSecret: process.env.SLACK_SIGNING_SECRET,
   clientId: process.env.SLACK_CLIENT_ID,
   clientSecret: process.env.SLACK_CLIENT_SECRET,
-  stateSecret: process.env.SLACK_STATE_SECRET,
+  stateSecret: encodeURI(process.env.SLACK_STATE_SECRET || ''),
   logLevel: process.env.LOG_LEVEL as LogLevel,
   installationStore: QraftyInstallStore,
   tokenVerificationEnabled: true,
