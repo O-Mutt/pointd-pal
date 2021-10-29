@@ -19,7 +19,7 @@ app.message('unmap all users', directMention(), unmapUsersToDb);
 app.message('map all slackIds to slackEmail', directMention(), mapSlackIdToEmail);
 
 async function mapUsersToDb({ message, context, client, logger, say }) {
-  const teamId = context.teamId;
+  const teamId = context.teamId as string;
   const userId: string = message.user;
 
   const { isAdmin } = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, userId);
@@ -47,7 +47,7 @@ async function mapUsersToDb({ message, context, client, logger, say }) {
 }
 
 async function mapMoreUserFieldsBySlackId({ message, context, client, logger, say }) {
-  const teamId = context.teamId;
+  const teamId = context.teamId as string;
   const userId: string = message.user;
 
   const { isAdmin } = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, userId);
@@ -78,7 +78,7 @@ async function mapMoreUserFieldsBySlackId({ message, context, client, logger, sa
 }
 
 async function mapSingleUserToDb({ message, context, client, logger, say }) {
-  const teamId = context.teamId;
+  const teamId = context.teamId as string;
   const userId: string = message.user;
 
   const { isAdmin } = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, userId);
@@ -115,7 +115,7 @@ async function mapSingleUserToDb({ message, context, client, logger, say }) {
 }
 
 async function unmapUsersToDb({ message, context, logger, say }) {
-  const teamId = context.teamId;
+  const teamId = context.teamId as string;
   const userId: string = message.user;
 
   const { isAdmin } = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, userId);
@@ -138,7 +138,7 @@ async function unmapUsersToDb({ message, context, logger, say }) {
 }
 
 async function mapSlackIdToEmail({ message, context, logger, say, client }) {
-  const teamId = context.teamId;
+  const teamId = context.teamId as string;
   const userId: string = message.user;
 
   const { isAdmin } = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, userId);

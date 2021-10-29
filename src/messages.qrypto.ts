@@ -30,7 +30,7 @@ async function levelUpAccount({ message, context, logger, say }) {
   if (!Helpers.isPrivateMessage(message.channel)) {
     return await say(`You should only execute a level up from within the context of a DM with ${'qrafty'}`);
   }
-  const teamId = context.teamId;
+  const teamId = context.teamId as string;
 
   const connection = connectionFactory(teamId);
   const user = await User(connection).findOneBySlackIdOrCreate(teamId, message.user);
@@ -72,7 +72,7 @@ async function levelUpToLevelThree({ action, body, logger, ack, say }) {
 }
 
 async function botWalletCount({ message, context, logger, say }) {
-  const teamId = context.teamId;
+  const teamId = context.teamId as string;
   const botWallet: IBotToken = await databaseService.getBotWallet(teamId);
   logger.debug(`Get the bot wallet by user ${message.user.name}, ${botWallet}`);
   let gas;

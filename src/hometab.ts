@@ -16,7 +16,7 @@ async function updateHomeTab({ event, context, client, logger }: SlackEventMiddl
   logger.debug('app home was opened!');
   try {
     const userId = event.user;
-    const teamId = context.teamId;
+    const teamId = context.teamId as string;
 
     const connection = connectionFactory(teamId);
     const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);

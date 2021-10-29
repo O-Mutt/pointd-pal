@@ -18,7 +18,7 @@ app.action(
   actions.hometab.admin_settings,
   async ({ ack, client, context, body }: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
     await ack();
-    const teamId = context.teamId;
+    const teamId = context.teamId as string;
     const userId = body.user.id;
     const connection = connectionFactory(teamId);
     const bonusly = await BonuslyBotConfig(connection).findOneOrCreate();
@@ -122,7 +122,7 @@ app.action(
   actions.hometab.user_settings,
   async ({ ack, client, context, body }: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
     await ack();
-    const teamId = context.teamId;
+    const teamId = context.teamId as string;
     const userId = body.user.id;
     const connection = connectionFactory(teamId);
     const bonusly = await BonuslyBotConfig(connection).findOne().exec();
@@ -200,9 +200,9 @@ for you to be able to withdraw your crypto. What is your public BEP20 wallet add
 
 app.action(
   actions.hometab.sync_admins,
-  async ({ ack, body }: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
+  async ({ ack, body, context }: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
     await ack();
-    const teamId = body.team?.id;
+    const teamId = context.teamId as string;
     const userId = body.user.id;
     const connection = connectionFactory(teamId);
     const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);

@@ -2,7 +2,7 @@ import { Schema, Document, Model, Connection } from 'mongoose';
 import { app } from '../../../app';
 import { AuditTags } from './auditTags';
 import { BonuslyBotConfigSchema, IBonuslyBotConfig } from './bonusly';
-import { Installation } from './installation';
+import { IInstallation, Installation } from './installation';
 
 export interface IQraftyConfig extends Document, AuditTags {
   slackToken?: string;
@@ -39,8 +39,11 @@ QraftyConfigSchema.statics.findOneOrCreate = async function (this: Model<QraftyC
     return qraftyConfig;
   }
 
-  const { installation } = await Installation.findOne({ teamId: teamId }).exec();
-  const { members } = await app.client.users.list({ token: installation.bot.token, team_id: teamId });
+  const teamInstall = await Installation.findOne({ teamId: teamId }).exec();
+  if (!teamInstall?.installation.bot?.token) {
+    throw new Error('Installation not found');
+  }
+  const { members } = await app.client.users.list({ token: teamInstall.installation.bot.token, team_id: teamId });
   const admins = members?.filter((user) => user.is_admin === true);
   qraftyConfig = new self({
     qraftyAdmins: admins

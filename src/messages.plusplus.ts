@@ -120,7 +120,7 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
 
 async function giveTokenBetweenUsers({ message, context, logger, say }) {
   const fullText = context.matches.input;
-  const teamId = context.teamId;
+  const teamId = context.teamId as string;
   const { premessage, userId, number, conjunction, reason } = context.matches.groups;
   const { channel, user: from } = message;
   if (!conjunction && reason) {
@@ -176,7 +176,7 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
 
 async function multipleUsersVote({ message, context, logger, say }) {
   const fullText = context.matches.input;
-  const teamId = context.teamId;
+  const teamId = context.teamId as string;
   const { premessage, allUsers, operator, conjunction, reason } = context.matches.groups;
   const { channel, user: from } = message;
   if (!allUsers) {
@@ -256,7 +256,7 @@ async function multipleUsersVote({ message, context, logger, say }) {
 async function eraseUserScore({ message, context, say }) {
   let erased;
   const fullText = context.matches.input;
-  const teamId = context.teamId;
+  const teamId = context.teamId as string;
   const { premessage, userId, conjunction, reason } = context.matches;
   const { channel, user: from } = message;
 

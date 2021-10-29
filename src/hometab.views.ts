@@ -12,7 +12,7 @@ app.view(
   actions.hometab.admin_settings_submit,
   async ({ ack, context, body, logger, view }: SlackViewMiddlewareArgs<ViewSubmitAction> & AllMiddlewareArgs) => {
     await ack();
-    const teamId = context.teamId;
+    const teamId = context.teamId as string;
     const userId = body.user.id;
     const connection = connectionFactory(teamId);
     const bonusly = await BonuslyBotConfig(connection).findOneOrCreate();
@@ -85,7 +85,7 @@ app.view(
   actions.hometab.user_settings_submit,
   async ({ ack, context, body, logger, view }: SlackViewMiddlewareArgs<ViewSubmitAction> & AllMiddlewareArgs) => {
     await ack();
-    const teamId = context.teamId;
+    const teamId = context.teamId as string;
     const userId = body.user.id;
 
     const connection = connectionFactory(teamId);

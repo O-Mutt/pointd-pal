@@ -21,7 +21,7 @@ app.message(regExpCreator.createTopPointGiversRegExp(), directMention(), getTopP
 
 async function respondWithScore({ message, context, say }) {
   const { userId } = context.matches.groups;
-  const teamId = context.teamId;
+  const teamId = context.teamId as string;
   const user = await databaseService.getUser(teamId, userId);
 
   let tokenString = '.';
@@ -69,7 +69,7 @@ async function respondWithScore({ message, context, say }) {
 
 async function respondWithLeaderLoserBoard({ client, message, context, logger, say }) {
   const { topOrBottom, digits }: { topOrBottom: string; digits: number } = context.matches.groups;
-  const teamId = context.teamId;
+  const teamId = context.teamId as string;
   const topOrBottomString = Helpers.capitalizeFirstLetter(topOrBottom);
   const methodName = `get${topOrBottomString}Scores`;
   const tops = await databaseService[methodName](teamId, digits);
@@ -121,7 +121,7 @@ async function respondWithLeaderLoserBoard({ client, message, context, logger, s
 
 async function respondWithLeaderLoserTokenBoard({ message, context, client }) {
   const { topOrBottom, digits }: { topOrBottom: string; digits: number } = context.matches.groups;
-  const teamId = context.teamId;
+  const teamId = context.teamId as string;
   const topOrBottomString = Helpers.capitalizeFirstLetter(topOrBottom);
   const methodName = `get${topOrBottomString}Tokens`;
   const tops = await databaseService[methodName](teamId, digits);
@@ -169,7 +169,7 @@ async function respondWithLeaderLoserTokenBoard({ message, context, client }) {
 
 async function getTopPointSenders({ message, context, client }) {
   const { topOrBottom, digits }: { topOrBottom: string; digits: number } = context.matches.groups;
-  const teamId = context.teamId;
+  const teamId = context.teamId as string;
   const topOrBottomString = Helpers.capitalizeFirstLetter(topOrBottom);
   const methodName = `get${topOrBottomString}Sender`;
   const tops = await databaseService[methodName](teamId, digits);

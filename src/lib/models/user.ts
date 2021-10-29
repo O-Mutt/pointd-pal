@@ -4,6 +4,7 @@ import { ESMap } from 'typescript';
 import { app } from '../../../app';
 import { PromptSettings } from '../types/Enums';
 import { AuditTags } from './auditTags';
+import { Installation } from './installation';
 
 export interface IUser extends Document, AuditTags {
   slackId: string;
@@ -96,9 +97,12 @@ UserSchema.statics.findOneBySlackIdOrCreate = async function (
     return user;
   }
 
-  const { installation } = await Installation.findOne({ teamId: teamId }).exec();
+  const teamInstall = await Installation.findOne({ teamId: teamId }).exec();
+  if (!teamInstall?.installation.bot?.token) {
+    throw new Error('Installation not found');
+  }
   // We will need to store and get the token for the client's specific team api
-  const { user: slackUser } = await app.client.users.info({ token: installation.bot.token, user: slackId });
+  const { user: slackUser } = await app.client.users.info({ token: teamInstall.installation.bot.token, user: slackId });
   user = new self({
     slackId,
     score: 0,
