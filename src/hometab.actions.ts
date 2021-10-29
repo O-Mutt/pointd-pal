@@ -129,7 +129,7 @@ app.action(
 
     const user = await User(connection).findOneBySlackIdOrCreate(userId);
     console.log('user settings', teamId, userId, user);
-    const qraftyConfig = await BotToken().findOne().exec();
+    const qraftyConfig = await BotToken.findOne().exec();
 
     let bonuslyBlocks: Appendable<ViewBlockBuilder> = [];
     if (bonusly?.enabled) {
