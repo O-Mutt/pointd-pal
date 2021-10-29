@@ -16,10 +16,10 @@ import { QraftyConfig } from './lib/models/qraftyConfig';
 
 app.action(
   actions.hometab.admin_settings,
-  async (actionArgs: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
-    await actionArgs.ack();
-    const teamId = actionArgs.context.teamId;
-    const userId = actionArgs.body.user.id;
+  async ({ ack, client, context, body }: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
+    await ack();
+    const teamId = context.teamId;
+    const userId = body.user.id;
     const connection = connectionFactory(teamId);
     const bonusly = await BonuslyBotConfig(connection).findOneOrCreate();
     const user = await User(connection).findOneBySlackIdOrCreate(userId);
@@ -111,8 +111,8 @@ app.action(
       ),
     );
 
-    const result = await actionArgs.client.views.open({
-      trigger_id: actionArgs.body.trigger_id,
+    const result = await client.views.open({
+      trigger_id: body.trigger_id,
       view: adminSettingsModal.buildToObject() as View,
     });
   },
@@ -120,10 +120,10 @@ app.action(
 
 app.action(
   actions.hometab.user_settings,
-  async (actionArgs: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
-    await actionArgs.ack();
-    const teamId = actionArgs.context.teamId;
-    const userId = actionArgs.body.user.id;
+  async ({ ack, client, context, body }: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
+    await ack();
+    const teamId = context.teamId;
+    const userId = body.user.id;
     const connection = connectionFactory(teamId);
     const bonusly = await BonuslyBotConfig(connection).findOne().exec();
 
@@ -191,8 +191,8 @@ for you to be able to withdraw your crypto. What is your public BEP20 wallet add
       callbackId: actions.hometab.user_settings_submit,
     }).blocks(...bonuslyBlocks, ...bonuslyCryptoBlocks, Blocks.Section({ text: 'Hello world' }));
 
-    const result = await actionArgs.client.views.open({
-      trigger_id: actionArgs.body.trigger_id,
+    const result = await client.views.open({
+      trigger_id: body.trigger_id,
       view: userSettingsModal.buildToObject() as View,
     });
   },
@@ -200,10 +200,10 @@ for you to be able to withdraw your crypto. What is your public BEP20 wallet add
 
 app.action(
   actions.hometab.sync_admins,
-  async (actionArgs: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
-    await actionArgs.ack();
-    const teamId = actionArgs.body.team?.id;
-    const userId = actionArgs.body.user.id;
+  async ({ ack, body }: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
+    await ack();
+    const teamId = body.team?.id;
+    const userId = body.user.id;
     const connection = connectionFactory(teamId);
     const user = await User(connection).findOneBySlackIdOrCreate(userId);
     const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId as string);

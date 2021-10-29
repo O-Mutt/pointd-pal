@@ -17,5 +17,4 @@ app.action(actions.bonusly.prompt_confirm, async (actionArgs: SlackActionMiddlew
 app.action(actions.bonusly.prompt_cancel, async (actionArgs: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
   await actionArgs.ack();
   await actionArgs.respond({ text: `${Md.emoji('ok_hand')} No bonusly sent.`, delete_original: true } as RespondArguments)
-  //const result = await app.client.chat.postEphemeral({ ...message, user: plusPlusEvent.sender.slackId } as ChatPostEphemeralArguments);
 });

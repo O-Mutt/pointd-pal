@@ -18,15 +18,16 @@ app.message('try to map @.* to db users', directMention(), mapSingleUserToDb);
 app.message('unmap all users', directMention(), unmapUsersToDb);
 app.message('map all slackIds to slackEmail', directMention(), mapSlackIdToEmail);
 
-const ALLOWED_ADMIN_IDS = ['ULKF78MG9', 'UD46NSKSM', 'U0231VDAB1B'];
-
 async function mapUsersToDb({ message, context, client, logger, say }) {
-  if (!ALLOWED_ADMIN_IDS.includes(message.user)) {
+  const teamId = context.teamId;
+  const userId: string = message.user;
+
+  const { isAdmin } = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(userId);
+  if (isAdmin) {
     logger.error("sorry, can't do that", message, context);
     await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
     return;
   }
-  const teamId = context.teamId;
   const databaseService = new DatabaseService({ ...procVars });
 
   const members: Member[] = (await client.users.list()).members;
@@ -46,13 +47,17 @@ async function mapUsersToDb({ message, context, client, logger, say }) {
 }
 
 async function mapMoreUserFieldsBySlackId({ message, context, client, logger, say }) {
-  if (!ALLOWED_ADMIN_IDS.includes(message.user)) {
+  const teamId = context.teamId;
+  const userId: string = message.user;
+
+  const { isAdmin } = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(userId);
+  if (isAdmin) {
     logger.error("sorry, can't do that", message, context);
     await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
     return;
   }
   const databaseService = new DatabaseService({ ...procVars });
-  const teamId = context.teamId;
+
 
   const members: Member[] = (await client.users.list()).members;
   for (const member of members) {
@@ -73,7 +78,11 @@ async function mapMoreUserFieldsBySlackId({ message, context, client, logger, sa
 }
 
 async function mapSingleUserToDb({ message, context, client, logger, say }) {
-  if (!ALLOWED_ADMIN_IDS.includes(message.user)) {
+  const teamId = context.teamId;
+  const userId: string = message.user;
+
+  const { isAdmin } = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(userId);
+  if (isAdmin) {
     logger.error("sorry, can't do that", message, context);
     await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
     return;
@@ -84,7 +93,7 @@ async function mapSingleUserToDb({ message, context, client, logger, say }) {
   // do the mention dance
   const to = { slackId: 'drp', name: 'derrp' };
   const databaseService = new DatabaseService({ ...procVars });
-  const teamId = context.teamId;
+
 
   const { user } = await client.users.info({ user: to.slackId });
   try {
@@ -106,13 +115,17 @@ async function mapSingleUserToDb({ message, context, client, logger, say }) {
 }
 
 async function unmapUsersToDb({ message, context, logger, say }) {
-  if (!ALLOWED_ADMIN_IDS.includes(message.user)) {
+  const teamId = context.teamId;
+  const userId: string = message.user;
+
+  const { isAdmin } = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(userId);
+  if (isAdmin) {
     logger.error("sorry, can't do that", message, context);
     await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
     return;
   }
   const databaseService = new DatabaseService({ ...procVars });
-  const teamId = context.teamId;
+
 
   try {
     await User(connectionFactory(teamId))
@@ -125,14 +138,18 @@ async function unmapUsersToDb({ message, context, logger, say }) {
 }
 
 async function mapSlackIdToEmail({ message, context, logger, say, client }) {
-  if (!ALLOWED_ADMIN_IDS.includes(message.user)) {
+  const teamId = context.teamId;
+  const userId: string = message.user;
+
+  const { isAdmin } = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(userId);
+  if (isAdmin) {
     logger.error("sorry, can't do that", message, context);
     await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
     return;
   }
 
   const databaseService = new DatabaseService({ ...procVars });
-  const teamId = context.teamId;
+
 
   try {
     const missingEmailUsers: IUser[] = await User(connectionFactory(teamId))

@@ -1,17 +1,19 @@
 import { Blocks, Elements, Md, Message } from 'slack-block-builder';
 
+import { ChatPostEphemeralArguments } from '@slack/web-api';
+
+import { app } from '../app';
+import { Installation } from './lib/models/installation';
 import { QraftyConfig } from './lib/models/qraftyConfig';
 import { IUser, User } from './lib/models/user';
-import { connectionFactory } from './lib/services/connectionsFactory';
 import { BonuslyService } from './lib/services/bonusly';
+import { connectionFactory } from './lib/services/connectionsFactory';
 import { eventBus } from './lib/services/eventBus';
+import { actions } from './lib/types/Actions';
 import { ConfirmOrCancel, PromptSettings } from './lib/types/Enums';
 import {
   PlusPlus, PlusPlusBonuslyEventName, PlusPlusEventName, PlusPlusFailure, PlusPlusFailureEventName
 } from './lib/types/Events';
-import { app } from '../app';
-import { actions } from './lib/types/Actions';
-import { ChatPostEphemeralArguments, ChatPostMessageArguments } from '@slack/web-api';
 
 eventBus.on(PlusPlusEventName, sendBonuslyBonus);
 eventBus.on(PlusPlusBonuslyEventName, handleBonuslySent);
@@ -21,9 +23,16 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
   const connection = connectionFactory(plusPlusEvent.teamId);
   const config = await QraftyConfig(connection).findOneOrCreate(plusPlusEvent.teamId);
   const sender = await User(connection).findOneBySlackIdOrCreate(plusPlusEvent.sender.slackId);
+  const teamInstallConfig = await Installation.findOne({ teamId: plusPlusEvent.teamId }).exec();
   if (!config.bonuslyConfig?.enabled || !config.bonuslyConfig?.apiKey || !config.bonuslyConfig?.url) {
     return;
   }
+
+  if (!teamInstallConfig?.installation.bot?.token) {
+    return;
+  }
+  const token = teamInstallConfig.installation.bot.token;
+
   if (plusPlusEvent.sender.isBot === true) {
     // bots can't send ++ let alone bonusly bonuses
     return;
@@ -72,7 +81,11 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
         .buildToObject();
 
       try {
-        const result = await app.client.chat.postEphemeral({ ...message, user: plusPlusEvent.sender.slackId } as ChatPostEphemeralArguments);
+        const result = await app.client.chat.postEphemeral({
+          ...message,
+          token: token,
+          user: plusPlusEvent.sender.slackId
+        } as ChatPostEphemeralArguments);
       } catch (e) {
         console.log(e);
       }
@@ -88,6 +101,11 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
 async function handleBonuslySent(responses: any[], plusPlusEvent: PlusPlus, sender: IUser) {
   const messages: string[] = [];
   const dms: string[] = [];
+  const teamInstallConfig = await Installation.findOne({ teamId: plusPlusEvent.teamId }).exec();
+  if (!teamInstallConfig?.installation.bot?.token) {
+    return;
+  }
+  const token = teamInstallConfig.installation.bot.token;
   for (let i = 0; i < responses.length; i++) {
     if (responses[i].success === true) {
       messages.push(`We sent a Bonusly for ${responses[i].result.amount_with_currency} to ${Md.user(plusPlusEvent.recipients[i].slackId)}.`);
@@ -101,6 +119,7 @@ async function handleBonuslySent(responses: any[], plusPlusEvent: PlusPlus, send
     if (sender.bonuslyPointsDMResponse) {
       try {
         await app.client.chat.postMessage({
+          token: token,
           channel: plusPlusEvent.sender.slackId,
           text: dms.join('\n'),
         });
@@ -111,6 +130,7 @@ async function handleBonuslySent(responses: any[], plusPlusEvent: PlusPlus, send
 
     try {
       await app.client.chat.postMessage({
+        token: token,
         channel: plusPlusEvent.channel,
         text: messages.join('\n'),
       });

@@ -10,16 +10,16 @@ import { EnabledSettings } from './lib/types/Enums';
 
 app.view(
   actions.hometab.admin_settings_submit,
-  async (args: SlackViewMiddlewareArgs<ViewSubmitAction> & AllMiddlewareArgs) => {
-    await args.ack();
-    const teamId = args.context.teamId;
-    const userId = args.body.user.id;
+  async ({ ack, context, body, logger, view }: SlackViewMiddlewareArgs<ViewSubmitAction> & AllMiddlewareArgs) => {
+    await ack();
+    const teamId = context.teamId;
+    const userId = body.user.id;
     const connection = connectionFactory(teamId);
     const bonusly = await BonuslyBotConfig(connection).findOneOrCreate();
     const qrafty = await QraftyConfig(connection).findOneOrCreate(teamId as string);
-    for (const option in args.view.state.values) {
-      for (const key in args.view.state.values[option]) {
-        const state = args.view.state.values[option][key];
+    for (const option in view.state.values) {
+      for (const key in view.state.values[option]) {
+        const state = view.state.values[option][key];
         const value = (state.value || state.selected_option?.value) as string;
         const selectedUsers = state.selected_users as string[];
         switch (key) {
@@ -53,7 +53,7 @@ app.view(
             try {
               bonusly.url = new URL(value);
             } catch (e) {
-              args.logger.warn('There was an error thrown when trying to set the bonusly url');
+              logger.warn('There was an error thrown when trying to set the bonusly url');
             }
             break;
           }
@@ -66,7 +66,7 @@ app.view(
             break;
           }
           default: {
-            args.logger.debug('key not recognized');
+            logger.debug('key not recognized');
             break;
           }
         }
@@ -76,25 +76,25 @@ app.view(
     qrafty.updatedBy = userId;
     qrafty.updatedAt = new Date();
     qrafty.bonuslyConfig = bonusly;
-    args.logger.debug(`Updating admin configs for ${teamId} by ${userId}`);
+    logger.debug(`Updating admin configs for ${teamId} by ${userId}`);
     await qrafty.save();
   },
 );
 
 app.view(
   actions.hometab.user_settings_submit,
-  async (args: SlackViewMiddlewareArgs<ViewSubmitAction> & AllMiddlewareArgs) => {
-    await args.ack();
-    const teamId = args.context.teamId;
-    const userId = args.body.user.id;
+  async ({ ack, context, body, logger, view }: SlackViewMiddlewareArgs<ViewSubmitAction> & AllMiddlewareArgs) => {
+    await ack();
+    const teamId = context.teamId;
+    const userId = body.user.id;
 
     const connection = connectionFactory(teamId);
     const user = await User(connection).findOneBySlackIdOrCreate(userId);
 
-    for (const option in args.view.state.values) {
-      for (const key in args.view.state.values[option]) {
-        const value: string = (args.view.state.values[option][key].value ||
-          args.view.state.values[option][key].selected_option?.value) as string;
+    for (const option in view.state.values) {
+      for (const key in view.state.values[option]) {
+        const value: string = (view.state.values[option][key].value ||
+          view.state.values[option][key].selected_option?.value) as string;
         switch (key) {
           case 'hometab_bonuslyPrompt': {
             user.bonuslyPrompt = value;
@@ -108,14 +108,14 @@ app.view(
             user.walletAddress = value;
           }
           default: {
-            args.logger.debug('key not recognized');
+            logger.debug('key not recognized');
             break;
           }
         }
       }
     }
     user.updatedAt = new Date();
-    args.logger.debug(`Updating user configs for ${teamId} by ${userId}`);
+    logger.debug(`Updating user configs for ${teamId} by ${userId}`);
     await user.save();
   },
 );

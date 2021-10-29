@@ -1,4 +1,5 @@
 import { app } from '../app';
+import { Installation } from './lib/models/installation';
 import { QraftyConfig } from './lib/models/qraftyConfig';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { eventBus } from './lib/services/eventBus';
@@ -17,12 +18,18 @@ async function sendPlusPlusNotification(plusPlusEvent: PlusPlus) {
   if (!config?.notificationRoom) {
     return;
   }
-  const channelId = await SlackService.findOrCreateConversation(plusPlusEvent.teamId, config?.notificationRoom);
+  const teamInstallConfig = await Installation.findOne({ teamId: plusPlusEvent.teamId }).exec();
+  if (!teamInstallConfig?.installation.bot?.token) {
+    return;
+  }
+  const botToken = teamInstallConfig.installation.bot.token;
+  const channelId = await SlackService.findOrCreateConversation(botToken, plusPlusEvent.teamId, config.notificationRoom);
   if (!channelId) {
     return;
   }
   try {
     const result = await app.client.chat.postMessage({
+      token: botToken,
       channel: channelId,
       text: plusPlusEvent.notificationMessage,
     });
@@ -36,12 +43,18 @@ async function sendPlusPlusFalsePositiveNotification(plusPlusFailureEvent: PlusP
   if (!config?.falsePositiveRoom) {
     return;
   }
-  const channelId = await SlackService.findOrCreateConversation(plusPlusFailureEvent.teamId, config?.falsePositiveRoom);
+  const teamInstallConfig = await Installation.findOne({ teamId: plusPlusFailureEvent.teamId }).exec();
+  if (!teamInstallConfig?.installation.bot?.token) {
+    return;
+  }
+  const botToken = teamInstallConfig.installation.bot.token;
+  const channelId = await SlackService.findOrCreateConversation(botToken, plusPlusFailureEvent.teamId, config.falsePositiveRoom);
   if (!channelId) {
     return;
   }
   try {
     const result = await app.client.chat.postMessage({
+      token: botToken,
       channel: channelId,
       text: plusPlusFailureEvent.notificationMessage,
     });
@@ -50,24 +63,23 @@ async function sendPlusPlusFalsePositiveNotification(plusPlusFailureEvent: PlusP
   }
 }
 
-/**
- *
- * @param {object} notificationObject
- * @param {object} notificationObject.to the user object who was receiving the point
- * @param {object} notificationObject.from the user object who was sending the point
- * @param {string} notificationObject.message the message that should be sent to the user
- * @param {string} notificationObject.reason a reason why the message is being sent
- */
-async function logAndNotifySpam({ sender, recipient, message, reason }: PlusPlusSpam) {
+async function logAndNotifySpam({ sender, recipient, message, reason, teamId }: PlusPlusSpam) {
   //Logger.error(`A spam event has been detected: ${notificationObject.message}. ${notificationObject.reason}`);
   //robot.messageRoom(notificationObject.from.slackId, `${notificationObject.message}\n\n${notificationObject.reason}`);
+  if (!sender.slackId) {
+    return;
+  }
+  const teamInstallConfig = await Installation.findOne({ teamId: teamId }).exec();
+  if (!teamInstallConfig?.installation.bot?.token) {
+    return;
+  }
+  const botToken = teamInstallConfig.installation.bot.token;
   try {
-    if (sender?.slackId) {
-      const result = await app.client.chat.postMessage({
-        channel: sender.slackId,
-        text: `${message}\n\n${reason}`,
-      });
-    }
+    const result = await app.client.chat.postMessage({
+      token: botToken,
+      channel: sender.slackId,
+      text: `${message}\n\n${reason}`,
+    });
   } catch (error) {
     // logger.error(error);
   }

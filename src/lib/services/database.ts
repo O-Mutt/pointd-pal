@@ -87,11 +87,12 @@ export class DatabaseService {
     await from.save();
 
     if (newScore % this.furtherFeedbackScore === 0) {
+      // TODO formal feedback should be in an event to handle it outside of the db service...
       //Logger.debug(`${from.name} has sent a lot of points to ${to.name} suggesting further feedback ${score}`);
-      await app.client.chat.postMessage({
+      /* await app.client.chat.postMessage({
         channel: from.slackId,
         text: `Looks like you've given ${Md.user(to.slackId)} quite a few points, maybe you should look at submitting ${this.peerFeedbackUrl}`,
-      });
+      }); */
     }
   }
 

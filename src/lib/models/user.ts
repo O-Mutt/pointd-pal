@@ -95,8 +95,9 @@ UserSchema.statics.findOneBySlackIdOrCreate = async function (
     return user;
   }
 
+  const { installation } = Installation().findOne({ teamId: teamId }).exec();
   // We will need to store and get the token for the client's specific team api
-  const { user: slackUser } = await app.client.users.info({ user: slackId });
+  const { user: slackUser } = await app.client.users.info({ token: installation.bot.token, user: slackId });
   user = new self({
     slackId,
     score: 0,

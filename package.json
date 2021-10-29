@@ -10,7 +10,7 @@
   "scripts": {
     "ngrok": "ngrok http 3000",
     "start": "node --max-old-space-size=4096 -- node_modules/ts-node/dist/bin -P tsconfig.json app.ts",
-    "start:dev": "node --max-old-space-size=4096 -- node_modules/ts-node-dev/dist/bin -P tsconfig.json app.ts",
+    "start:dev": "ts-node-dev -P tsconfig.json app.ts",
     "lint": "eslint '*/**' --quiet --fix",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -12,11 +12,11 @@ import { actions } from './lib/types/Actions';
 
 app.event('app_home_opened', updateHomeTab);
 
-async function updateHomeTab(args: SlackEventMiddlewareArgs<'app_home_opened'> & AllMiddlewareArgs) {
-  args.logger.debug('app home was opened!');
+async function updateHomeTab({ event, context, client, logger }: SlackEventMiddlewareArgs<'app_home_opened'> & AllMiddlewareArgs) {
+  logger.debug('app home was opened!');
   try {
-    const userId = args.event.user;
-    const teamId = args.context.teamId;
+    const userId = event.user;
+    const teamId = context.teamId;
 
     const connection = connectionFactory(teamId);
     const user = await User(connection).findOneBySlackIdOrCreate(userId);
@@ -36,10 +36,9 @@ async function updateHomeTab(args: SlackEventMiddlewareArgs<'app_home_opened'> &
 
       //...getBonuslyAdminConfigSection(user, bonusly, qraftyConfig),
     );
-    args.logger.error(args.context)
-    const result = await args.client.views.publish({ token: args.context.botToken, view: hometab.buildToObject() as View, user_id: userId });
+    await client.views.publish({ token: context.botToken, view: hometab.buildToObject() as View, user_id: userId });
   } catch (e) {
-    args.logger.error('error publishing hometab', e);
+    logger.error('error publishing hometab', e);
   }
 }
 
