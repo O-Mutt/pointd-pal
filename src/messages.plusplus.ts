@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { Blocks, Md, Message } from 'slack-block-builder';
 import tokenBuddy from 'token-buddy';
 
@@ -46,16 +45,13 @@ if (procVars.magicIv && procVars.magicNumber) {
 
 // listen to everything
 app.message(regExpCreator.createUpDownVoteRegExp(), upOrDownVote);
-app.message(new RegExp('how much .*point.*', 'i'), tellHowMuchPointsAreWorth);
 app.message(regExpCreator.createMultiUserVoteRegExp(), multipleUsersVote);
 
 // listen for bot tag/ping
-app.message(regExpCreator.createGiveTokenRegExp(), giveTokenBetweenUsers);
-
+app.message(regExpCreator.createGiveTokenRegExp(), directMention(), giveTokenBetweenUsers);
 
 // admin
-// directMention
-app.message(regExpCreator.createEraseUserScoreRegExp(), eraseUserScore);
+app.message(regExpCreator.createEraseUserScoreRegExp(), directMention(), eraseUserScore);
 
 /**
  * Functions for responding to commands
@@ -254,26 +250,6 @@ async function multipleUsersVote({ message, context, logger, say }) {
 
   logger.debug(`These are the messages \n ${messages.join(' ')} `);
   await say(messages.join('\n'));
-}
-
-async function tellHowMuchPointsAreWorth({ payload, logger, message, context, say }) {
-  logger.error(message, context, payload);
-  try {
-    const resp = await axios({
-      url: 'https://api.coindesk.com/v1/bpi/currentprice/ARS.json',
-    });
-
-    const bitcoin = resp.data.bpi.USD.rate_float;
-    const ars = resp.data.bpi.ARS.rate_float;
-    const satoshi = bitcoin / 1e8;
-    return say(
-      `A bitcoin is worth ${bitcoin} USD right now(${ars} ARS), a satoshi is about ${satoshi}, and qrafty points are worth nothing!`,
-    );
-  } catch (e: any) {
-    return await say(
-      "Seems like we are having trouble getting some data... Don't worry, though, your qrafty points are still worth nothing!",
-    );
-  }
 }
 
 async function eraseUserScore({ message, context, say }) {

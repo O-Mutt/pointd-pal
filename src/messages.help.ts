@@ -1,16 +1,19 @@
-import { ChatPostMessageArguments } from '@slack/web-api';
+import axios from 'axios';
 import { Blocks, Md, Message } from 'slack-block-builder';
+
+import { directMention } from '@slack/bolt';
+import { ChatPostMessageArguments } from '@slack/web-api';
+
 import { app } from '../app';
 import * as pjson from '../package.json';
 import { Helpers } from './lib/helpers';
 import { regExpCreator } from './lib/regexpCreator';
 
-//directMention()
-app.message(regExpCreator.getHelp(), respondWithHelpGuidance);
-// directMention
-app.message(RegExp(/(plusplus version|-v|--version)/, 'i'), async ({ message, context, say }) => {
+app.message(regExpCreator.getHelp(), directMention(), respondWithHelpGuidance);
+app.message(RegExp(/(plusplus version|-v|--version)/, 'i'), directMention(), async ({ message, context, say }) => {
   await say(`${Helpers.capitalizeFirstLetter('qrafty')} ${pjson.name}, version: ${pjson.version}`);
 });
+app.message(new RegExp('how much .*point.*', 'i'), tellHowMuchPointsAreWorth);
 
 const procVars = Helpers.getProcessVariables(process.env);
 
@@ -46,5 +49,25 @@ async function respondWithHelpGuidance({ client, message, say }) {
     const result = await client.chat.postMessage(theMessage as ChatPostMessageArguments);
   } catch (e: any) {
     console.error('error', e.data.response_metadata.message);
+  }
+}
+
+async function tellHowMuchPointsAreWorth({ payload, logger, message, context, say }) {
+  logger.error(message, context, payload);
+  try {
+    const resp = await axios({
+      url: 'https://api.coindesk.com/v1/bpi/currentprice/ARS.json',
+    });
+
+    const bitcoin = resp.data.bpi.USD.rate_float;
+    const ars = resp.data.bpi.ARS.rate_float;
+    const satoshi = bitcoin / 1e8;
+    return say(
+      `A bitcoin is worth ${bitcoin} USD right now(${ars} ARS), a satoshi is about ${satoshi}, and qrafty points are worth nothing!`,
+    );
+  } catch (e: any) {
+    return await say(
+      "Seems like we are having trouble getting some data... Don't worry, though, your qrafty points are still worth nothing!",
+    );
   }
 }

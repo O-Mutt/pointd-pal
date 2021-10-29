@@ -1,5 +1,8 @@
+import { Md } from 'slack-block-builder';
+
 import { App } from '@slack/bolt';
 import { LogLevel } from '@slack/logger';
+
 import { QraftyInstallStore } from './src/lib/services/qraftyInstallStore';
 
 require('dotenv').config();
@@ -45,7 +48,6 @@ import './src/monthlyScoreboardCron';
 import './src/hometab';
 import './src/hometab.actions';
 import './src/hometab.views';
-import { Md } from 'slack-block-builder';
 
 app.action('button_click', async ({ body, ack, say }) => {
   // Acknowledge the action

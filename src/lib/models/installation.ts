@@ -7,7 +7,7 @@ export interface IInstallation extends Document {
 
 export const InstallationSchema = new Schema({
   teamId: String,
-  installation: Object,
+  installation: Schema.Types.Subdocument,
 });
 
 export interface InstallationInterface extends IInstallation {
