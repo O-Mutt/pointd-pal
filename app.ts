@@ -11,6 +11,27 @@ export let app = new App({
   stateSecret: process.env.SLACK_STATE_SECRET,
   logLevel: process.env.LOG_LEVEL as LogLevel,
   installationStore: QraftyInstallStore,
+  scopes: [
+    "app_mentions:read",
+    "channels:history",
+    "channels:manage",
+    "channels:read",
+    "chat:write",
+    "commands",
+    "groups:history",
+    "groups:read",
+    "groups:write",
+    "im:history",
+    "im:read",
+    "im:write",
+    "mpim:history",
+    "mpim:read",
+    "mpim:write",
+    "users.profile:read",
+    "users:read",
+    "users:read.email",
+    "usergroups:read",
+  ]
 });
 
 import './src/actions.bonusly';
