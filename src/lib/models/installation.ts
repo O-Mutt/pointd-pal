@@ -1,4 +1,5 @@
 import { Schema, Document, Model, model } from 'mongoose';
+import { connectionFactory } from '../services/connectionsFactory';
 
 export interface IInstallation extends Document {
   teamId: string;
@@ -18,4 +19,4 @@ export interface InstallationModelInterface extends Model<InstallationInterface>
   // static methods
 }
 
-export const Installation = model<InstallationInterface, InstallationModelInterface>('installation', InstallationSchema);
+export const Installation = connectionFactory().model<InstallationInterface, InstallationModelInterface>('installation', InstallationSchema);

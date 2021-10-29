@@ -175,7 +175,7 @@ export class DatabaseService {
     user.token = user.score;
     user.accountLevel = 2;
     await user.save();
-    await BotToken()
+    await BotToken
       .findOneAndUpdate({}, { $inc: { token: -user.token } })
       .exec();
     eventBus.emit('plusplus-tokens');
@@ -183,7 +183,7 @@ export class DatabaseService {
   }
 
   async getBotWallet(teamId: string): Promise<IBotToken> {
-    const botWallet = await BotToken().findOne({ name: 'qrafty' }).exec();
+    const botWallet = await BotToken.findOne({ name: 'qrafty' }).exec();
     return botWallet as IBotToken;
   }
 
@@ -256,7 +256,7 @@ export class DatabaseService {
   }
 
   async getMagicSecretStringNumberValue() {
-    const updateBotWallet = await BotToken().findOne({ name: 'qrafty' });
+    const updateBotWallet = await BotToken.findOne({ name: 'qrafty' });
     if (updateBotWallet) {
       return updateBotWallet.magicString;
     }

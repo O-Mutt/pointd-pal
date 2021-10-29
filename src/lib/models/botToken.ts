@@ -25,5 +25,4 @@ export interface BotTokenInterfaceModelInterface extends Model<BotTokenInterface
   // static methods
 }
 
-export const BotToken = () =>
-  connectionFactory().model<BotTokenInterface, BotTokenInterfaceModelInterface>('botToken', BotTokenSchema);
+export const BotToken = connectionFactory().model<BotTokenInterface, BotTokenInterfaceModelInterface>('botToken', BotTokenSchema);
