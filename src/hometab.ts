@@ -19,7 +19,7 @@ async function updateHomeTab({ event, context, client, logger }: SlackEventMiddl
     const teamId = context.teamId;
 
     const connection = connectionFactory(teamId);
-    const user = await User(connection).findOneBySlackIdOrCreate(userId);
+    const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
     const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId as string);
 
     const hometab = HomeTab({ callbackId: 'hometab' }).blocks(

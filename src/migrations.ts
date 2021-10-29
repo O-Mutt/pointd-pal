@@ -22,7 +22,7 @@ async function mapUsersToDb({ message, context, client, logger, say }) {
   const teamId = context.teamId;
   const userId: string = message.user;
 
-  const { isAdmin } = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(userId);
+  const { isAdmin } = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, userId);
   if (isAdmin) {
     logger.error("sorry, can't do that", message, context);
     await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
@@ -50,7 +50,7 @@ async function mapMoreUserFieldsBySlackId({ message, context, client, logger, sa
   const teamId = context.teamId;
   const userId: string = message.user;
 
-  const { isAdmin } = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(userId);
+  const { isAdmin } = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, userId);
   if (isAdmin) {
     logger.error("sorry, can't do that", message, context);
     await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
@@ -81,7 +81,7 @@ async function mapSingleUserToDb({ message, context, client, logger, say }) {
   const teamId = context.teamId;
   const userId: string = message.user;
 
-  const { isAdmin } = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(userId);
+  const { isAdmin } = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, userId);
   if (isAdmin) {
     logger.error("sorry, can't do that", message, context);
     await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
@@ -118,7 +118,7 @@ async function unmapUsersToDb({ message, context, logger, say }) {
   const teamId = context.teamId;
   const userId: string = message.user;
 
-  const { isAdmin } = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(userId);
+  const { isAdmin } = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, userId);
   if (isAdmin) {
     logger.error("sorry, can't do that", message, context);
     await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
@@ -141,7 +141,7 @@ async function mapSlackIdToEmail({ message, context, logger, say, client }) {
   const teamId = context.teamId;
   const userId: string = message.user;
 
-  const { isAdmin } = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(userId);
+  const { isAdmin } = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, userId);
   if (isAdmin) {
     logger.error("sorry, can't do that", message, context);
     await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);

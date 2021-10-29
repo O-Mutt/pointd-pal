@@ -22,7 +22,7 @@ app.action(
     const userId = body.user.id;
     const connection = connectionFactory(teamId);
     const bonusly = await BonuslyBotConfig(connection).findOneOrCreate();
-    const user = await User(connection).findOneBySlackIdOrCreate(userId);
+    const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
     const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId as string);
 
     if (!user.isAdmin) {
@@ -127,7 +127,7 @@ app.action(
     const connection = connectionFactory(teamId);
     const bonusly = await BonuslyBotConfig(connection).findOne().exec();
 
-    const user = await User(connection).findOneBySlackIdOrCreate(userId);
+    const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
     console.log('user settings', teamId, userId, user);
     const qraftyConfig = await BotToken.findOne().exec();
 
@@ -205,7 +205,7 @@ app.action(
     const teamId = body.team?.id;
     const userId = body.user.id;
     const connection = connectionFactory(teamId);
-    const user = await User(connection).findOneBySlackIdOrCreate(userId);
+    const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
     const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId as string);
 
     if (!user.isAdmin) {

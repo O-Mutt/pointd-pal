@@ -33,7 +33,7 @@ async function levelUpAccount({ message, context, logger, say }) {
   const teamId = context.teamId;
 
   const connection = connectionFactory(teamId);
-  const user = await User(connection).findOneBySlackIdOrCreate(message.user);
+  const user = await User(connection).findOneBySlackIdOrCreate(teamId, message.user);
   if (user.accountLevel === 2) {
     const theBlocks = Message({ channel: context.channel, text: "Let's level you up!" })
       .blocks(

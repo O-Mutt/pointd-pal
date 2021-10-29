@@ -87,6 +87,7 @@ export const UserSchema = new Schema({
 
 UserSchema.statics.findOneBySlackIdOrCreate = async function (
   this: Model<UserInterface, UserModelInterface>,
+  teamId: string,
   slackId: string,
 ): Promise<IUser> {
   const self: Model<UserInterface, UserModelInterface> = this;
@@ -95,7 +96,7 @@ UserSchema.statics.findOneBySlackIdOrCreate = async function (
     return user;
   }
 
-  const { installation } = Installation().findOne({ teamId: teamId }).exec();
+  const { installation } = await Installation.findOne({ teamId: teamId }).exec();
   // We will need to store and get the token for the client's specific team api
   const { user: slackUser } = await app.client.users.info({ token: installation.bot.token, user: slackId });
   user = new self({
@@ -122,7 +123,7 @@ export interface UserInterface extends IUser {
 
 export interface UserModelInterface extends Model<UserInterface> {
   // static methods
-  findOneBySlackIdOrCreate(slackId: string): Promise<IUser>;
+  findOneBySlackIdOrCreate(teamId: string, slackId: string): Promise<IUser>;
 }
 
 export const User = (conn: Connection) => conn.model<UserInterface, UserModelInterface>('score', UserSchema);

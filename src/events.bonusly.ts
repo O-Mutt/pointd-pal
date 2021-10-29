@@ -22,7 +22,7 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
   console.log("send bonusly bonus");
   const connection = connectionFactory(plusPlusEvent.teamId);
   const config = await QraftyConfig(connection).findOneOrCreate(plusPlusEvent.teamId);
-  const sender = await User(connection).findOneBySlackIdOrCreate(plusPlusEvent.sender.slackId);
+  const sender = await User(connection).findOneBySlackIdOrCreate(plusPlusEvent.teamId, plusPlusEvent.sender.slackId);
   const teamInstallConfig = await Installation.findOne({ teamId: plusPlusEvent.teamId }).exec();
   if (!config.bonuslyConfig?.enabled || !config.bonuslyConfig?.apiKey || !config.bonuslyConfig?.url) {
     return;

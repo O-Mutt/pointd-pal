@@ -39,7 +39,7 @@ QraftyConfigSchema.statics.findOneOrCreate = async function (this: Model<QraftyC
     return qraftyConfig;
   }
 
-  const { installation } = Installation().findOne({ teamId: teamId }).exec();
+  const { installation } = await Installation.findOne({ teamId: teamId }).exec();
   const { members } = await app.client.users.list({ token: installation.bot.token, team_id: teamId });
   const admins = members?.filter((user) => user.is_admin === true);
   qraftyConfig = new self({

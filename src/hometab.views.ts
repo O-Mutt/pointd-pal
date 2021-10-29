@@ -31,7 +31,7 @@ app.view(
             qrafty.qraftyAdmins = selectedUsers;
             for (const newAdminId of selectedUsers) {
               console.log(newAdminId);
-              const user = await User(connection).findOneBySlackIdOrCreate(newAdminId);
+              const user = await User(connection).findOneBySlackIdOrCreate(teamId, newAdminId);
               user.isAdmin = true;
               await user.save();
             }
@@ -89,7 +89,7 @@ app.view(
     const userId = body.user.id;
 
     const connection = connectionFactory(teamId);
-    const user = await User(connection).findOneBySlackIdOrCreate(userId);
+    const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
 
     for (const option in view.state.values) {
       for (const key in view.state.values[option]) {
