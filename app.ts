@@ -14,6 +14,9 @@ export let app = new App({
   stateSecret: process.env.SLACK_STATE_SECRET,
   logLevel: process.env.LOG_LEVEL as LogLevel,
   installationStore: QraftyInstallStore,
+  tokenVerificationEnabled: true,
+  installerOptions: {
+  },
   scopes: [
     "app_mentions:read",
     "channels:history",
