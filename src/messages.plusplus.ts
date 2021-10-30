@@ -83,22 +83,22 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
   const increment = operator.match(regExpCreator.positiveOperators) ? 1 : -1;
 
 
-  const cleanReason = Helpers.cleanAndEncode(reason);
+  // const cleanReason = Helpers.cleanAndEncode(reason);
 
   args.logger.debug(
-    `${increment} score for [${userId}] from[${from}]${cleanReason ? ` because ${cleanReason}` : ''
+    `${increment} score for [${userId}] from[${from}]${reason ? ` because ${reason}` : ''
     } in [${channel}]`,
   );
   let toUser;
   let fromUser;
   try {
-    ({ toUser, fromUser } = await scoreKeeper.incrementScore(teamId, userId, from, channel, cleanReason, increment));
+    ({ toUser, fromUser } = await scoreKeeper.incrementScore(teamId, userId, from, channel, reason, increment));
   } catch (e: any) {
     await args.say(e.message);
     return;
   }
 
-  const theMessage = Helpers.getMessageForNewScore(toUser, cleanReason, 'qrafty');
+  const theMessage = Helpers.getMessageForNewScore(toUser, reason, 'qrafty');
 
   if (theMessage) {
     await args.say(theMessage);
@@ -111,7 +111,7 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
       direction: operator,
       amount: 1,
       channel,
-      reason: cleanReason,
+      reason: reason,
       teamId: teamId,
     });
     eventBus.emit(PlusPlusEventName, plusPlusEvent);

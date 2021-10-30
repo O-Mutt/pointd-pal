@@ -10,6 +10,7 @@ import { regExpCreator } from './lib/regexpCreator';
 import { DatabaseService } from './lib/services/database';
 import { Blocks, Md, Message } from 'slack-block-builder';
 import { ChatPostMessageArguments } from '@slack/web-api';
+import { ESMap } from 'typescript';
 
 const procVars = Helpers.getProcessVariables(process.env);
 const databaseService = new DatabaseService({ ...procVars });
@@ -42,21 +43,22 @@ async function respondWithScore({ message, context, say }) {
   }
   const keys = Object.keys(user.reasons);
   if (keys.length > 1) {
-    const sampleReasons = {};
+    let sampleReasons: ESMap<string, number> = new Map();
     const maxReasons = keys.length >= 5 ? 5 : keys.length;
     do {
       const randomNumber = _.random(0, keys.length - 1);
       const reason = keys[randomNumber];
-      const value = user.reasons.get(keys[randomNumber]);
-      sampleReasons[reason] = value;
+      const value = user.reasons.get(keys[randomNumber]) as number;
+      sampleReasons.set(reason, value);
+      //sampleReasons[reason] = value;
     } while (Object.keys(sampleReasons).length < maxReasons);
 
     const reasonMap = _.reduce(
       sampleReasons,
-      (memo, val, key) => {
-        const decodedKey = Helpers.decode(key);
+      (memo, val, reason) => {
+        //const decodedKey = Helpers.decode(key);
         const pointStr = val > 1 ? 'points' : 'point';
-        memo += `\n_${decodedKey}_: ${val} ${pointStr}`;
+        memo += `\n_${reason}_: ${val} ${pointStr}`;
         return memo;
       },
       '',

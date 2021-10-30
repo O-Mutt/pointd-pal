@@ -88,17 +88,17 @@ export class Helpers {
     }
 
     if (reason) {
-      const decodedReason = Helpers.decode(reason);
+      //const decodedReason = Helpers.decode(reason);
       if (user.reasons.get(reason) === 1 || user.reasons.get(reason) === -1) {
         if (user.score === 1 || user.score === -1) {
-          reasonStr = ` for ${decodedReason}.`;
+          reasonStr = ` for ${reason}.`;
         } else {
-          reasonStr = `, ${user.reasons.get(reason)} of which is for ${decodedReason}.`;
+          reasonStr = `, ${user.reasons.get(reason)} of which is for ${reason}.`;
         }
       } else if (user.reasons.get(reason) === 0) {
-        reasonStr = `, none of which are for ${decodedReason}.`;
+        reasonStr = `, none of which are for ${reason}.`;
       } else {
-        reasonStr = `, ${user.reasons.get(reason)} of which are for ${decodedReason}.`;
+        reasonStr = `, ${user.reasons.get(reason)} of which are for ${reason}.`;
       }
     }
 
