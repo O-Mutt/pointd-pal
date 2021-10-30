@@ -12,7 +12,7 @@ import { eventBus } from './lib/services/eventBus';
 import { actions } from './lib/types/Actions';
 import { ConfirmOrCancel, PromptSettings } from './lib/types/Enums';
 import {
-  PlusPlus, PlusPlusBonuslyEventName, PlusPlusEventName, PlusPlusFailure, PlusPlusFailureEventName
+  PlusPlus, PlusPlusBonusly, PlusPlusBonuslyEventName, PlusPlusEventName, PlusPlusFailure, PlusPlusFailureEventName
 } from './lib/types/Events';
 
 eventBus.on(PlusPlusEventName, sendBonuslyBonus);
@@ -59,7 +59,7 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
   switch (sender.bonuslyPrompt) {
     case PromptSettings.ALWAYS: {
       const responses: any[] = await BonuslyService.sendBonus(plusPlusEvent.teamId, plusPlusEvent.sender, plusPlusEvent.recipients, plusPlusEvent.amount, plusPlusEvent.reason);
-      eventBus.emit(PlusPlusBonuslyEventName, { responses, plusPlusEvent, sender });
+      eventBus.emit(PlusPlusBonuslyEventName, { responses, plusPlusEvent, sender } as PlusPlusBonusly);
       break;
     }
     case PromptSettings.PROMPT: {
@@ -97,29 +97,30 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
 }
 
 
-async function handleBonuslySent(responses: any[], plusPlusEvent: PlusPlus, sender: IUser) {
+async function handleBonuslySent(plusPlusBonuslyEvent: PlusPlusBonusly) {
   const messages: string[] = [];
   const dms: string[] = [];
-  const teamInstallConfig = await Installation.findOne({ teamId: plusPlusEvent.teamId }).exec();
+  console.log("This is the handle bonusly sent: ", plusPlusBonuslyEvent);
+  const teamInstallConfig = await Installation.findOne({ teamId: plusPlusBonuslyEvent.plusPlusEvent.teamId }).exec();
   if (!teamInstallConfig?.installation.bot?.token) {
     return;
   }
   const token = teamInstallConfig.installation.bot.token;
-  for (let i = 0; i < responses.length; i++) {
-    if (responses[i].success === true) {
-      messages.push(`We sent a Bonusly for ${responses[i].result.amount_with_currency} to ${Md.user(plusPlusEvent.recipients[i].slackId)}.`);
+  for (let i = 0; i < plusPlusBonuslyEvent.responses.length; i++) {
+    if (plusPlusBonuslyEvent.responses[i].success === true) {
+      messages.push(`We sent a Bonusly for ${plusPlusBonuslyEvent.responses[i].result.amount_with_currency} to ${Md.user(plusPlusBonuslyEvent.plusPlusEvent.recipients[i].slackId)}.`);
       // logger.debug('bonusly point was sent and we caught the event.');
-      dms.push(`We sent ${Md.user(plusPlusEvent.recipients[i].slackId)} ${responses[i].result.amount_with_currency} via Bonusly. You now have ${responses[i].result.giver.giving_balance_with_currency} left.`);
+      dms.push(`We sent ${Md.user(plusPlusBonuslyEvent.plusPlusEvent.recipients[i].slackId)} ${plusPlusBonuslyEvent.responses[i].result.amount_with_currency} via Bonusly. You now have ${plusPlusBonuslyEvent.responses[i].result.giver.giving_balance_with_currency} left.`);
     } else {
       // logger.error('there was an issue sending a bonus', e.response.message);
-      messages.push(`Sorry, there was an issue sending your bonusly bonus: ${responses[i].message}`);
+      messages.push(`Sorry, there was an issue sending your bonusly bonus: ${plusPlusBonuslyEvent.responses[i].message}`);
     }
 
-    if (sender.bonuslyPointsDMResponse) {
+    if (plusPlusBonuslyEvent.sender.bonuslyPointsDMResponse) {
       try {
         await app.client.chat.postMessage({
           token: token,
-          channel: plusPlusEvent.sender.slackId,
+          channel: plusPlusBonuslyEvent.plusPlusEvent.sender.slackId,
           text: dms.join('\n'),
         });
       } catch (e) {
@@ -130,7 +131,7 @@ async function handleBonuslySent(responses: any[], plusPlusEvent: PlusPlus, send
     try {
       await app.client.chat.postMessage({
         token: token,
-        channel: plusPlusEvent.channel,
+        channel: plusPlusBonuslyEvent.plusPlusEvent.channel,
         text: messages.join('\n'),
       });
     } catch (e) {

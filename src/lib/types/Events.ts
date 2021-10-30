@@ -58,6 +58,7 @@ export const PlusPlusBonuslyEventName = 'plus-plus-bonusly-sent';
 export class PlusPlusBonusly {
   plusPlusEvent: PlusPlus;
   responses: any[];
+  sender: IUser;
 
   constructor(init: Partial<PlusPlusBonusly>) {
     Object.assign(this, init);
