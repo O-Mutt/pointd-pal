@@ -58,8 +58,17 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
 
   switch (sender.bonuslyPrompt) {
     case PromptSettings.ALWAYS: {
-      const responses: any[] = await BonuslyService.sendBonus(plusPlusEvent.teamId, plusPlusEvent.sender, plusPlusEvent.recipients, plusPlusEvent.amount, plusPlusEvent.reason);
-      eventBus.emit(PlusPlusBonuslyEventName, { responses, plusPlusEvent, sender } as PlusPlusBonusly);
+      let responses: any[] | undefined = await BonuslyService.sendBonus(plusPlusEvent.teamId, plusPlusEvent.sender, plusPlusEvent.recipients, plusPlusEvent.amount, plusPlusEvent.reason);
+      if (!responses) {
+        return;
+      }
+      responses = responses as any[];
+      const ppBonusly = new PlusPlusBonusly({
+        responses,
+        plusPlusEvent,
+        sender: plusPlusEvent.sender
+      })
+      eventBus.emit(PlusPlusBonuslyEventName, ppBonusly);
       break;
     }
     case PromptSettings.PROMPT: {
