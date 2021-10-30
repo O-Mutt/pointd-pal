@@ -71,8 +71,8 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
           Blocks.Header({ text: `Should we include ${bonuslyAmount} Bonusly points (per recipient), ${totalBonuslyPoints} total, with your Qrafty points?` }),
           Blocks.Section({ text: `You are sending ${plusPlusEvent.amount} Qrafty Points (per recipient), ${totalQraftyPoints} total, to ${plusPlusEvent.recipients.map((recipient) => Md.user(recipient.slackId)).join(', ')}. Would you like to include ${bonuslyAmount} per user, ${totalBonuslyPoints} total, bonusly bonus with these?` }),
           Blocks.Actions().elements(
-            Elements.Button({ text: ConfirmOrCancel.CONFIRM, actionId: actions.bonusly.prompt_confirm, value: JSON.stringify(plusPlusEvent) }),
-            Elements.Button({ text: ConfirmOrCancel.CANCEL, actionId: actions.bonusly.prompt_cancel, value: JSON.stringify(plusPlusEvent) })
+            Elements.Button({ text: ConfirmOrCancel.CONFIRM, actionId: actions.bonusly.prompt_confirm, value: JSON.stringify({ ...plusPlusEvent, amount: bonuslyAmount }) }),
+            Elements.Button({ text: ConfirmOrCancel.CANCEL, actionId: actions.bonusly.prompt_cancel })
           )
         )
         .ephemeral(true)
