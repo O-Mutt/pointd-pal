@@ -36,7 +36,7 @@ export interface InstallationInterface extends IInstallation {
 
 export interface InstallationModelInterface extends Model<InstallationInterface> {
   // static methods
-  findOneOrCreate(teamId: string): Promise<IInstallation>;
+  findOneOrCreate(teamId: string, installation: OAuthInstallation): Promise<IInstallation>;
 }
 
 export const Installation = connectionFactory().model<InstallationInterface, InstallationModelInterface>('installation', InstallationSchema);

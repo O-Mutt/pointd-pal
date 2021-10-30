@@ -8,19 +8,19 @@ export const QraftyInstallStore: InstallationStore = {
     if (installation.isEnterpriseInstall && installation.enterprise !== undefined) {
       // support for org-wide app installation
       console.log("[INSTALL] org wide", installation);
-      await Installation.create({
-        teamId: installation.enterprise.id,
-        installation: installation
-      });
+      await Installation.findOneOrCreate(
+        installation.enterprise.id,
+        installation,
+      );
       return;
     }
     if (installation.team !== undefined) {
       // single team app installation
       console.log("[INSTALL] single team", installation);
-      await Installation.create({
-        teamId: installation.team.id,
-        installation: installation
-      });
+      await Installation.findOneOrCreate(
+        installation.team.id,
+        installation,
+      );
       return;
     }
     throw new Error('Failed saving installation data to installationStore');
