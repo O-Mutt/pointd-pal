@@ -10,7 +10,7 @@ app.action(actions.bonusly.prompt_confirm, async (actionArgs: SlackActionMiddlew
   await actionArgs.ack();
   const plusPlusEvent: PlusPlus = JSON.parse(actionArgs.payload.value) as PlusPlus;
   console.error(plusPlusEvent);
-  const responses: any[] = await BonuslyService.sendBonus(plusPlusEvent.teamId, plusPlusEvent.sender, plusPlusEvent.recipients, plusPlusEvent.amount, plusPlusEvent.reason);
+  const responses: any[] | undefined = await BonuslyService.sendBonus(plusPlusEvent.teamId, plusPlusEvent.sender, plusPlusEvent.recipients, plusPlusEvent.amount, plusPlusEvent.reason);
   eventBus.emit(PlusPlusBonuslyEventName, { responses, plusPlusEvent, sender: plusPlusEvent.sender } as PlusPlusBonusly);
   await actionArgs.respond({ text: `${Md.emoji('ok_hand')} Bonusly sent.`, delete_original: true } as RespondArguments)
 });

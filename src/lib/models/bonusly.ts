@@ -6,8 +6,8 @@ export interface IBonuslyBotConfig extends Document {
   enabled: boolean;
   url?: URL;
   apiKey?: string;
-  defaultReason?: string;
-  defaultHashtag?: string;
+  defaultReason: string;
+  defaultHashtag: string;
 }
 
 export const BonuslyBotConfigSchema = new Schema({
@@ -18,7 +18,10 @@ export const BonuslyBotConfigSchema = new Schema({
     type: String,
     default: 'point sent through Qrafty'
   },
-  defaultHashtag: String,
+  defaultHashtag: {
+    type: String,
+    default: '#excellence'
+  },
 });
 
 BonuslyBotConfigSchema.statics.findOneOrCreate = async function (
