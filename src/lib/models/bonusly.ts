@@ -14,9 +14,11 @@ export const BonuslyBotConfigSchema = new Schema({
   enabled: Boolean,
   url: String,
   apiKey: String,
-  defaultReason: String,
+  defaultReason: {
+    type: String,
+    default: 'point sent through Qrafty'
+  },
   defaultHashtag: String,
-  scoreOverride: Number,
 });
 
 BonuslyBotConfigSchema.statics.findOneOrCreate = async function (

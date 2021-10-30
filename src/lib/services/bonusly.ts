@@ -23,14 +23,14 @@ export class BonuslyService {
       },
     });
     if (!reason) {
-      reason = `point given through qrafty`;
+      reason = qraftyConfig.bonuslyConfig?.defaultReason;
     }
 
-    let hashtag = qraftyConfig.bonuslyConfig?.defaultReason;
+    let hashtag = qraftyConfig.bonuslyConfig?.defaultHashtag;
     // check if the reason has a hashtag already in it
     if (reason && /(#\w+)/i.test(reason)) {
       const match = reason.match(/(#\w+)/i);
-      hashtag = match ? match[0] : qraftyConfig.bonuslyConfig?.defaultReason;
+      hashtag = match ? match[0] : qraftyConfig.bonuslyConfig?.defaultHashtag;
     }
 
     let data: any[] = [];

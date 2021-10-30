@@ -64,6 +64,14 @@ app.view(
             bonusly.apiKey = value;
             break;
           }
+          case 'hometab_bonuslyDefaultReason': {
+            bonusly.defaultReason = value;
+            break;
+          }
+          case 'hometab_bonuslyDefaultHashtag': {
+            bonusly.defaultHashtag = value;
+            break;
+          }
           case 'homeTab_qraftyTokenEnabled': {
             qrafty.qryptoEnabled = value === EnabledSettings.ENABLED;
             break;

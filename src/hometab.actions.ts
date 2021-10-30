@@ -95,6 +95,22 @@ app.action(
           placeholder: 'https://bonus.ly/api/v1'
         }),
       ),
+      Blocks.Input({ label: `${Md.emoji('gift')} Default reason` }).element(
+        Elements.TextInput({
+          actionId: 'hometab_bonuslyDefaultReason',
+          minLength: 5,
+          initialValue: bonusly.defaultReason || '',
+          placeholder: 'point sent through Qrafty'
+        }),
+      ),
+      Blocks.Input({ label: `${Md.emoji('hash')} Default hashtag` }).element(
+        Elements.TextInput({
+          actionId: 'hometab_bonuslyDefaultHashtag',
+          minLength: 3,
+          initialValue: bonusly.defaultHashtag || '',
+          placeholder: '#excellence'
+        }),
+      ),
       Blocks.Divider(),
       Blocks.Header({ text: 'Qrypto' }),
       Blocks.Input({ label: 'Qrypto (Crypto) Enabled' }).element(
