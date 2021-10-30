@@ -41,7 +41,8 @@ export class BonuslyService {
         });
         data.push(response.data);
       } catch (e: any) {
-        //logger.error('Error sending bonusly bonus', e);
+        // logger.error('Error sending bonusly bonus', e);
+        console.error('Error sending bonusly bonus', e);
         data.push(e.response.data);
       }
     }
