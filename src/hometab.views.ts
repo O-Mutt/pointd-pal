@@ -20,7 +20,7 @@ app.view(
     for (const option in view.state.values) {
       for (const key in view.state.values[option]) {
         const state = view.state.values[option][key];
-        const value = (state.value || state.selected_option?.value) as string;
+        let value = (state.value || state.selected_option?.value) as string;
         const selectedUsers = state.selected_users as string[];
         switch (key) {
           case 'hometab_qraftyCompanyName': {
@@ -51,6 +51,9 @@ app.view(
           }
           case 'hometab_bonuslyUri': {
             try {
+              if (value.charAt(value.length - 1) === '/') {
+                value = value.substring(0, value.length - 1);
+              }
               bonusly.url = new URL(value);
             } catch (e) {
               logger.warn('There was an error thrown when trying to set the bonusly url');

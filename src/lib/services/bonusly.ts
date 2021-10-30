@@ -1,10 +1,11 @@
-import axios from 'axios';
+import Axios from 'axios';
 import { QraftyConfig } from '../models/qraftyConfig';
 import { IUser } from '../models/user';
 import { connectionFactory } from './connectionsFactory';
 
 export class BonuslyService {
-  constructor() { }
+  constructor() {
+  }
 
   /**
    *
@@ -14,6 +15,13 @@ export class BonuslyService {
   static async sendBonus(teamId: string, sender: IUser, recipients: IUser[], amount: number, reason?: string) {
     const qraftyConfig = await QraftyConfig(connectionFactory(teamId)).findOneOrCreate(teamId);
     //logger.debug(`Sending a bonusly bonus to ${JSON.stringify(event.recipient.slackEmail)} from ${JSON.stringify(event.sender.slackEmail)}`);
+    const axios = Axios.create({
+      baseURL: qraftyConfig.bonuslyConfig?.url?.toString(),
+      headers: {
+        Authorization: `Bearer ${qraftyConfig.bonuslyConfig?.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
     if (!reason) {
       reason = `point given through qrafty`;
     } else {
@@ -32,7 +40,7 @@ export class BonuslyService {
 
     for (const recipient of recipients) {
       try {
-        const response = await axios.post(`${qraftyConfig.bonuslyConfig?.url}/bonuses`, {
+        const response = await axios.post(`/bonuses`, {
           giver_email: sender.email,
           receiver_email: recipient.email,
           amount: amount,

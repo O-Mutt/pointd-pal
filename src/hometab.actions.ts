@@ -92,6 +92,7 @@ app.action(
           actionId: 'hometab_bonuslyAPIKey',
           minLength: 5,
           initialValue: bonusly.apiKey || '',
+          placeholder: 'https://bonus.ly/api/v1'
         }),
       ),
       Blocks.Divider(),

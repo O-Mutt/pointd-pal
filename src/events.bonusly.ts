@@ -19,7 +19,6 @@ eventBus.on(PlusPlusEventName, sendBonuslyBonus);
 eventBus.on(PlusPlusBonuslyEventName, handleBonuslySent);
 
 async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
-  console.log("send bonusly bonus");
   const connection = connectionFactory(plusPlusEvent.teamId);
   const config = await QraftyConfig(connection).findOneOrCreate(plusPlusEvent.teamId);
   const sender = await User(connection).findOneBySlackIdOrCreate(plusPlusEvent.teamId, plusPlusEvent.sender.slackId);
