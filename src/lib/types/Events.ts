@@ -16,6 +16,8 @@ export class PlusPlus extends EventWithTeamId {
   channel: string;
   amount: number;
   direction: DirectionEnum;
+  originalMessage: string;
+  originalMessageTs: string;
   notificationMessage?: string;
   reason?: string;
 

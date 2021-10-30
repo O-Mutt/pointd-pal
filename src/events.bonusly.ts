@@ -129,10 +129,11 @@ async function handleBonuslySent(plusPlusBonuslyEvent: PlusPlusBonusly) {
     }
 
     try {
-      await app.client.chat.postMessage({
+      await app.client.chat.update({
         token: token,
+        ts: plusPlusBonuslyEvent.plusPlusEvent.originalMessageTs,
         channel: plusPlusBonuslyEvent.plusPlusEvent.channel,
-        text: messages.join('\n'),
+        text: `${plusPlusBonuslyEvent.plusPlusEvent.originalMessageTs}\n${messages.join('\n')}`,
       });
     } catch (e) {
       // logger.error('error sending dm for bonus', e)

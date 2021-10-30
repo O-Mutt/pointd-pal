@@ -17,7 +17,7 @@ import { DirectionEnum } from './lib/types/Enums';
 import {
   PlusPlus, PlusPlusEventName, PlusPlusFailure, PlusPlusFailureEventName, PlusPlusSpam
 } from './lib/types/Events';
-import { directMention } from '@slack/bolt';
+import { AllMiddlewareArgs, directMention, SlackEventMiddlewareArgs } from '@slack/bolt';
 import { connectionFactory } from './lib/services/connectionsFactory';
 
 const procVars = Helpers.getProcessVariables(process.env);
@@ -86,8 +86,6 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
   }
   const increment = operator.match(regExpCreator.positiveOperators) ? 1 : -1;
 
-
-
   args.logger.debug(
     `${increment} score for [${userId}] from[${from}]${reason ? ` because ${reason}` : ''
     } in [${channel}]`,
@@ -97,14 +95,14 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
   try {
     ({ toUser, fromUser } = await scoreKeeper.incrementScore(teamId, userId, from, channel, reason, increment));
   } catch (e: any) {
-    await args.say(e.message);
+    const sayR = await args.say(e.message);
     return;
   }
 
   const theMessage = Helpers.getMessageForNewScore(toUser, reason);
 
   if (theMessage) {
-    await args.say(theMessage);
+    const sayResponse = await args.say(theMessage);
     const plusPlusEvent = new PlusPlus({
       notificationMessage: `${Md.user(fromUser.slackId)} ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
         } a Qrafty point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'
@@ -116,7 +114,10 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
       channel,
       reason: reason,
       teamId: teamId,
+      originalMessage: theMessage,
+      originalMessageTs: sayResponse.ts as string,
     });
+
     eventBus.emit(PlusPlusEventName, plusPlusEvent);
   }
 }
@@ -160,7 +161,7 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
   );
 
   if (message) {
-    await say(theMessage);
+    const sayResponse = await say(theMessage);
     const plusPlusEvent = new PlusPlus({
       notificationMessage: `${Md.user(response.fromUser.slackId)} sent ${number} Qrafty point${parseInt(number, 10) > 1 ? 's' : ''} to ${Md.user(response.toUser.slackId)} in ${Md.channel(channel)}`,
       recipients: [response.toUser],
@@ -170,6 +171,8 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
       channel,
       reason: reason,
       teamId: teamId,
+      originalMessage: theMessage,
+      originalMessageTs: sayResponse.ts as string,
     });
     eventBus.emit(PlusPlusEventName, plusPlusEvent);
   }
@@ -239,6 +242,8 @@ async function multipleUsersVote({ message, context, logger, say }) {
     }
   }
   messages = messages.filter((message) => !!message); // de-dupe
+  logger.debug(`These are the messages \n ${messages.join(' ')} `);
+  const sayResponse = await say(messages.join('\n'));
   const plusPlusEvent = new PlusPlus({
     notificationMessage: notificationMessage.join('\n'),
     sender,
@@ -248,12 +253,11 @@ async function multipleUsersVote({ message, context, logger, say }) {
     channel,
     reason: reason,
     teamId: teamId,
+    originalMessage: theMessage,
+    originalMessageTs: sayResponse.ts as string,
   });
 
   eventBus.emit(PlusPlusEventName, plusPlusEvent);
-
-  logger.debug(`These are the messages \n ${messages.join(' ')} `);
-  await say(messages.join('\n'));
 }
 
 async function eraseUserScore({ message, context, say }) {
