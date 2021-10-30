@@ -45,7 +45,7 @@ async function respondWithScore({ message, context, logger, say }) {
     )}`;
   }
 
-
+  logger.debug("all the keys!", user.reasons.keys);
   const keys = user.reasons.keys;
   if (keys.length > 1) {
     let sampleReasons: ESMap<string, number> = new Map();
@@ -56,20 +56,17 @@ async function respondWithScore({ message, context, logger, say }) {
       const value = user.reasons.get(keys[randomNumber]) as number;
       sampleReasons.set(reason, value);
       //sampleReasons[reason] = value;
+      logger.debug('loop the reasons!', reason, value);
     } while (sampleReasons.keys.length < maxReasons);
 
-    const reasonMap = _.reduce(
-      sampleReasons,
-      (memo, points, reason) => {
-        //const decodedKey = Helpers.decode(key);
-        const pointStr = points > 1 ? 'points' : 'point';
-        memo += `\n_${reason}_: ${points} ${pointStr}`;
-        return memo;
-      },
-      '',
-    );
+    const reasonMessageArray: string[] = [];
+    sampleReasons.forEach((points, reason) => {
+      //const decodedKey = Helpers.decode(key);
+      const pointStr = points > 1 ? 'points' : 'point';
+      reasonMessageArray.push(`_${reason}_: ${points} ${pointStr}`);
+    });
 
-    return await say(`${baseString}\n\n:star: Here are some reasons :star:${reasonMap}`);
+    return await say(`${baseString}\n\n:star: Here are some reasons :star:\n${reasonMessageArray.join('\n')}`);
   }
   return await say(`${baseString}`);
 }
