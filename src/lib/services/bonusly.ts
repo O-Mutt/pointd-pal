@@ -32,7 +32,7 @@ export class BonuslyService {
 
     for (const recipient of recipients) {
       try {
-        const response = await axios.post('/api/v1/bonuses', {
+        const response = await axios.post(`${qraftyConfig.bonuslyConfig?.url}/bonuses`, {
           giver_email: sender.email,
           receiver_email: recipient.email,
           amount: amount,
