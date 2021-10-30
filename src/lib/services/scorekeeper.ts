@@ -1,8 +1,9 @@
 import { DatabaseService } from './database';
-import { IUser } from '../models/user';
+import { IUser, User } from '../models/user';
 import { PlusPlusSpam, PlusPlusSpamEventName } from '../types/Events';
 import { eventBus } from './eventBus';
 import { Md } from 'slack-block-builder';
+import { connectionFactory } from './connectionsFactory';
 
 export class ScoreKeeper {
   databaseService: DatabaseService;
@@ -31,10 +32,10 @@ export class ScoreKeeper {
   * incrementValue - [number] the value to change the score by
   * return scoreObject - the new document for the user who received the score
   */
-  async incrementScore(teamId: string, toId: string, fromId: string, channel: string, reason: string, incrementValue: number) {
+  async incrementScore(teamId: string, toId: string, fromId: string, channel: string, reason: string, incrementValue: number): Promise<{ toUser: IUser; fromUser: IUser; }> {
     try {
-      const toUser = await this.databaseService.getUser(teamId, toId);
-      const fromUser = await this.databaseService.getUser(teamId, fromId);
+      const toUser = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, toId);
+      const fromUser = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, fromId);
       if (fromUser.isBot === true) {
         throw new Error('Bots can\'t send points, silly.');
       }
@@ -68,8 +69,8 @@ export class ScoreKeeper {
 
   async transferTokens(teamId: string, toId: string, fromId: string, channel: string, reason: string, numberOfTokens: number): Promise<{ toUser: IUser; fromUser: IUser; }> {
     try {
-      const toUser = await this.databaseService.getUser(teamId, toId);
-      const fromUser = await this.databaseService.getUser(teamId, fromId);
+      const toUser = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, toId);
+      const fromUser = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, fromId);
       if (toUser.accountLevel < 2 && fromUser.accountLevel < 2) {
         // to or from is not level 2
         throw new Error(`In order to send tokens to ${Md.user(toUser.slackId)} you both must be, at least, level 2.`);

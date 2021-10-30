@@ -5,7 +5,7 @@ import { ChatPostMessageArguments } from '@slack/web-api';
 
 import { app } from '../app';
 import { Helpers } from './lib/helpers';
-import { IUser } from './lib/models/user';
+import { IUser, User } from './lib/models/user';
 import { regExpCreator } from './lib/regexpCreator';
 import { DatabaseService } from './lib/services/database';
 import { decrypt } from './lib/services/decrypt';
@@ -18,6 +18,7 @@ import {
   PlusPlus, PlusPlusEventName, PlusPlusFailure, PlusPlusFailureEventName, PlusPlusSpam
 } from './lib/types/Events';
 import { directMention } from '@slack/bolt';
+import { connectionFactory } from './lib/services/connectionsFactory';
 
 const procVars = Helpers.getProcessVariables(process.env);
 const scoreKeeper = new ScoreKeeper({ ...procVars });
@@ -262,7 +263,7 @@ async function eraseUserScore({ message, context, say }) {
 
   const cleanReason = Helpers.cleanAndEncode(reason);
 
-  const fromUser = await databaseService.getUser(teamId, from);
+  const fromUser = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, from);
   const isAdmin = fromUser.isAdmin;
 
   if (!isAdmin) {

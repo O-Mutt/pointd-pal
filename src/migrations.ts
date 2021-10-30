@@ -36,7 +36,7 @@ async function mapUsersToDb({ message, context, client, logger, say }) {
   for (const member of members) {
     try {
       logger.debug('Map this member', JSON.stringify(member));
-      const localMember = await databaseService.getUser(teamId, member.id as string);
+      const localMember = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, member.id as string);
       mappings.push(`\`{ name: ${localMember.name}, slackId: ${localMember.slackId}, id: ${localMember._id} }\``);
       logger.debug(`Save the new member ${JSON.stringify(localMember)}`);
     } catch (er) {
@@ -64,7 +64,7 @@ async function mapMoreUserFieldsBySlackId({ message, context, client, logger, sa
     if (member?.profile?.email) {
       try {
         logger.debug('Map this member', JSON.stringify(member));
-        const localMember = await databaseService.getUser(teamId, member.id as string);
+        const localMember = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, member.id as string);
         localMember.slackId = member.id as string;
         localMember.email = member.profile.email;
         await localMember.save();
@@ -98,7 +98,7 @@ async function mapSingleUserToDb({ message, context, client, logger, say }) {
   const { user } = await client.users.info({ user: to.slackId });
   try {
     logger.debug('Map this member', JSON.stringify(user));
-    const localMember = await databaseService.getUser(teamId, user);
+    const toUser = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, user);
     localMember.slackId = user.slackId;
     // eslint-disable-next-line no-underscore-dangle
     if (localMember._id) {
