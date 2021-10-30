@@ -26,15 +26,6 @@ export class DatabaseService {
   /*
    * user - the name of the user
    */
-  async getUser(teamId: string, userId: string): Promise<IUser> {
-    // Maybe this should include a migration path to keep the user object up to date with any changes?
-    const user = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, userId);
-    return user;
-  }
-
-  /*
-   * user - the name of the user
-   */
   async getAllUsers(teamId: string) {
     const search = { id: { $exists: true } };
     //Logger.debug('getting _all_ users');

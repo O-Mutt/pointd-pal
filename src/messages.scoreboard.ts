@@ -11,6 +11,8 @@ import { DatabaseService } from './lib/services/database';
 import { Blocks, Md, Message } from 'slack-block-builder';
 import { ChatPostMessageArguments } from '@slack/web-api';
 import { ESMap } from 'typescript';
+import { User } from './lib/models/user';
+import { connectionFactory } from './lib/services/connectionsFactory';
 
 const procVars = Helpers.getProcessVariables(process.env);
 const databaseService = new DatabaseService({ ...procVars });
@@ -20,10 +22,11 @@ app.message(regExpCreator.createTopBottomRegExp(), directMention(), respondWithL
 app.message(regExpCreator.createTopBottomTokenRegExp(), directMention(), respondWithLeaderLoserTokenBoard);
 app.message(regExpCreator.createTopPointGiversRegExp(), directMention(), getTopPointSenders);
 
-async function respondWithScore({ message, context, say }) {
+async function respondWithScore({ message, context, logger, say }) {
+  logger.debug('respond with the score');
   const { userId } = context.matches.groups;
   const teamId = context.teamId as string;
-  const user = await databaseService.getUser(teamId, userId);
+  const user = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, userId);
 
   let tokenString = '.';
   if (user.accountLevel > 1) {
@@ -41,7 +44,9 @@ async function respondWithScore({ message, context, say }) {
       'MM-DD-yyyy',
     )}`;
   }
-  const keys = Object.keys(user.reasons);
+
+
+  const keys = user.reasons.keys;
   if (keys.length > 1) {
     let sampleReasons: ESMap<string, number> = new Map();
     const maxReasons = keys.length >= 5 ? 5 : keys.length;
@@ -51,14 +56,14 @@ async function respondWithScore({ message, context, say }) {
       const value = user.reasons.get(keys[randomNumber]) as number;
       sampleReasons.set(reason, value);
       //sampleReasons[reason] = value;
-    } while (Object.keys(sampleReasons).length < maxReasons);
+    } while (sampleReasons.keys.length < maxReasons);
 
     const reasonMap = _.reduce(
       sampleReasons,
-      (memo, val, reason) => {
+      (memo, points, reason) => {
         //const decodedKey = Helpers.decode(key);
-        const pointStr = val > 1 ? 'points' : 'point';
-        memo += `\n_${reason}_: ${val} ${pointStr}`;
+        const pointStr = points > 1 ? 'points' : 'point';
+        memo += `\n_${reason}_: ${points} ${pointStr}`;
         return memo;
       },
       '',
