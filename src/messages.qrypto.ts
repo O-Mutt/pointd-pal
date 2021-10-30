@@ -28,7 +28,7 @@ app.action('confirm_levelup', levelUpToLevelThree);
 
 async function levelUpAccount({ message, context, logger, say }) {
   if (!Helpers.isPrivateMessage(message.channel)) {
-    return await say(`You should only execute a level up from within the context of a DM with ${'qrafty'}`);
+    return await say(`You should only execute a level up from within the context of a DM with Qrafty`);
   }
   const teamId = context.teamId as string;
 
@@ -79,7 +79,7 @@ async function botWalletCount({ message, context, logger, say }) {
   try {
     gas = await tokenBuddy.getBalance(botWallet.publicWalletAddress);
   } catch (e) {
-    await say(`An error occurred getting ${'qrafty'}'s gas amount`);
+    await say(`An error occurred getting Qrafty's gas amount`);
   }
   logger.debug(
     `Get the bot wallet by user ${message.user.name}, ${_.pick(JSON.stringify(botWallet), [
@@ -89,9 +89,9 @@ async function botWalletCount({ message, context, logger, say }) {
     ])}`,
   );
 
-  const theBlocks = Message({ channel: context.channel, text: `${Helpers.capitalizeFirstLetter('qrafty')} Wallet:` })
+  const theBlocks = Message({ channel: context.channel, text: `Qrafty Wallet:` })
     .blocks(
-      Blocks.Section({ text: `${Helpers.capitalizeFirstLetter('qrafty')} Token Wallet Info:` }),
+      Blocks.Section({ text: `Qrafty Token Wallet Info:` }),
       Blocks.Divider(),
       Blocks.Section({ text: `Public Wallet Address: ${botWallet.publicWalletAddress}` }),
       Blocks.Section({ text: `Tokens In Wallet: ${botWallet.token.toLocaleString()}` }),

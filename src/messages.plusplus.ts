@@ -62,7 +62,8 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
   const fullText = args.context.matches.input;
   const teamId = args.body.team_id;
   const { channel, user: from } = args.message;
-  const { premessage, userId, operator, conjunction, reason } = args.context.matches.groups;
+  let { premessage, userId, operator, conjunction, reason } = args.context.matches.groups;
+  reason = reason.toLowerCase();
 
   if (userId.charAt(0).toLowerCase() === 's') {
     const { users } = await args.client.usergroups.users.list({ team_id: teamId, usergroup: userId });
@@ -84,7 +85,6 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
   const increment = operator.match(regExpCreator.positiveOperators) ? 1 : -1;
 
 
-  // const cleanReason = Helpers.cleanAndEncode(reason);
 
   args.logger.debug(
     `${increment} score for [${userId}] from[${from}]${reason ? ` because ${reason}` : ''
@@ -99,13 +99,13 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
     return;
   }
 
-  const theMessage = Helpers.getMessageForNewScore(toUser, reason, 'qrafty');
+  const theMessage = Helpers.getMessageForNewScore(toUser, reason);
 
   if (theMessage) {
     await args.say(theMessage);
     const plusPlusEvent = new PlusPlus({
       notificationMessage: `${Md.user(fromUser.slackId)} ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
-        } a ${Helpers.capitalizeFirstLetter('qrafty')} point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'
+        } a Qrafty point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'
         } ${Md.user(toUser.slackId)} in ${Md.channel(channel)}`,
       sender: fromUser,
       recipients: [toUser],
@@ -122,7 +122,8 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
 async function giveTokenBetweenUsers({ message, context, logger, say }) {
   const fullText = context.matches.input;
   const teamId = context.teamId as string;
-  const { premessage, userId, number, conjunction, reason } = context.matches.groups;
+  let { premessage, userId, number, conjunction, reason } = context.matches.groups;
+  reason = reason.toLowerCase();
   const { channel, user: from } = message;
   if (!conjunction && reason) {
     // circuit break a plus plus
@@ -135,40 +136,35 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
     eventBus.emit(PlusPlusFailureEventName, failureEvent);
     return;
   }
-  const cleanReason = Helpers.cleanAndEncode(reason);
 
   logger.debug(
-    `${number} score for [${userId}] from[${from}]${cleanReason ? ` because ${cleanReason}` : ''} in [${channel}]`,
+    `${number} score for [${userId}] from[${from}]${reason ? ` because ${reason}` : ''} in [${channel}]`,
   );
   let response;
   try {
-    response = await scoreKeeper.transferTokens(teamId, userId, from, channel, cleanReason, number);
+    response = await scoreKeeper.transferTokens(teamId, userId, from, channel, reason, number);
   } catch (e: any) {
     await say(e.message);
     return;
   }
 
   const theMessage = Helpers.getMessageForTokenTransfer(
-    'qrafty',
     response.toUser,
     response.fromUser,
     number,
-    cleanReason,
+    reason,
   );
 
   if (message) {
     await say(theMessage);
     const plusPlusEvent = new PlusPlus({
-      notificationMessage: `${Md.user(response.fromUser.slackId)} sent ${number} ${Helpers.capitalizeFirstLetter(
-        'qrafty',
-      )
-        } point${parseInt(number, 10) > 1 ? 's' : ''} to ${Md.user(response.toUser.slackId)} in ${Md.channel(channel)}`,
+      notificationMessage: `${Md.user(response.fromUser.slackId)} sent ${number} Qrafty point${parseInt(number, 10) > 1 ? 's' : ''} to ${Md.user(response.toUser.slackId)} in ${Md.channel(channel)}`,
       recipients: [response.toUser],
       sender: response.fromUser,
       direction: DirectionEnum.PLUS,
       amount: number,
       channel,
-      reason: cleanReason,
+      reason: reason,
       teamId: teamId,
     });
     eventBus.emit(PlusPlusEventName, plusPlusEvent);
@@ -178,7 +174,8 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
 async function multipleUsersVote({ message, context, logger, say }) {
   const fullText = context.matches.input;
   const teamId = context.teamId as string;
-  const { premessage, allUsers, operator, conjunction, reason } = context.matches.groups;
+  let { premessage, allUsers, operator, conjunction, reason } = context.matches.groups;
+  reason = reason.toLowerCase();
   const { channel, user: from } = message;
   if (!allUsers) {
     return;
@@ -198,7 +195,6 @@ async function multipleUsersVote({ message, context, logger, say }) {
   const idArray = allUsers.trim().split(new RegExp(regExpCreator.multiUserSeparator)).filter(Boolean);
   logger.debug("We pulled all the user ids from the 'allUsers' regexp group", idArray.join(','));
 
-  const cleanReason = Helpers.cleanAndEncode(reason);
   const increment = operator.match(regExpCreator.positiveOperators) ? 1 : -1;
 
   const cleanedIdArray = idArray
@@ -217,7 +213,7 @@ async function multipleUsersVote({ message, context, logger, say }) {
   for (const toUserId of cleanedIdArray) {
     let response: { toUser: IUser; fromUser: IUser };
     try {
-      response = await scoreKeeper.incrementScore(teamId, toUserId, from, channel, cleanReason, increment);
+      response = await scoreKeeper.incrementScore(teamId, toUserId, from, channel, reason, increment);
     } catch (e: any) {
       await say(e.message);
       continue;
@@ -225,13 +221,13 @@ async function multipleUsersVote({ message, context, logger, say }) {
     sender = response.fromUser;
     if (response.toUser) {
       logger.debug(
-        `clean names map[${toUserId}]: ${response.toUser.score}, the reason ${response.toUser.reasons.get(cleanReason)} `,
+        `clean names map[${toUserId}]: ${response.toUser.score}, the reason ${response.toUser.reasons.get(reason)} `,
       );
-      messages.push(Helpers.getMessageForNewScore(response.toUser, cleanReason, 'qrafty'));
+      messages.push(Helpers.getMessageForNewScore(response.toUser, reason));
       to.push(response.toUser);
       notificationMessage.push(
         `${Md.user(response.fromUser.slackId)} ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
-        } a ${Helpers.capitalizeFirstLetter('qrafty')} point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'
+        } a Qrafty point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'
         } ${Md.user(response.toUser.slackId)} in ${Md.channel(channel)} `,
       );
     }
@@ -244,7 +240,7 @@ async function multipleUsersVote({ message, context, logger, say }) {
     direction: operator,
     amount: 1,
     channel,
-    reason: cleanReason,
+    reason: reason,
     teamId: teamId,
   });
 
@@ -261,8 +257,6 @@ async function eraseUserScore({ message, context, say }) {
   const { premessage, userId, conjunction, reason } = context.matches;
   const { channel, user: from } = message;
 
-  const cleanReason = Helpers.cleanAndEncode(reason);
-
   const fromUser = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, from);
   const isAdmin = fromUser.isAdmin;
 
@@ -270,13 +264,12 @@ async function eraseUserScore({ message, context, say }) {
     await say("Sorry, you don't have authorization to do that.");
     return;
   } else if (isAdmin) {
-    erased = await scoreKeeper.erase(teamId, userId, from, channel, cleanReason);
+    erased = await scoreKeeper.erase(teamId, userId, from, channel, reason);
   }
 
   if (erased) {
-    const decodedReason = Helpers.decode(cleanReason);
-    const message = !decodedReason
-      ? `Erased the following reason from ${Md.user(userId)}: ${decodedReason} `
+    const message = !reason
+      ? `Erased the following reason from ${Md.user(userId)}: ${reason} `
       : `Erased points for ${Md.user(userId)} `;
     await say(message);
   }

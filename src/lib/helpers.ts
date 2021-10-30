@@ -18,16 +18,6 @@ export class Helpers {
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
 
-  static decode(str: string): string | undefined {
-    if (!str) {
-      return;
-    }
-
-    const buff = Buffer.from(str, 'base64');
-    const text = buff.toString('utf8');
-    return text;
-  }
-
   static isCakeDay(dateObject: Date): boolean {
     try {
       const robotDay = moment(dateObject);
@@ -61,7 +51,7 @@ export class Helpers {
     return `${years}th `;
   }
 
-  static getMessageForNewScore(user: IUser, reason: string | undefined, robotName: string): string {
+  static getMessageForNewScore(user: IUser, reason: string | undefined): string {
     if (!user) {
       return '';
     }
@@ -80,15 +70,14 @@ export class Helpers {
     }
 
     if (user.accountLevel && user.accountLevel > 1) {
-      let tokenStr = `(*${user.token} ${Helpers.capitalizeFirstLetter('qrafty')} Tokens*)`;
+      let tokenStr = `(*${user.token} Qrafty Tokens*)`;
       if (user.token === 1) {
-        tokenStr = `(*${user.token} ${Helpers.capitalizeFirstLetter('qrafty')} Token*)`;
+        tokenStr = `(*${user.token} Qrafty Token*)`;
       }
       scoreStr = scoreStr.concat(` ${tokenStr}`);
     }
 
     if (reason) {
-      //const decodedReason = Helpers.decode(reason);
       if (user.reasons.get(reason) === 1 || user.reasons.get(reason) === -1) {
         if (user.score === 1 || user.score === -1) {
           reasonStr = ` for ${reason}.`;
@@ -104,68 +93,42 @@ export class Helpers {
 
     if (Helpers.isCakeDay(user.robotDay)) {
       const yearsAsString = Helpers.getYearsAsString(user.robotDay);
-      cakeDayStr = `\n:birthday: Today is ${Md.user(user.slackId)}'s ${yearsAsString}${'qrafty'}day! :birthday:`;
+      cakeDayStr = `\n:birthday: Today is ${Md.user(user.slackId)}'s ${yearsAsString}Qraftyday! :birthday:`;
     }
     return `${scoreStr}${reasonStr}${cakeDayStr}`;
   }
 
-  static getMessageForTokenTransfer(robotName: string, to: IUser, from: IUser, number: number, reason: string | undefined) {
+  static getMessageForTokenTransfer(to: IUser, from: IUser, number: number, reason: string | undefined) {
     if (!to) {
       return '';
     }
 
-    const scoreStr = `${Md.user(from.slackId)} transferred *${number}* ${robotName} Tokens to ${Md.user(to.slackId)}.\n${Md.user(to.slackId)} now has ${to.token
+    const scoreStr = `${Md.user(from.slackId)} transferred *${number}* Qrafty Tokens to ${Md.user(to.slackId)}.\n${Md.user(to.slackId)} now has ${to.token
       } token${Helpers.getEsOnEndOfWord(to.token || 0)}`;
     let reasonStr = '.';
     let cakeDayStr = '';
 
     if (reason) {
-      const decodedReason = Helpers.decode(reason);
       if (to.reasons.get(reason) === 1 || to.reasons.get(reason) === -1) {
         if (to.score === 1 || to.score === -1) {
-          reasonStr = ` for ${decodedReason}.`;
+          reasonStr = ` for ${reason}.`;
         } else {
-          reasonStr = `, ${to.reasons.get(reason)} of which is for ${decodedReason}.`;
+          reasonStr = `, ${to.reasons.get(reason)} of which is for ${reason}.`;
         }
       } else if (to.reasons.get(reason) === 0) {
-        reasonStr = `, none of which are for ${decodedReason}.`;
+        reasonStr = `, none of which are for ${reason}.`;
       } else {
-        reasonStr = `, ${to.reasons.get(reason)} of which are for ${decodedReason}.`;
+        reasonStr = `, ${to.reasons.get(reason)} of which are for ${reason}.`;
       }
     }
 
-    if (Helpers.isCakeDay(to[`robotDay`])) {
-      const yearsAsString = Helpers.getYearsAsString(to[`${robotName}Day`]);
-      cakeDayStr = `\n:birthday: Today is ${Md.user(to.slackId)}'s ${yearsAsString}${robotName}day! :birthday:`;
+    if (Helpers.isCakeDay(to.robotDay)) {
+      const yearsAsString = Helpers.getYearsAsString(to.robotDay);
+      cakeDayStr = `\n:birthday: Today is ${Md.user(to.slackId)}'s ${yearsAsString}Qraftyday! :birthday:`;
     }
     return `${scoreStr}${reasonStr}${cakeDayStr}\n_${Md.user(from.slackId)} has ${from.token} token${Helpers.getEsOnEndOfWord(
       from.token || 0,
     )}_`;
-  }
-
-  static cleanName(name: string): string {
-    if (name) {
-      let trimmedName = name.trim().toLowerCase();
-      if (trimmedName.charAt(0) === ':') {
-        trimmedName = trimmedName.replace(/(^\s*['"@])|([,'"\s]*$)/gi, '');
-      } else {
-        trimmedName = trimmedName.replace(/(^\s*['"@])|([,:'"\s]*$)/gi, '');
-      }
-      return trimmedName;
-    }
-    return name;
-  }
-
-  static cleanAndEncode(str: string): string {
-    if (!str) {
-      return '';
-    }
-
-    // this should fix a dumb issue with mac quotes
-    const trimmed = JSON.parse(JSON.stringify(str.trim().toLowerCase()));
-    const buff = Buffer.from(trimmed);
-    const base64data = buff.toString('base64');
-    return base64data;
   }
 
   /*

@@ -30,7 +30,7 @@ async function respondWithScore({ message, context, logger, say }) {
 
   let tokenString = '.';
   if (user.accountLevel > 1) {
-    tokenString = ` (*${user.token} ${Helpers.capitalizeFirstLetter('qrafty')} `;
+    tokenString = ` (*${user.token} Qrafty `;
     tokenString = tokenString.concat(user.token && user.token > 1 ? 'Tokens*).' : 'Token*).');
   }
 
@@ -40,7 +40,7 @@ async function respondWithScore({ message, context, logger, say }) {
   baseString += `\nTotal Points Given: ${user.totalPointsGiven}`;
   if (user.robotDay) {
     const dateObj = new Date(user.robotDay);
-    baseString += `\n:birthday: ${Helpers.capitalizeFirstLetter('qrafty')}day is ${moment(dateObj).format(
+    baseString += `\n:birthday: Qraftyday is ${moment(dateObj).format(
       'MM-DD-yyyy',
     )}`;
   }
@@ -64,7 +64,6 @@ async function respondWithScore({ message, context, logger, say }) {
 
     const reasonMessageArray: string[] = [];
     sampleReasons.forEach((points, reason) => {
-      //const decodedKey = Helpers.decode(key);
       const pointStr = points > 1 ? 'points' : 'point';
       reasonMessageArray.push(`_${reason}_: ${points} ${pointStr}`);
     });
@@ -139,7 +138,7 @@ async function respondWithLeaderLoserTokenBoard({ message, context, client }) {
       const tokenStr = tops[i].token > 1 ? 'Tokens' : 'Token';
       const pointStr = tops[i].score > 1 ? 'points' : 'point';
       messages.push(
-        `${i + 1}. ${Md.user(tops[i].slackId)}: *${tops[i].token} ${Helpers.capitalizeFirstLetter('qrafty')} ${tokenStr}* (${tops[i].score
+        `${i + 1}. ${Md.user(tops[i].slackId)}: *${tops[i].token} Qrafty ${tokenStr}* (${tops[i].score
         } ${pointStr})`,
       );
     }

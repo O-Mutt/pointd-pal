@@ -47,7 +47,7 @@ const databaseService = new DatabaseService({ ...procVars });
 
         let graphSize = Math.min(topSenders.length, Math.min(10, 20));
         messages.splice(0, 0, clark(_.take(_.map(topSenders, 'scoreChange'), graphSize)));
-        messages.splice(0, 0, `:tada: The top 10 ${'qrafty'} point senders over the last month! :tada:`);
+        messages.splice(0, 0, `:tada: The top 10 Qrafty point senders over the last month! :tada:`);
 
         await app.client.chat.postMessage({
           channel: channelId,
@@ -68,7 +68,7 @@ const databaseService = new DatabaseService({ ...procVars });
 
         graphSize = Math.min(topRecipient.length, Math.min(10, 20));
         messages.splice(0, 0, clark(_.take(_.map(topRecipient, 'scoreChange'), graphSize)));
-        messages.splice(0, 0, `:tada: The top 10 ${'qrafty'} point recipients over the last month! :tada:`);
+        messages.splice(0, 0, `:tada: The top 10 Qrafty point recipients over the last month! :tada:`);
         await app.client.chat.postMessage({
           channel: channelId,
           text: messages.join('\n'),
@@ -88,7 +88,7 @@ const databaseService = new DatabaseService({ ...procVars });
 
         graphSize = Math.min(topRoom.length, Math.min(10, 20));
         messages.splice(0, 0, clark(_.take(_.map(topRoom, 'scoreChange'), graphSize)));
-        messages.splice(0, 0, `:tada: The top 3 rooms that sent ${'qrafty'} point(s) over the last month! :tada:`);
+        messages.splice(0, 0, `:tada: The top 3 rooms that sent Qrafty point(s) over the last month! :tada:`);
         await app.client.chat.postMessage({
           channel: channelId,
           text: messages.join('\n'),
