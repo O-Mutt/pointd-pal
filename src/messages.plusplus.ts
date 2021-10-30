@@ -63,7 +63,9 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
   const teamId = args.body.team_id;
   const { channel, user: from } = args.message;
   let { premessage, userId, operator, conjunction, reason } = args.context.matches.groups;
-  reason = reason.toLowerCase();
+  if (reason) {
+    reason = reason.toLowerCase();
+  }
 
   if (userId.charAt(0).toLowerCase() === 's') {
     const { users } = await args.client.usergroups.users.list({ team_id: teamId, usergroup: userId });
@@ -123,7 +125,9 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
   const fullText = context.matches.input;
   const teamId = context.teamId as string;
   let { premessage, userId, number, conjunction, reason } = context.matches.groups;
-  reason = reason.toLowerCase();
+  if (reason) {
+    reason = reason.toLowerCase();
+  }
   const { channel, user: from } = message;
   if (!conjunction && reason) {
     // circuit break a plus plus
@@ -175,7 +179,9 @@ async function multipleUsersVote({ message, context, logger, say }) {
   const fullText = context.matches.input;
   const teamId = context.teamId as string;
   let { premessage, allUsers, operator, conjunction, reason } = context.matches.groups;
-  reason = reason.toLowerCase();
+  if (reason) {
+    reason = reason.toLowerCase();
+  }
   const { channel, user: from } = message;
   if (!allUsers) {
     return;

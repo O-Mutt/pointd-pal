@@ -55,3 +55,11 @@ export class PlusPlusSpam extends EventWithTeamId {
 }
 
 export const PlusPlusBonuslyEventName = 'plus-plus-bonusly-sent';
+export class PlusPlusBonusly {
+  plusPlusEvent: PlusPlus;
+  responses: any[];
+
+  constructor(init: Partial<PlusPlusBonusly>) {
+    Object.assign(this, init);
+  }
+}
