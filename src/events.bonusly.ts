@@ -138,7 +138,7 @@ async function handleBonuslySent(plusPlusBonuslyEvent: PlusPlusBonusly) {
         token: token,
         ts: plusPlusBonuslyEvent.plusPlusEvent.originalMessageTs,
         channel: plusPlusBonuslyEvent.plusPlusEvent.channel,
-        text: `${plusPlusBonuslyEvent.plusPlusEvent.originalMessageTs}\n${messages.join('\n')}`,
+        text: `${plusPlusBonuslyEvent.plusPlusEvent.originalMessage}\n*Bonusly:*\n${messages.join('\n')}`,
       });
     } catch (e) {
       // logger.error('error sending dm for bonus', e)
