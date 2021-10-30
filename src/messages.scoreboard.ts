@@ -11,7 +11,7 @@ import { DatabaseService } from './lib/services/database';
 import { Blocks, Md, Message } from 'slack-block-builder';
 import { ChatPostMessageArguments } from '@slack/web-api';
 import { ESMap } from 'typescript';
-import { User } from './lib/models/user';
+import { IUser, User } from './lib/models/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
 
 const procVars = Helpers.getProcessVariables(process.env);
@@ -26,7 +26,7 @@ async function respondWithScore({ message, context, logger, say }) {
   logger.debug('respond with the score');
   const { userId } = context.matches.groups;
   const teamId = context.teamId as string;
-  const user = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, userId);
+  const user: IUser = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, userId);
 
   let tokenString = '.';
   if (user.accountLevel > 1) {
@@ -45,19 +45,22 @@ async function respondWithScore({ message, context, logger, say }) {
     )}`;
   }
 
-  logger.debug("all the keys!", user.reasons.keys);
-  const keys = user.reasons.keys;
+  const keys: string[] = [];
+  user.reasons.forEach((points, key) => {
+    keys.push(key);
+  });
+  logger.debug("all the keys!", user.reasons.keys());
   if (keys.length > 1) {
     let sampleReasons: ESMap<string, number> = new Map();
     const maxReasons = keys.length >= 5 ? 5 : keys.length;
     do {
       const randomNumber = _.random(0, keys.length - 1);
       const reason = keys[randomNumber];
-      const value = user.reasons.get(keys[randomNumber]) as number;
+      const value = user.reasons.get(reason) as number;
       sampleReasons.set(reason, value);
       //sampleReasons[reason] = value;
       logger.debug('loop the reasons!', reason, value);
-    } while (sampleReasons.keys.length < maxReasons);
+    } while (sampleReasons.size < maxReasons);
 
     const reasonMessageArray: string[] = [];
     sampleReasons.forEach((points, reason) => {
