@@ -1,4 +1,4 @@
-import Axios from 'axios';
+import Axios, { AxiosError } from 'axios';
 import { QraftyConfig } from '../models/qraftyConfig';
 import { IUser } from '../models/user';
 import { connectionFactory } from './connectionsFactory';
@@ -45,9 +45,15 @@ export class BonuslyService {
           reason,
         });
         data.push(response.data);
-      } catch (e: any) {
-        // logger.error('Error sending bonusly bonus', e);
-        console.error('Error sending bonusly bonus', e.message);
+      } catch (e: any | unknown) {
+        const isAxiosError = Axios.isAxiosError(e)
+        if (isAxiosError) {
+          const axErr = e as AxiosError;
+          console.error(axErr.stack);
+        } else {
+          // logger.error('Error sending bonusly bonus', e);
+          console.error('Error sending bonusly bonus', e);
+        }
         data.push(e.response.data);
       }
     }
