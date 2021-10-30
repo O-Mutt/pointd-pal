@@ -98,7 +98,7 @@ async function mapSingleUserToDb({ message, context, client, logger, say }) {
   const { user } = await client.users.info({ user: to.slackId });
   try {
     logger.debug('Map this member', JSON.stringify(user));
-    const toUser = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, user);
+    const localMember = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, user);
     localMember.slackId = user.slackId;
     // eslint-disable-next-line no-underscore-dangle
     if (localMember._id) {
