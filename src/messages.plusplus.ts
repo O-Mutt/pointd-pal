@@ -1,7 +1,6 @@
 import { Blocks, Md, Message } from 'slack-block-builder';
 import tokenBuddy from 'token-buddy';
 
-import { ChatPostMessageArguments } from '@slack/web-api';
 
 import { app } from '../app';
 import { Helpers } from './lib/helpers';
@@ -253,7 +252,7 @@ async function multipleUsersVote({ message, context, logger, say }) {
     channel,
     reason: reason,
     teamId: teamId,
-    originalMessage: theMessage,
+    originalMessage: messages.join('\n'),
     originalMessageTs: sayResponse.ts as string,
   });
 
