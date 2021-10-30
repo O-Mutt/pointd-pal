@@ -24,9 +24,6 @@ export class BonuslyService {
     });
     if (!reason) {
       reason = `point given through qrafty`;
-    } else {
-      const buff = Buffer.from(reason, 'base64');
-      reason = buff.toString('utf-8');
     }
 
     let hashtag = qraftyConfig.bonuslyConfig?.defaultReason;
