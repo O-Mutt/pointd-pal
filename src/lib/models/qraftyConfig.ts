@@ -44,7 +44,7 @@ QraftyConfigSchema.statics.findOneOrCreate = async function (this: Model<QraftyC
     throw new Error('Installation not found');
   }
   const { members } = await app.client.users.list({ token: teamInstall.installation.bot.token, team_id: teamId });
-  const admins = members?.filter((user) => user.is_admin === true);
+  const admins = members?.filter((user) => user.is_admin === true).map((admin) => admin.id);
   qraftyConfig = new self({
     qraftyAdmins: admins
   });
