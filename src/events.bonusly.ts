@@ -62,6 +62,7 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
       if (!responses) {
         return;
       }
+
       responses = responses as any[];
       const ppBonusly = new PlusPlusBonusly({
         responses,
