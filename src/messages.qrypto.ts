@@ -17,11 +17,9 @@ import { ConfirmOrCancel } from './lib/types/Enums';
 const procVars = Helpers.getProcessVariables(process.env);
 const databaseService = new DatabaseService({ ...procVars });
 
-// directMention()
 app.message(regExpCreator.getBotWallet(), directMention(), botWalletCount);
 
 // DM only
-// directMention()
 app.message(regExpCreator.createLevelUpAccount(), directMention(), levelUpAccount);
 
 app.action('confirm_levelup', levelUpToLevelThree);

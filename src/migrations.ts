@@ -17,6 +17,7 @@ app.message('try to map more data to all slack users to db users', directMention
 app.message('try to map @.* to db users', directMention(), mapSingleUserToDb);
 app.message('unmap all users', directMention(), unmapUsersToDb);
 app.message('map all slackIds to slackEmail', directMention(), mapSlackIdToEmail);
+app.message('hubot to bolt', directMention(), migrateFromHubotToBolt);
 
 async function mapUsersToDb({ message, context, client, logger, say }) {
   const teamId = context.teamId as string;
@@ -175,4 +176,54 @@ async function mapSlackIdToEmail({ message, context, logger, say, client }) {
   } catch (er) {
     logger.error('Error processing users', er);
   }
+}
+
+async function migrateFromHubotToBolt({ message, context, logger, say, client }) {
+  const teamId = context.teamId as string;
+  const userId: string = message.user;
+  const connection = connectionFactory(teamId)
+  const { isAdmin } = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
+  if (isAdmin) {
+    logger.error("sorry, can't do that", message, context);
+    await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
+    return;
+  }
+
+  try {
+    const hubotishUsers: any[] = await User(connection)
+      .find({ id: { $exists: true } })
+      .exec();
+
+    for (const hubotishUser of hubotishUsers) {
+      logger.debug('Map this member', hubotishUser.slackId, hubotishUser.name);
+      hubotishUser.qraftyToken = hubotishUser.token;
+      delete hubotishUser.token;
+      hubotishUser.email = hubotishUser.slackEmail;
+      delete hubotishUser.slackEmail;
+      for (const reason in hubotishUser.reasons) {
+        const decodedReason = decode(reason);
+        hubotishUser.reasons.set(decodedReason, hubotishUser.reasons[reason]);
+        delete hubotishUser.reasons[reason];
+      }
+
+      for (const pointGiven in hubotishUser.pointsGiven) {
+        const decodedPointGiven = decode(pointGiven);
+        hubotishUser.reasons.set(decodedPointGiven, hubotishUser.pointsGiven[pointGiven]);
+        delete hubotishUser.pointsGiven[pointGiven];
+      }
+      await say(
+        `Decoding the reasons and the points given finished for ${Md.user(hubotishUser.slackId)}`,
+      );
+      await User(connection).replaceOne({ slackId: hubotishUser.slackId }, hubotishUser as IUser);
+    }
+  } catch (er) {
+    logger.error('Error processing users', er);
+  }
+}
+
+
+function decode(str: string): string {
+  const buff = Buffer.from(str, 'base64');
+  const text = buff.toString('utf-8');
+  return text;
 }

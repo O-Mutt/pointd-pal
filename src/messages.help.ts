@@ -11,7 +11,7 @@ import { regExpCreator } from './lib/regexpCreator';
 
 app.message(regExpCreator.getHelp(), directMention(), respondWithHelpGuidance);
 app.message(RegExp(/(plusplus version|-v|--version)/, 'i'), directMention(), async ({ message, context, say }) => {
-  await say(`Qrafty ${pjson.name}, version: ${pjson.version}`);
+  await say(`Qrafty Version: _${pjson.version}_`);
 });
 app.message(new RegExp('how much .*point.*', 'i'), tellHowMuchPointsAreWorth);
 
@@ -55,19 +55,22 @@ async function respondWithHelpGuidance({ client, message, say }) {
 async function tellHowMuchPointsAreWorth({ payload, logger, message, context, say }) {
   logger.error(message, context, payload);
   try {
-    const resp = await axios({
-      url: 'https://api.coindesk.com/v1/bpi/currentprice/ARS.json',
+    const { data: eth } = await axios({
+      url: 'https://api.coinbase.com/v2/exchange-rates?currency=ETH',
     });
 
-    const bitcoin = resp.data.bpi.USD.rate_float;
-    const ars = resp.data.bpi.ARS.rate_float;
-    const satoshi = bitcoin / 1e8;
+    const { data: btc } = await axios({
+      url: 'https://api.coinbase.com/v2/exchange-rates?currency=BTC',
+    });
+
+    const ethInUsd = eth.rates.USD;
+    const btcInUsd = btc.rates.USD;
     return say(
-      `A bitcoin is worth ${bitcoin} USD right now(${ars} ARS), a satoshi is about ${satoshi}, and qrafty points are worth nothing!`,
+      `A Bitcoin is worth $${btcInUsd} USD right now, Ethereum is $${ethInUsd} USD, and ${Md.bold('Qrafty points are worth nothing')}!`,
     );
   } catch (e: any) {
     return await say(
-      "Seems like we are having trouble getting some data... Don't worry, though, your qrafty points are still worth nothing!",
+      "Seems like we are having trouble getting some data... Don't worry, though, your Qrafty points are still worth nothing!",
     );
   }
 }
