@@ -196,29 +196,29 @@ async function migrateFromHubotToBolt({ message, context, logger, say, client })
 
     for (const hubotishUser of hubotishUsers) {
       logger.debug('Map this member', hubotishUser.slackId, hubotishUser.name);
-      hubotishUser.qraftyToken = hubotishUser.token;
+      hubotishUser.qraftyToken = hubotishUser.token || hubotishUser.qraftyToken;
       delete hubotishUser.token;
-      hubotishUser.email = hubotishUser.slackEmail;
+      hubotishUser.email = hubotishUser.slackEmail || hubotishUser.email;
       delete hubotishUser.slackEmail;
-      for (const reason in hubotishUser.reasons) {
-        if (isBase64(reason)) {
-          const decodedReason = decode(reason);
-          hubotishUser.reasons.set(decodedReason, hubotishUser.reasons[reason]);
-          console.log("check each reason", reason, decodedReason, hubotishUser.reasons[reason], hubotishUser.reasons[decodedReason])
-          delete hubotishUser.reasons[reason];
+      for (const [key, value] of hubotishUser.reasons) {
+        if (isBase64(key)) {
+          const decodedReason = decode(key);
+          hubotishUser.reasons.set(decodedReason, value);
+          console.log("check each reason", key, decodedReason, hubotishUser.reasons[key], hubotishUser.reasons[decodedReason])
+          delete hubotishUser.reasons[key];
         } else {
-          console.log("reason not base 64", reason);
+          console.log("reason not base 64", key);
         }
       }
 
-      for (const pointGiven in hubotishUser.pointsGiven) {
-        if (isBase64(pointGiven)) {
-          const decodedPointGiven = decode(pointGiven);
-          hubotishUser.reasons.set(decodedPointGiven, hubotishUser.pointsGiven[pointGiven]);
-          console.log("check each point given", pointGiven, decodedPointGiven, hubotishUser.pointsGiven[pointGiven], hubotishUser.pointsGiven[decodedPointGiven])
-          delete hubotishUser.pointsGiven[pointGiven];
+      for (const [key, value] of hubotishUser.pointsGiven) {
+        if (isBase64(key)) {
+          const decodedPointGiven = decode(key);
+          hubotishUser.reasons.set(decodedPointGiven, value);
+          console.log("check each point given", key, decodedPointGiven, hubotishUser.pointsGiven[key], hubotishUser.pointsGiven[decodedPointGiven])
+          delete hubotishUser.pointsGiven[key];
         } else {
-          console.log("point given not base 64", pointGiven);
+          console.log("point given not base 64", key);
         }
       }
       await say(`Decoding the reasons and the points given finished for ${Md.user(hubotishUser.slackId)}`);
