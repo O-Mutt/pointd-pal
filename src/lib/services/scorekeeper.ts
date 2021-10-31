@@ -76,7 +76,7 @@ export class ScoreKeeper {
         throw new Error(`In order to send tokens to ${Md.user(toUser.slackId)} you both must be, at least, level 2.`);
       }
 
-      if (fromUser.qraftyToken && fromUser.qraftyToken >= numberOfTokens) {
+      if (fromUser.qraftyToken && fromUser.qraftyToken <= numberOfTokens) {
         // from has too few tokens to send that many
         throw new Error(`You don't have enough tokens to send ${numberOfTokens} to ${Md.user(toUser.slackId)}`);
       }
