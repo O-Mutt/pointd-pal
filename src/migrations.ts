@@ -203,12 +203,14 @@ async function migrateFromHubotToBolt({ message, context, logger, say, client })
       for (const reason in hubotishUser.reasons) {
         const decodedReason = decode(reason);
         hubotishUser.reasons.set(decodedReason, hubotishUser.reasons[reason]);
+        console.log("check each reason", reason, decodedReason, hubotishUser.reasons[reason], hubotishUser.reasons[decodedReason])
         delete hubotishUser.reasons[reason];
       }
 
       for (const pointGiven in hubotishUser.pointsGiven) {
         const decodedPointGiven = decode(pointGiven);
         hubotishUser.reasons.set(decodedPointGiven, hubotishUser.pointsGiven[pointGiven]);
+        console.log("check each point given", pointGiven, decodedPointGiven, hubotishUser.pointsGiven[pointGiven], hubotishUser.pointsGiven[decodedPointGiven])
         delete hubotishUser.pointsGiven[pointGiven];
       }
       await say(
