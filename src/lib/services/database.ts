@@ -41,8 +41,6 @@ export class DatabaseService {
     reason: string | undefined,
     incrementValue: number,
   ) {
-    from.totalPointsGiven = from.totalPointsGiven + incrementValue;
-    await from.save();
     await ScoreLog(connectionFactory(teamId)).create({
       from: from.slackId,
       to: to.slackId,
@@ -75,6 +73,7 @@ export class DatabaseService {
     const newScore: number = (from.pointsGiven.get(to.slackId) || 0) + 1;
     // even if they are down voting them they should still get a tally (e.g. + 1) as they ++/-- the same person
     from.pointsGiven.set(to.slackId, newScore);
+    from.totalPointsGiven = from.totalPointsGiven + score;
     await from.save();
 
     if (newScore % this.furtherFeedbackScore === 0) {

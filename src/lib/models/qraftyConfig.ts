@@ -5,7 +5,6 @@ import { BonuslyBotConfigSchema, IBonuslyBotConfig } from './bonusly';
 import { IInstallation, Installation } from './installation';
 
 export interface IQraftyConfig extends Document, AuditTags {
-  slackToken?: string;
   notificationRoom?: string;
   falsePositiveRoom?: string;
   formalFeedbackUrl?: string;
@@ -18,11 +17,13 @@ export interface IQraftyConfig extends Document, AuditTags {
 }
 
 export const QraftyConfigSchema = new Schema({
-  slackToken: String,
   notificationRoom: String,
   falsePositiveRoom: String,
   formalFeedbackUrl: String,
-  formalFeedbackModulo: Number,
+  formalFeedbackModulo: {
+    type: Number,
+    default: 10
+  },
   companyName: String,
   qryptoEnabled: {
     type: Boolean,

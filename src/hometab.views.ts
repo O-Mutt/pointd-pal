@@ -45,6 +45,14 @@ app.view(
             qrafty.falsePositiveRoom = value.toLowerCase();
             break;
           }
+          case 'hometab_qraftyFormalFeedbackUrl': {
+            qrafty.formalFeedbackUrl = value;
+            break;
+          }
+          case 'hometab_qraftyFormalFeedbackModulo': {
+            qrafty.formalFeedbackModulo = parseInt(value, 10);
+            break;
+          }
           case 'hometab_bonuslyEnabled': {
             bonusly.enabled = value === EnabledSettings.ENABLED;
             break;

@@ -64,6 +64,22 @@ app.action(
           initialValue: qraftyConfig?.falsePositiveRoom || '',
         }),
       ),
+      Blocks.Input({ label: 'Is there a \"Formal\" feedback that you would like frequent senders to be prompted for?' }).element(
+        Elements.TextInput({
+          actionId: 'hometab_qraftyFormalFeedbackUrl',
+          placeholder: 'https://formal.praise.company.com',
+          minLength: 2,
+          initialValue: qraftyConfig?.formalFeedbackUrl || '',
+        }),
+      ),
+      Blocks.Input({ label: 'When a user interacts (++ or --) with another user at what increment should they be prompted to send formal praise?' }).element(
+        Elements.TextInput({
+          actionId: 'hometab_qraftyFormalFeedbackModulo',
+          placeholder: '10',
+          minLength: 2,
+          initialValue: qraftyConfig?.formalFeedbackModulo || 10,
+        }),
+      ),
       Blocks.Divider(),
       Blocks.Header({ text: `${Md.emoji('rocket')} Bonusly Integration` }),
       Blocks.Input({ label: 'Bonusly Enabled' }).element(

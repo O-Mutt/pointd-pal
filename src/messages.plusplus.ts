@@ -141,7 +141,7 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
     return;
   }
 
-  logger.debug(
+  console.debug(
     `${number} score for [${userId}] from[${from}]${reason ? ` because ${reason}` : ''} in [${channel}]`,
   );
   let response;
