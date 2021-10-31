@@ -183,7 +183,7 @@ async function migrateFromHubotToBolt({ message, context, logger, say, client })
   const userId: string = message.user;
   const connection = connectionFactory(teamId)
   const { isAdmin } = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
-  if (isAdmin) {
+  if (!isAdmin) {
     logger.error("sorry, can't do that", message, context);
     await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
     return;
