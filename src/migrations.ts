@@ -200,22 +200,28 @@ async function migrateFromHubotToBolt({ message, context, logger, say, client })
       delete hubotishUser.token;
       hubotishUser.email = hubotishUser.slackEmail;
       delete hubotishUser.slackEmail;
-      for (const reason of hubotishUser.reasons) {
-        const decodedReason = decode(reason);
-        hubotishUser.reasons.set(decodedReason, hubotishUser.reasons[reason]);
-        console.log("check each reason", reason, decodedReason, hubotishUser.reasons[reason], hubotishUser.reasons[decodedReason])
-        delete hubotishUser.reasons[reason];
+      for (const reason in hubotishUser.reasons) {
+        if (isBase64(reason)) {
+          const decodedReason = decode(reason);
+          hubotishUser.reasons.set(decodedReason, hubotishUser.reasons[reason]);
+          console.log("check each reason", reason, decodedReason, hubotishUser.reasons[reason], hubotishUser.reasons[decodedReason])
+          delete hubotishUser.reasons[reason];
+        } else {
+          console.log("reason not base 64", reason);
+        }
       }
 
-      for (const pointGiven of hubotishUser.pointsGiven) {
-        const decodedPointGiven = decode(pointGiven);
-        hubotishUser.reasons.set(decodedPointGiven, hubotishUser.pointsGiven[pointGiven]);
-        console.log("check each point given", pointGiven, decodedPointGiven, hubotishUser.pointsGiven[pointGiven], hubotishUser.pointsGiven[decodedPointGiven])
-        delete hubotishUser.pointsGiven[pointGiven];
+      for (const pointGiven in hubotishUser.pointsGiven) {
+        if (isBase64(pointGiven)) {
+          const decodedPointGiven = decode(pointGiven);
+          hubotishUser.reasons.set(decodedPointGiven, hubotishUser.pointsGiven[pointGiven]);
+          console.log("check each point given", pointGiven, decodedPointGiven, hubotishUser.pointsGiven[pointGiven], hubotishUser.pointsGiven[decodedPointGiven])
+          delete hubotishUser.pointsGiven[pointGiven];
+        } else {
+          console.log("point given not base 64", pointGiven);
+        }
       }
-      await say(
-        `Decoding the reasons and the points given finished for ${Md.user(hubotishUser.slackId)}`,
-      );
+      await say(`Decoding the reasons and the points given finished for ${Md.user(hubotishUser.slackId)}`);
       await User(connection).replaceOne({ slackId: hubotishUser.slackId }, hubotishUser as IUser);
     }
   } catch (er) {
@@ -228,4 +234,18 @@ function decode(str: string): string {
   const buff = Buffer.from(str, 'base64');
   const text = buff.toString('utf-8');
   return text;
+}
+
+function encode(str: string): string {
+  const buff = Buffer.from(str);
+  const base64data = buff.toString('base64');
+  return base64data;
+}
+
+function isBase64(str: string): boolean {
+  try {
+    return encode(decode(str)) == str;
+  } catch (err) {
+    return false;
+  }
 }
