@@ -200,14 +200,14 @@ async function migrateFromHubotToBolt({ message, context, logger, say, client })
       delete hubotishUser.token;
       hubotishUser.email = hubotishUser.slackEmail;
       delete hubotishUser.slackEmail;
-      for (const reason in hubotishUser.reasons) {
+      for (const reason of hubotishUser.reasons) {
         const decodedReason = decode(reason);
         hubotishUser.reasons.set(decodedReason, hubotishUser.reasons[reason]);
         console.log("check each reason", reason, decodedReason, hubotishUser.reasons[reason], hubotishUser.reasons[decodedReason])
         delete hubotishUser.reasons[reason];
       }
 
-      for (const pointGiven in hubotishUser.pointsGiven) {
+      for (const pointGiven of hubotishUser.pointsGiven) {
         const decodedPointGiven = decode(pointGiven);
         hubotishUser.reasons.set(decodedPointGiven, hubotishUser.pointsGiven[pointGiven]);
         console.log("check each point given", pointGiven, decodedPointGiven, hubotishUser.pointsGiven[pointGiven], hubotishUser.pointsGiven[decodedPointGiven])
