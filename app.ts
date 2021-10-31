@@ -40,14 +40,23 @@ export let app = new App({
   ]
 });
 
-import './src/actions.bonusly';
-import './src/messages.plusplus';
-import './src/migrations';
+// messages
 import './src/messages.qrypto';
 import './src/messages.scoreboard';
-import './src/events';
+import './src/messages.help';
+import './src/messages.plusplus';
+
+// bonusly
+import './src/actions.bonusly';
 import './src/events.bonusly';
+
+// etc
+import './src/events';
+import './src/migrations';
 import './src/monthlyScoreboardCron';
+
+
+// hometab
 import './src/hometab';
 import './src/hometab.actions';
 import './src/hometab.views';
