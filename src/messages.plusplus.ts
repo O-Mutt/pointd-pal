@@ -124,7 +124,7 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
 async function giveTokenBetweenUsers({ message, context, logger, say }) {
   const fullText = context.matches.input;
   const teamId = context.teamId as string;
-  let { premessage, userId, number, conjunction, reason } = context.matches.groups;
+  let { premessage, userId, amount, conjunction, reason } = context.matches.groups;
   if (reason) {
     reason = reason.toLowerCase();
   }
@@ -142,11 +142,11 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
   }
 
   console.debug(
-    `${number} score for [${userId}] from[${from}]${reason ? ` because ${reason}` : ''} in [${channel}]`,
+    `${amount} score for [${userId}] from[${from}]${reason ? ` because ${reason}` : ''} in [${channel}]`,
   );
   let response;
   try {
-    response = await scoreKeeper.transferTokens(teamId, userId, from, channel, reason, number);
+    response = await scoreKeeper.transferTokens(teamId, userId, from, channel, reason, amount);
   } catch (e: any) {
     await say(e.message);
     return;
@@ -155,18 +155,18 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
   const theMessage = Helpers.getMessageForTokenTransfer(
     response.toUser,
     response.fromUser,
-    number,
+    amount,
     reason,
   );
 
   if (message) {
     const sayResponse = await say(theMessage);
     const plusPlusEvent = new PlusPlus({
-      notificationMessage: `${Md.user(response.fromUser.slackId)} sent ${number} Qrafty point${parseInt(number, 10) > 1 ? 's' : ''} to ${Md.user(response.toUser.slackId)} in ${Md.channel(channel)}`,
+      notificationMessage: `${Md.user(response.fromUser.slackId)} sent ${amount} Qrafty point${parseInt(amount, 10) > 1 ? 's' : ''} to ${Md.user(response.toUser.slackId)} in ${Md.channel(channel)}`,
       recipients: [response.toUser],
       sender: response.fromUser,
       direction: DirectionEnum.PLUS,
-      amount: number,
+      amount: amount,
       channel,
       reason: reason,
       teamId: teamId,

@@ -84,7 +84,7 @@ export class RegExpCreator {
    */
   createGiveTokenRegExp(): RegExp {
     const reg = new RegExp(
-      `(?<premessage>.*)?${this.userObject}${this.allowSpacesAfterObject}\\+${this.allowSpacesAfterObject}([0-9]{1,})${this.reasonForVote}${this.eol}`,
+      `(?<premessage>.*)?${this.userObject}${this.allowSpacesAfterObject}\\+${this.allowSpacesAfterObject}(?<amount>[0-9]{1,})${this.reasonForVote}${this.eol}`,
       'i',
     );
     return reg;
