@@ -30,8 +30,8 @@ async function respondWithScore({ message, context, logger, say }) {
 
   let tokenString = '.';
   if (user.accountLevel > 1) {
-    tokenString = ` (*${user.token} Qrafty `;
-    tokenString = tokenString.concat(user.token && user.token > 1 ? 'Tokens*).' : 'Token*).');
+    tokenString = ` (*${user.qraftyToken} Qrafty `;
+    tokenString = tokenString.concat(user.qraftyToken && user.qraftyToken > 1 ? 'Tokens*).' : 'Token*).');
   }
 
   const scoreStr = user.score > 1 ? 'points' : 'point';
@@ -84,9 +84,9 @@ async function respondWithLeaderLoserBoard({ client, message, context, logger, s
   if (tops.length > 0) {
     for (let i = 0, end = tops.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
       if (tops[i].accountLevel && tops[i].accountLevel > 1) {
-        const tokenStr = tops[i].token > 1 ? 'Tokens' : 'Token';
+        const tokenStr = tops[i].qraftyToken > 1 ? 'Tokens' : 'Token';
         messages.push(
-          `${i + 1}. ${Md.user(tops[i].slackId)}: ${tops[i].score} (*${tops[i].token} ${Helpers.capitalizeFirstLetter(
+          `${i + 1}. ${Md.user(tops[i].slackId)}: ${tops[i].score} (*${tops[i].qraftyToken} ${Helpers.capitalizeFirstLetter(
             'qrafty',
           )} ${tokenStr}*)`,
         );
@@ -135,10 +135,10 @@ async function respondWithLeaderLoserTokenBoard({ message, context, client }) {
   const messages: string[] = [];
   if (tops.length > 0) {
     for (let i = 0, end = tops.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
-      const tokenStr = tops[i].token > 1 ? 'Tokens' : 'Token';
+      const tokenStr = tops[i].qraftyToken > 1 ? 'Tokens' : 'Token';
       const pointStr = tops[i].score > 1 ? 'points' : 'point';
       messages.push(
-        `${i + 1}. ${Md.user(tops[i].slackId)}: *${tops[i].token} Qrafty ${tokenStr}* (${tops[i].score
+        `${i + 1}. ${Md.user(tops[i].slackId)}: *${tops[i].qraftyToken} Qrafty ${tokenStr}* (${tops[i].score
         } ${pointStr})`,
       );
     }
@@ -154,7 +154,7 @@ async function respondWithLeaderLoserTokenBoard({ message, context, client }) {
     .chtt(chartText)
     .chxt('x,y')
     .chxl(`0:|${_.take(_.map(tops, 'name'), graphSize).join('|')}`)
-    .chd(`a:${_.take(_.map(tops, 'token'), graphSize).join(',')}`)
+    .chd(`a:${_.take(_.map(tops, 'qraftyToken'), graphSize).join(',')}`)
     .toURL();
 
   const theMessage = Message({ channel: message.channel, text: chartText })

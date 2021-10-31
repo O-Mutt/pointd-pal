@@ -16,13 +16,13 @@ export interface IUser extends Document, AuditTags {
   totalPointsGiven: number;
   isAdmin: boolean;
   isBot: boolean;
+  qraftyToken: number;
   email?: string;
   name?: string;
-  token?: number;
-  bonuslyScoreOverride?: number;
-  bonuslyPrompt?: string;
+  bonuslyScoreOverride: number;
+  bonuslyPrompt: string;
   walletAddress?: string;
-  bonuslyPointsDMResponse?: boolean
+  bonuslyPointsDM: boolean
 }
 
 export const UserSchema = new Schema({
@@ -66,7 +66,7 @@ export const UserSchema = new Schema({
   },
   email: String,
   name: String,
-  token: {
+  qraftyToken: {
     type: Number,
     default: 0,
   },
@@ -80,7 +80,7 @@ export const UserSchema = new Schema({
     default: PromptSettings.PROMPT,
   },
   walletAddress: String,
-  bonuslyPointsDMResponse: {
+  bonuslyPointsDM: {
     type: Boolean,
     default: true,
   },

@@ -121,7 +121,7 @@ async function handleBonuslySent(plusPlusBonuslyEvent: PlusPlusBonusly) {
       messages.push(`Sorry, there was an issue sending your bonusly bonus: ${plusPlusBonuslyEvent.responses[i].message}`);
     }
 
-    if (plusPlusBonuslyEvent.sender.bonuslyPointsDMResponse) {
+    if (plusPlusBonuslyEvent.sender.bonuslyPointsDM) {
       try {
         await app.client.chat.postMessage({
           token: token,

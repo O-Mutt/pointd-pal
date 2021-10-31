@@ -8,7 +8,6 @@ export class SlackService {
     } catch (e: any | unknown) {
       // logger.error(e)
       console.error('Error getting list of conversations', e.message);
-      return;
     }
 
     const foundChannel = result.channels?.filter((channel) => {
@@ -16,6 +15,14 @@ export class SlackService {
     });
 
     if (foundChannel && foundChannel.length === 1) {
+      // make sure we're in the channel
+      try {
+        await app.client.conversations.join({ token: token, channel: foundChannel[0].id })
+      } catch (e: any | unknown) {
+        // logger.error(e)
+        console.error('This may be a known error and we should probably check for the e.warning === \'already_in_channel\' but:', e.message);
+        return
+      }
       return foundChannel[0].id;
     }
 

@@ -115,6 +115,10 @@ app.view(
             user.bonuslyScoreOverride = parseInt(value, 10);
             break;
           }
+          case 'hometab_bonuslyPointsDM': {
+            user.bonuslyPointsDM = value === EnabledSettings.ENABLED;
+            break;
+          }
           case 'hometab_cryptoWalletAddress': {
             user.walletAddress = value;
           }

@@ -164,11 +164,11 @@ export class DatabaseService {
   }
 
   async updateAccountLevelToTwo(teamId: string, user: IUser): Promise<void> {
-    user.token = user.score;
+    user.qraftyToken = user.score;
     user.accountLevel = 2;
     await user.save();
     await BotToken
-      .findOneAndUpdate({}, { $inc: { token: -user.token } })
+      .findOneAndUpdate({}, { $inc: { qraftyToken: -user.qraftyToken } })
       .exec();
     eventBus.emit('plusplus-tokens');
     return;
@@ -241,8 +241,8 @@ export class DatabaseService {
    * @returns {object} the user who received the points updated value
    */
   async transferTokens(teamId: string, user: IUser, from: IUser, scoreChange: number): Promise<void> {
-    user.token = user.token || 0 + scoreChange;
-    from.token = from.token || 0 - scoreChange;
+    user.qraftyToken = user.qraftyToken || 0 + scoreChange;
+    from.qraftyToken = from.qraftyToken || 0 - scoreChange;
     await user.save();
     await from.save();
   }

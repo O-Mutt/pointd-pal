@@ -70,9 +70,9 @@ export class Helpers {
     }
 
     if (user.accountLevel && user.accountLevel > 1) {
-      let tokenStr = `(*${user.token} Qrafty Tokens*)`;
-      if (user.token === 1) {
-        tokenStr = `(*${user.token} Qrafty Token*)`;
+      let tokenStr = `(*${user.qraftyToken} Qrafty Tokens*)`;
+      if (user.qraftyToken === 1) {
+        tokenStr = `(*${user.qraftyToken} Qrafty Token*)`;
       }
       scoreStr = scoreStr.concat(` ${tokenStr}`);
     }
@@ -103,8 +103,8 @@ export class Helpers {
       return '';
     }
 
-    const scoreStr = `${Md.user(from.slackId)} transferred *${number}* Qrafty Tokens to ${Md.user(to.slackId)}.\n${Md.user(to.slackId)} now has ${to.token
-      } token${Helpers.getEsOnEndOfWord(to.token || 0)}`;
+    const scoreStr = `${Md.user(from.slackId)} transferred *${number}* Qrafty Tokens to ${Md.user(to.slackId)}.\n${Md.user(to.slackId)} now has ${to.qraftyToken
+      } token${Helpers.getEsOnEndOfWord(to.qraftyToken || 0)}`;
     let reasonStr = '.';
     let cakeDayStr = '';
 
@@ -126,8 +126,8 @@ export class Helpers {
       const yearsAsString = Helpers.getYearsAsString(to.robotDay);
       cakeDayStr = `\n:birthday: Today is ${Md.user(to.slackId)}'s ${yearsAsString}Qraftyday! :birthday:`;
     }
-    return `${scoreStr}${reasonStr}${cakeDayStr}\n_${Md.user(from.slackId)} has ${from.token} token${Helpers.getEsOnEndOfWord(
-      from.token || 0,
+    return `${scoreStr}${reasonStr}${cakeDayStr}\n_${Md.user(from.slackId)} has ${from.qraftyToken} token${Helpers.getEsOnEndOfWord(
+      from.qraftyToken || 0,
     )}_`;
   }
 

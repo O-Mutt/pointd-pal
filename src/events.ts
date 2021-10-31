@@ -66,7 +66,6 @@ async function sendPlusPlusFalsePositiveNotification(plusPlusFailureEvent: PlusP
 
 async function logAndNotifySpam({ sender, recipient, message, reason, teamId }: PlusPlusSpam) {
   //Logger.error(`A spam event has been detected: ${notificationObject.message}. ${notificationObject.reason}`);
-  //robot.messageRoom(notificationObject.from.slackId, `${notificationObject.message}\n\n${notificationObject.reason}`);
   if (!sender.slackId) {
     return;
   }

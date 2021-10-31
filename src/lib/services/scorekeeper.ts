@@ -76,7 +76,7 @@ export class ScoreKeeper {
         throw new Error(`In order to send tokens to ${Md.user(toUser.slackId)} you both must be, at least, level 2.`);
       }
 
-      if (fromUser.token && fromUser.token >= numberOfTokens) {
+      if (fromUser.qraftyToken && fromUser.qraftyToken >= numberOfTokens) {
         // from has too few tokens to send that many
         throw new Error(`You don't have enough tokens to send ${numberOfTokens} to ${Md.user(toUser.slackId)}`);
       }
@@ -85,8 +85,8 @@ export class ScoreKeeper {
         throw new Error(`I'm sorry ${Md.user(fromUser.slackId)}, I'm afraid I can't do that.`);
       }
 
-      fromUser.token = fromUser.token || 0 - numberOfTokens;
-      toUser.token = toUser.token || 0 + numberOfTokens;
+      fromUser.qraftyToken = fromUser.qraftyToken || 0 - numberOfTokens;
+      toUser.qraftyToken = toUser.qraftyToken || 0 + numberOfTokens;
       if (reason) {
         const newReasonScore = (toUser.reasons.get(reason) || 0) + numberOfTokens;
         toUser.reasons.set(reason, newReasonScore);

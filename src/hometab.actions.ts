@@ -139,16 +139,15 @@ app.action(
   actions.hometab.user_settings,
   async ({ ack, client, context, body }: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
     await ack();
+    let bonuslyBlocks: Appendable<ViewBlockBuilder> = [];
     const teamId = context.teamId as string;
     const userId = body.user.id;
     const connection = connectionFactory(teamId);
     const bonusly = await BonuslyBotConfig(connection).findOne().exec();
-
-    const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
-    console.log('user settings', teamId, userId, user);
     const qraftyConfig = await BotToken.findOne().exec();
 
-    let bonuslyBlocks: Appendable<ViewBlockBuilder> = [];
+    const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
+
     if (bonusly?.enabled) {
       bonuslyBlocks = [
         Blocks.Header({ text: 'Bonusly Integration Settings' }),
@@ -181,6 +180,21 @@ and a bonusly is included what is the default amount that you would like to send
             actionId: 'hometab_bonuslyScoreOverride',
             initialValue: user?.bonuslyScoreOverride?.toString() || '1',
           }),
+        ),
+        Blocks.Input({ label: `When you send a Bonusly would you like Qrafty to DM you to tell you about your remaining balance?` }).element(
+          Elements.StaticSelect({ actionId: 'hometab_bonuslyPointsDM' })
+            .initialOption(
+              user?.bonuslyPointsDM
+                ? Bits.Option({
+                  text: user?.bonuslyPointsDM ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
+                  value: user?.bonuslyPointsDM ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
+                })
+                : undefined,
+            )
+            .options(
+              Bits.Option({ text: EnabledSettings.ENABLED, value: EnabledSettings.ENABLED }),
+              Bits.Option({ text: EnabledSettings.DISABLED, value: EnabledSettings.DISABLED })
+            ),
         ),
       ];
     }
