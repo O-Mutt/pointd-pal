@@ -267,14 +267,14 @@ async function eraseUserScore({ message, context, say }) {
   const { channel, user: from } = message;
 
   const fromUser = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, from);
-  const isAdmin = fromUser.isAdmin;
+  const toBeErased = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, userId);
 
-  if (!isAdmin) {
+  if (fromUser.isAdmin !== true) {
     await say("Sorry, you don't have authorization to do that.");
     return;
-  } else if (isAdmin) {
-    erased = await scoreKeeper.erase(teamId, userId, from, channel, reason);
   }
+
+  erased = await scoreKeeper.erase(teamId, toBeErased, fromUser, channel, reason);
 
   if (erased) {
     const message = !reason

@@ -150,19 +150,19 @@ export class DatabaseService {
     return results;
   }
 
-  async erase(teamId: string, user: IUser, reason?: string): Promise<void> {
+  async erase(toBeErased: IUser, reason?: string): Promise<void> {
     if (reason) {
-      const reasonScore: number = user.reasons.get(reason) || 0;
-      user.reasons.delete(reason);
-      user.score = user.score - reasonScore;
-      await user.save();
+      const reasonScore: number = toBeErased.reasons.get(reason) || 0;
+      toBeErased.reasons.delete(reason);
+      toBeErased.score = toBeErased.score - reasonScore;
+      await toBeErased.save();
     } else {
-      await user.remove();
+      await toBeErased.delete();
     }
     return;
   }
 
-  async updateAccountLevelToTwo(teamId: string, user: IUser): Promise<void> {
+  async updateAccountLevelToTwo(user: IUser): Promise<void> {
     user.qraftyToken = user.score;
     user.accountLevel = 2;
     await user.save();

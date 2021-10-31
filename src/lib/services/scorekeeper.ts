@@ -76,7 +76,7 @@ export class ScoreKeeper {
         throw new Error(`In order to send tokens to ${Md.user(toUser.slackId)} you both must be, at least, level 2.`);
       }
 
-      if (fromUser.qraftyToken && fromUser.qraftyToken <= numberOfTokens) {
+      if (fromUser.qraftyToken && fromUser.qraftyToken < numberOfTokens) {
         // from has too few tokens to send that many
         throw new Error(`You don't have enough tokens to send ${numberOfTokens} to ${Md.user(toUser.slackId)}`);
       }
@@ -110,14 +110,9 @@ export class ScoreKeeper {
     }
   }
 
-  async erase(teamId: string, user: IUser, from: IUser, channel: string, reason: string) {
-    if (reason) {
-      //Logger.error(`Erasing score for reason ${reason} for ${user} by ${from}`);
-      await this.databaseService.erase(teamId, user, reason);
-      return true;
-    }
+  async erase(teamId: string, toBeErased: IUser, admin: IUser, channel: string, reason?: string) {
     //Logger.error(`Erasing all scores for ${user} by ${from}`);
-    await this.databaseService.erase(teamId, user, undefined);
+    await this.databaseService.erase(toBeErased, reason);
 
     return true;
   }

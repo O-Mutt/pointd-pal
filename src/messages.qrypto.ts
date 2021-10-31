@@ -54,7 +54,7 @@ async function levelUpAccount({ message, context, logger, say }) {
     return;
   }
 
-  const leveledUpUser = await databaseService.updateAccountLevelToTwo(teamId, user);
+  const leveledUpUser = await databaseService.updateAccountLevelToTwo(user);
   logger.debug('DB results', leveledUpUser);
 
   await say(
