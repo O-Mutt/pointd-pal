@@ -5,8 +5,9 @@ export class SlackService {
     let result;
     try {
       result = await app.client.conversations.list({ token: token });
-    } catch (e) {
+    } catch (e: any | unknown) {
       // logger.error(e)
+      console.error('Error getting list of conversations', e.message);
       return;
     }
 
@@ -21,9 +22,10 @@ export class SlackService {
     try {
       const { channel } = await app.client.conversations.create({ token: token, team_id: teamId, name: channelName });
       return channel?.id;
-    } catch (e) {
+    } catch (e: any | unknown) {
       // logger.error(e)
-      return;
+      console.error('Error creating the conversation for notifications', e.message);
+      return
     }
   }
 }

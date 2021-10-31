@@ -33,7 +33,8 @@ async function sendPlusPlusNotification(plusPlusEvent: PlusPlus) {
       channel: channelId,
       text: plusPlusEvent.notificationMessage,
     });
-  } catch (error) {
+  } catch (error: any | unknown) {
+    console.error('There was an error when posting the `++` event to the notifications room', error.message)
     // logger.error(error);
   }
 }

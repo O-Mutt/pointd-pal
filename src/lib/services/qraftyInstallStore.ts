@@ -7,7 +7,7 @@ export const QraftyInstallStore: InstallationStore = {
     // change the lines below so they save to your database
     if (installation.isEnterpriseInstall && installation.enterprise !== undefined) {
       // support for org-wide app installation
-      console.log("[INSTALL] org wide", installation);
+      console.log("[INSTALL] org wide", installation.enterprise.id);
       await Installation.findOneOrCreate(
         installation.enterprise.id,
         installation,
@@ -16,7 +16,7 @@ export const QraftyInstallStore: InstallationStore = {
     }
     if (installation.team !== undefined) {
       // single team app installation
-      console.log("[INSTALL] single team", installation);
+      console.log("[INSTALL] single team", installation.team.id);
       await Installation.findOneOrCreate(
         installation.team.id,
         installation,
@@ -29,7 +29,7 @@ export const QraftyInstallStore: InstallationStore = {
     // change the lines below so they fetch from your database
     if (installQuery.isEnterpriseInstall && installQuery.enterpriseId !== undefined) {
       // org wide app installation lookup
-      console.log("[LOOKUP] org wide app", installQuery);
+      console.log("[LOOKUP] org wide app", installQuery.enterpriseId);
       const result = await Installation.findOne({ teamId: installQuery.enterpriseId }).exec();
       if (!result) {
         throw new Error('Failed fetching installation');
@@ -38,7 +38,7 @@ export const QraftyInstallStore: InstallationStore = {
     }
     if (installQuery.teamId !== undefined) {
       // single team app installation lookup
-      console.log("[LOOKUP] single team app", installQuery);
+      console.log("[LOOKUP] single team app", installQuery.teamId);
       const result = await Installation.findOne({ teamId: installQuery.teamId }).exec();
       if (!result) {
         throw new Error('Failed fetching installation');
