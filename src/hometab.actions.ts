@@ -77,7 +77,7 @@ app.action(
           actionId: 'hometab_qraftyFormalFeedbackModulo',
           placeholder: '10',
           minLength: 2,
-          initialValue: qraftyConfig?.formalFeedbackModulo || 10,
+          initialValue: qraftyConfig?.formalFeedbackModulo.toString() || '10',
         }),
       ),
       Blocks.Divider(),
