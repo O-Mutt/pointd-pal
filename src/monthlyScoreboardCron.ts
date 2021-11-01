@@ -18,12 +18,6 @@ const procVars = H.getProcessVariables(process.env);
 const databaseService = new DatabaseService({ ...procVars });
 
 (async () => {
-  // somehow we need a team id... maybe loop all the teams for the cron? Cron per instance?
-  /* const config = await QraftyConfig(connectionFactory(teamId)).findOne().exec();
-  const channelId = await SlackService.findOrCreateConversation(config?.notificationRoom);
-  if (!channelId) {
-    return;
-  } */
   const allInstalls = await Installation.find({}).exec();
 
   for (const install of allInstalls) {
@@ -55,7 +49,7 @@ const databaseService = new DatabaseService({ ...procVars });
           if (topSenders.length > 0) {
             for (let i = 0, end = topSenders.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
               const pointStr = `point${H.getEsOnEndOfWord(topSenders[i].scoreChange)} given`;
-              messages.push(`${i + 1}. ${Md.user(topSenders[i].slackId)} (${topSenders[i].scoreChange} ${pointStr})`);
+              messages.push(`${i + 1}. ${Md.user(topSenders[i]._id)} (${topSenders[i].scoreChange} ${pointStr})`);
             }
           } else {
             messages.push('No scores to keep track of yet!');
@@ -75,7 +69,7 @@ const databaseService = new DatabaseService({ ...procVars });
           if (topRecipient.length > 0) {
             for (let i = 0, end = topRecipient.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
               const pointStr = `point${H.getEsOnEndOfWord(topRecipient[i].scoreChange)} received`;
-              messages.push(`${i + 1}. ${Md.user(topRecipient[i].slackId)} (${topRecipient[i].scoreChange} ${pointStr})`);
+              messages.push(`${i + 1}. ${Md.user(topRecipient[i]._id)} (${topRecipient[i].scoreChange} ${pointStr})`);
             }
           } else {
             messages.push('No scores to keep track of yet!');
@@ -94,7 +88,7 @@ const databaseService = new DatabaseService({ ...procVars });
           if (topRoom.length > 0) {
             for (let i = 0, end = topRoom.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
               const pointStr = `point${H.getEsOnEndOfWord(topRoom[i].scoreChange)} given`;
-              messages.push(`${i + 1}. ${Md.channel(topRoom[i].slackId)} (${topRoom[i].scoreChange} ${pointStr})`);
+              messages.push(`${i + 1}. ${Md.channel(topRoom[i]._id)} (${topRoom[i].scoreChange} ${pointStr})`);
             }
           } else {
             messages.push('No scores to keep track of yet!');
