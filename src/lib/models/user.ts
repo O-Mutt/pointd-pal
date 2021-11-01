@@ -86,7 +86,6 @@ export const UserSchema = new Schema({
   },
 });
 
-UserSchema.path('reasons')
 
 UserSchema.statics.findOneBySlackIdOrCreate = async function (
   this: Model<UserInterface, UserModelInterface>,
