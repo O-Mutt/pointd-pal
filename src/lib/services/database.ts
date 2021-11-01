@@ -41,14 +41,7 @@ export class DatabaseService {
     reason: string | undefined,
     incrementValue: number,
   ) {
-    await ScoreLog(connectionFactory(teamId)).create({
-      from: from.slackId,
-      to: to.slackId,
-      date: new Date(),
-      channel,
-      reason,
-      scoreChange: incrementValue,
-    });
+
   }
 
   async isSpam(teamId: string, to: IUser, from: IUser) {

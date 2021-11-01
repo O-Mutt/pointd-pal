@@ -184,7 +184,10 @@ ${Md.user(to.slackId)} now has ${to.qraftyToken} token${Helpers.getEsOnEndOfWord
     return text;
   }
 
-  static obfuscate(str: string, amountToLeaveUnobfuscated: number = 3) {
+  static obfuscate(str: string, amountToLeaveUnobfuscated: number = 3): string {
+    if (!str) {
+      return str;
+    }
     const backwards = Helpers.reverseString(str);
     let obfuscatedString = backwards;
     if (backwards.length > amountToLeaveUnobfuscated) {

@@ -4,6 +4,12 @@ import { PlusPlusSpam, PlusPlusSpamEventName } from '../types/Events';
 import { eventBus } from './eventBus';
 import { Md } from 'slack-block-builder';
 import { connectionFactory } from './connectionsFactory';
+import { BotToken } from '../models/botToken';
+import { QraftyConfig } from '../models/qraftyConfig';
+import { ChatPostMessageArguments } from '@slack/web-api';
+import { app } from '../../../app';
+import { Installation } from '../models/installation';
+import { ScoreLog } from '../models/scoreLog';
 
 export class ScoreKeeper {
   databaseService: DatabaseService;
@@ -34,8 +40,13 @@ export class ScoreKeeper {
   */
   async incrementScore(teamId: string, toId: string, fromId: string, channel: string, incrementValue: number, reason?: string): Promise<{ toUser: IUser; fromUser: IUser; }> {
     try {
-      const toUser = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, toId);
-      const fromUser = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, fromId);
+      const connection = connectionFactory(teamId);
+      const toUser = await User(connection).findOneBySlackIdOrCreate(teamId, toId);
+      const fromUser = await User(connection).findOneBySlackIdOrCreate(teamId, fromId);
+      const bot = await BotToken.findOne({}).exec();
+      const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId);
+      const install = await Installation.findOne({ teamId: teamId });
+
       if (fromUser.isBot === true) {
         throw new Error('Bots can\'t send points, silly.');
       }
@@ -49,17 +60,43 @@ export class ScoreKeeper {
         toUser.reasons.set(reason, newReasonScore);
       }
 
-      await this.databaseService.savePointsGiven(fromUser, toUser, incrementValue);
-      await toUser.save();
+      //await this.databaseService.savePointsGiven(fromUser, toUser, incrementValue);
+      const newScore: number = (fromUser.pointsGiven.get(toUser.slackId) || 0) + 1;
+      fromUser.pointsGiven.set(toUser.slackId, newScore);
+      fromUser.totalPointsGiven = fromUser.totalPointsGiven + incrementValue;
+      if (qraftyConfig.formalFeedbackUrl &&
+        newScore % qraftyConfig.formalFeedbackModulo === 0 &&
+        install?.installation.bot?.token) {
+        await app.client.chat.postMessage({
+          token: install.installation.bot.token,
+          channel: fromUser.slackId,
+          text: `Looks like you've given ${Md.user(toUser.slackId)} quite a few points, maybe should submit a formal praise ${Md.link(qraftyConfig.formalFeedbackUrl)}`,
+        } as ChatPostMessageArguments);
+      }
+
       try {
-        await this.databaseService.savePlusPlusLog(teamId, toUser, fromUser, channel, reason, incrementValue);
+        await ScoreLog(connection).create({
+          from: fromUser.slackId,
+          to: toUser.slackId,
+          date: new Date(),
+          channel,
+          reason,
+          scoreChange: incrementValue,
+        });
       } catch (e) {
         //Logger.error(`failed saving spam log for user ${toUser.name} from ${from.name} in channel ${channel} because ${reason}`, e);
       }
 
-      if (toUser && toUser.accountLevel > 1 && incrementValue > 1) {
+      if (toUser && toUser.accountLevel > 1) {
+        if (bot) {
+          bot.token = bot.token - incrementValue;
+        }
+        toUser.qraftyToken = toUser.qraftyToken + incrementValue
         //saveResponse = await this.databaseService.transferScoreFromBotToUser(toUser, incrementValue, fromUser);
       }
+      await toUser.save();
+      await fromUser.save();
+      await bot?.save();
       return { toUser, fromUser };
     } catch (e) {
       //Logger.error(`failed to ${incrementValue > 0 ? 'add' : 'subtract'} point to [${to.name || 'no to'}] from [${from ? from.name : 'no from'}] because [${reason}] object [${JSON.stringify(toUser)}]`, e);
@@ -69,8 +106,9 @@ export class ScoreKeeper {
 
   async transferTokens(teamId: string, toId: string, fromId: string, channel: string, numberOfTokens: number, reason?: string): Promise<{ toUser: IUser; fromUser: IUser; }> {
     try {
-      const toUser = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, toId);
-      const fromUser = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, fromId);
+      const connection = connectionFactory(teamId);
+      const toUser = await User(connection).findOneBySlackIdOrCreate(teamId, toId);
+      const fromUser = await User(connection).findOneBySlackIdOrCreate(teamId, fromId);
       if (toUser.accountLevel < 2 && fromUser.accountLevel < 2) {
         // to or from is not level 2
         throw new Error(`In order to send tokens to ${Md.user(toUser.slackId)} you both must be, at least, level 2.`);
@@ -92,9 +130,18 @@ export class ScoreKeeper {
         toUser.reasons.set(reason, newReasonScore);
       }
 
-      await this.databaseService.savePointsGiven(fromUser, toUser, numberOfTokens);
+      const newScore: number = (fromUser.pointsGiven.get(toUser.slackId) || 0) + numberOfTokens;
+      fromUser.pointsGiven.set(toUser.slackId, newScore);
+      fromUser.totalPointsGiven = fromUser.totalPointsGiven + numberOfTokens;
       try {
-        await this.databaseService.savePlusPlusLog(teamId, toUser, fromUser, channel, reason, numberOfTokens);
+        await ScoreLog(connection).create({
+          from: fromUser.slackId,
+          to: toUser.slackId,
+          date: new Date(),
+          channel,
+          reason,
+          scoreChange: numberOfTokens,
+        });
       } catch (e) {
         //Logger.error(`failed saving spam log for user ${toUser.name} from ${from.name} in channel ${channel} because ${reason}`, e);
       }
