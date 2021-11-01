@@ -2,6 +2,7 @@ import Axios, { AxiosError } from 'axios';
 import { QraftyConfig } from '../models/qraftyConfig';
 import { IUser } from '../models/user';
 import { connectionFactory } from './connectionsFactory';
+import { Helpers as H } from '../helpers';
 
 export class BonuslyService {
   constructor() {
@@ -26,7 +27,9 @@ export class BonuslyService {
         'Content-Type': 'application/json',
       },
     });
-    if (!reason) {
+    if (reason) {
+      reason = H.decode(reason);
+    } else {
       reason = qraftyConfig.bonuslyConfig.defaultReason;
     }
 
