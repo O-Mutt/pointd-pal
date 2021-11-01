@@ -19,6 +19,7 @@ eventBus.on(PlusPlusEventName, sendBonuslyBonus);
 eventBus.on(PlusPlusBonuslyEventName, handleBonuslySent);
 
 async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
+  console.log('Handle plusplus for bonusly')
   const connection = connectionFactory(plusPlusEvent.teamId);
   const config = await QraftyConfig(connection).findOneOrCreate(plusPlusEvent.teamId);
   const sender = await User(connection).findOneBySlackIdOrCreate(plusPlusEvent.teamId, plusPlusEvent.sender.slackId);
@@ -29,7 +30,7 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
   }
 
   if (!teamInstallConfig?.installation.bot?.token) {
-    console.warn(`This install is missing the bot token, aparently...`);
+    console.warn(`This install is missing the bot token, apparently...`);
     return;
   }
   const token = teamInstallConfig.installation.bot.token;
@@ -49,11 +50,10 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
     return;
   }
 
-  const bots = plusPlusEvent.recipients.filter((recipient) => recipient.isBot === true);
-  const missingEmail = plusPlusEvent.recipients.filter((recipient) => !recipient.email);
   const filteredRecipients = plusPlusEvent.recipients.filter((recipient) => recipient.isBot !== true && recipient.email);
 
   if (filteredRecipients && filteredRecipients.length < 1) {
+    console.error('No recipients found', plusPlusEvent.recipients.map((rec) => rec.name).join(', '));
     // no recipients have emails to receive bonusly bonuses
     return;
   }
