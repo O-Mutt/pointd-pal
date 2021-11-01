@@ -1,7 +1,7 @@
 import { AllMiddlewareArgs, SlackViewMiddlewareArgs, ViewSubmitAction } from '@slack/bolt';
 
 import { app } from '../app';
-import { BonuslyBotConfig } from './lib/models/bonusly';
+import { BonuslyConfig } from './lib/models/bonuslyConfig';
 import { QraftyConfig } from './lib/models/qraftyConfig';
 import { User } from './lib/models/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
@@ -15,7 +15,7 @@ app.view(
     const teamId = context.teamId as string;
     const userId = body.user.id;
     const connection = connectionFactory(teamId);
-    const bonusly = await BonuslyBotConfig(connection).findOneOrCreate();
+    const bonusly = await BonuslyConfig(connection).findOneOrCreate();
     const qrafty = await QraftyConfig(connection).findOneOrCreate(teamId as string);
     for (const option in view.state.values) {
       for (const key in view.state.values[option]) {
@@ -69,7 +69,9 @@ app.view(
             break;
           }
           case 'hometab_bonuslyAPIKey': {
-            bonusly.apiKey = value;
+            if (value.indexOf('*') === -1) {
+              bonusly.apiKey = value;
+            }
             break;
           }
           case 'hometab_bonuslyDefaultReason': {

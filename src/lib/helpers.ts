@@ -70,24 +70,22 @@ export class Helpers {
     }
 
     if (user.accountLevel && user.accountLevel > 1) {
-      let tokenStr = `(*${user.qraftyToken} Qrafty Tokens*)`;
-      if (user.qraftyToken === 1) {
-        tokenStr = `(*${user.qraftyToken} Qrafty Token*)`;
-      }
+      let tokenStr = `(*${user.qraftyToken} Qrafty Token${Helpers.getEsOnEndOfWord(user.qraftyToken)}*)`;
       scoreStr = scoreStr.concat(` ${tokenStr}`);
     }
 
     if (reason) {
+      const decodedReason = Helpers.decode(reason);
       if (user.reasons.get(reason) === 1 || user.reasons.get(reason) === -1) {
         if (user.score === 1 || user.score === -1) {
-          reasonStr = ` for ${reason}.`;
+          reasonStr = ` for ${decodedReason}.`;
         } else {
-          reasonStr = `, ${user.reasons.get(reason)} of which is for ${reason}.`;
+          reasonStr = `, ${user.reasons.get(reason)} of which is for ${decodedReason}.`;
         }
       } else if (user.reasons.get(reason) === 0) {
-        reasonStr = `, none of which are for ${reason}.`;
+        reasonStr = `, none of which are for ${decodedReason}.`;
       } else {
-        reasonStr = `, ${user.reasons.get(reason)} of which are for ${reason}.`;
+        reasonStr = `, ${user.reasons.get(reason)} of which are for ${decodedReason}.`;
       }
     }
 
@@ -103,22 +101,23 @@ export class Helpers {
       return '';
     }
 
-    const scoreStr = `${Md.user(from.slackId)} transferred *${number}* Qrafty Tokens to ${Md.user(to.slackId)}.\n${Md.user(to.slackId)} now has ${to.qraftyToken
-      } token${Helpers.getEsOnEndOfWord(to.qraftyToken || 0)}`;
+    const scoreStr = `${Md.user(from.slackId)} transferred *${number}* Qrafty Token${Helpers.getEsOnEndOfWord(number)} to ${Md.user(to.slackId)}.\n
+${Md.user(to.slackId)} now has ${to.qraftyToken} token${Helpers.getEsOnEndOfWord(to.qraftyToken || 0)}`;
     let reasonStr = '.';
     let cakeDayStr = '';
 
     if (reason) {
+      const decodedReason = Helpers.decode(reason);
       if (to.reasons.get(reason) === 1 || to.reasons.get(reason) === -1) {
         if (to.score === 1 || to.score === -1) {
-          reasonStr = ` for ${reason}.`;
+          reasonStr = ` for ${decodedReason}.`;
         } else {
-          reasonStr = `, ${to.reasons.get(reason)} of which is for ${reason}.`;
+          reasonStr = `, ${to.reasons.get(reason)} of which is for ${decodedReason}.`;
         }
       } else if (to.reasons.get(reason) === 0) {
-        reasonStr = `, none of which are for ${reason}.`;
+        reasonStr = `, none of which are for ${decodedReason}.`;
       } else {
-        reasonStr = `, ${to.reasons.get(reason)} of which are for ${reason}.`;
+        reasonStr = `, ${to.reasons.get(reason)} of which are for ${decodedReason}.`;
       }
     }
 
@@ -183,6 +182,19 @@ export class Helpers {
     const buff = Buffer.from(str, 'base64');
     const text = buff.toString('utf-8');
     return text;
+  }
+
+  static obfuscate(str: string, amountToLeaveUnobfuscated: number = 3) {
+    const backwards = Helpers.reverseString(str);
+    let obfuscatedString = backwards;
+    if (backwards.length > amountToLeaveUnobfuscated) {
+      obfuscatedString = backwards.slice(0, amountToLeaveUnobfuscated) + backwards.slice(amountToLeaveUnobfuscated, str.length).replace(/./g, '*');
+    }
+    return Helpers.reverseString(obfuscatedString);
+  }
+
+  static reverseString(str: string) {
+    return str.split("").reverse().join("");
   }
 }
 

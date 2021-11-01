@@ -18,7 +18,7 @@ export class BonuslyService {
     const axios = Axios.create({
       baseURL: qraftyConfig.bonuslyConfig?.url?.toString(),
       headers: {
-        Authorization: `Bearer ${qraftyConfig.bonuslyConfig?.apiKey}`,
+        Authorization: `Bearer ${qraftyConfig.bonuslyConfig?.get('apiKey', null, { getter: false })}`,
         'Content-Type': 'application/json',
       },
     });

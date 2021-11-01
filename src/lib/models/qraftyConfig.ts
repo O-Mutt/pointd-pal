@@ -1,7 +1,7 @@
 import { Schema, Document, Model, Connection } from 'mongoose';
 import { app } from '../../../app';
 import { AuditTags } from './auditTags';
-import { BonuslyBotConfigSchema, IBonuslyBotConfig } from './bonusly';
+import { BonuslyConfigSchema, IBonuslyConfig } from './bonuslyConfig';
 import { IInstallation, Installation } from './installation';
 
 export interface IQraftyConfig extends Document, AuditTags {
@@ -13,7 +13,7 @@ export interface IQraftyConfig extends Document, AuditTags {
   companyName?: string;
   qryptoEnabled?: boolean;
   qraftyAdmins?: string[];
-  bonuslyConfig?: IBonuslyBotConfig;
+  bonuslyConfig?: IBonuslyConfig;
 }
 
 export const QraftyConfigSchema = new Schema({
@@ -30,7 +30,7 @@ export const QraftyConfigSchema = new Schema({
     default: false
   },
   qraftyAdmins: [String],
-  bonuslyConfig: BonuslyBotConfigSchema,
+  bonuslyConfig: BonuslyConfigSchema,
 });
 
 QraftyConfigSchema.statics.findOneOrCreate = async function (this: Model<QraftyConfigInterface, QraftyConfigModelInterface>, teamId: string): Promise<IQraftyConfig> {

@@ -97,7 +97,7 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
     return;
   }
 
-  const theMessage = Helpers.getMessageForNewScore(toUser, cleanReason);
+  const theMessage = Helpers.getMessageForNewScore(toUser, reason);
 
   if (theMessage) {
     const sayResponse = await args.say(theMessage);

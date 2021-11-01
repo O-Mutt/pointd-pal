@@ -4,7 +4,7 @@ import { AllMiddlewareArgs, SlackEventMiddlewareArgs } from '@slack/bolt';
 import { View } from '@slack/types';
 
 import { app } from '../app';
-import { BonuslyBotConfig, IBonuslyBotConfig } from './lib/models/bonusly';
+import { BonuslyConfig, IBonuslyConfig } from './lib/models/bonuslyConfig';
 import { IQraftyConfig, QraftyConfig } from './lib/models/qraftyConfig';
 import { IUser, User } from './lib/models/user';
 import { connectionFactory } from './lib/services/connectionsFactory';

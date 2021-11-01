@@ -6,7 +6,7 @@ import { AllMiddlewareArgs, BlockButtonAction, SlackActionMiddlewareArgs } from 
 import { View } from '@slack/types';
 
 import { app } from '../app';
-import { BonuslyBotConfig } from './lib/models/bonusly';
+import { BonuslyConfig } from './lib/models/bonuslyConfig';
 import { BotToken } from './lib/models/botToken';
 import { User } from './lib/models/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
@@ -21,7 +21,7 @@ app.action(
     const teamId = context.teamId as string;
     const userId = body.user.id;
     const connection = connectionFactory(teamId);
-    const bonusly = await BonuslyBotConfig(connection).findOneOrCreate();
+    const bonusly = await BonuslyConfig(connection).findOneOrCreate();
     const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
     const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId as string);
 
@@ -159,7 +159,7 @@ app.action(
     const teamId = context.teamId as string;
     const userId = body.user.id;
     const connection = connectionFactory(teamId);
-    const bonusly = await BonuslyBotConfig(connection).findOne().exec();
+    const bonusly = await BonuslyConfig(connection).findOne().exec();
     const qraftyConfig = await BotToken.findOne().exec();
 
     const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
