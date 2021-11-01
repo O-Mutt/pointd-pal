@@ -14,24 +14,28 @@ export class BonuslyService {
    */
   static async sendBonus(teamId: string, sender: IUser, recipients: IUser[], amount: number, reason?: string) {
     const qraftyConfig = await QraftyConfig(connectionFactory(teamId)).findOneOrCreate(teamId);
+    if (!qraftyConfig.bonuslyConfig || qraftyConfig.bonuslyConfig.enabled !== true || !qraftyConfig.bonuslyConfig.url || !qraftyConfig.bonuslyConfig.apiKey) {
+      console.error('bonusly config missing for the team');
+      return;
+    }
     //logger.debug(`Sending a bonusly bonus to ${JSON.stringify(event.recipient.slackEmail)} from ${JSON.stringify(event.sender.slackEmail)}`);
-    console.log("trying to send a bonus", qraftyConfig.bonuslyConfig?.get('apiKey', String, { getter: false }), qraftyConfig.bonuslyConfig?.apiKey);
+    console.log("trying to send a bonus", qraftyConfig.bonuslyConfig.get('apiKey', String, { getters: false }), qraftyConfig.bonuslyConfig.apiKey);
     const axios = Axios.create({
-      baseURL: qraftyConfig.bonuslyConfig?.url?.toString(),
+      baseURL: qraftyConfig.bonuslyConfig.url?.toString(),
       headers: {
-        Authorization: `Bearer ${qraftyConfig.bonuslyConfig?.get('apiKey', String, { getter: false })}`,
+        Authorization: `Bearer ${qraftyConfig.bonuslyConfig.get('apiKey', String, { getters: false })}`,
         'Content-Type': 'application/json',
       },
     });
     if (!reason) {
-      reason = qraftyConfig.bonuslyConfig?.defaultReason;
+      reason = qraftyConfig.bonuslyConfig.defaultReason;
     }
 
-    let hashtag = qraftyConfig.bonuslyConfig?.defaultHashtag;
+    let hashtag = qraftyConfig.bonuslyConfig.defaultHashtag;
     // check if the reason has a hashtag already in it
     if (reason && /(#\w+)/i.test(reason)) {
       const match = reason.match(/(#\w+)/i);
-      hashtag = match ? match[0] : qraftyConfig.bonuslyConfig?.defaultHashtag;
+      hashtag = match ? match[0] : qraftyConfig.bonuslyConfig.defaultHashtag;
     }
 
     let data: any[] = [];
