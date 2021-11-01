@@ -88,6 +88,7 @@ const databaseService = new DatabaseService({ ...procVars });
           if (topRoom.length > 0) {
             for (let i = 0, end = topRoom.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
               const pointStr = `point${H.getEsOnEndOfWord(topRoom[i].scoreChange)} given`;
+              console.log(`Top room [i] ${topRoom[i]._id}[${i}]`);
               messages.push(`${i + 1}. ${Md.channel(topRoom[i]._id)} (${topRoom[i].scoreChange} ${pointStr})`);
             }
           } else {

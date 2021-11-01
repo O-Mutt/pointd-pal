@@ -69,6 +69,7 @@ async function tellHowMuchPointsAreWorth({ payload, logger, message, context, sa
       `A Bitcoin is worth $${btcInUsd} USD right now, Ethereum is $${ethInUsd} USD, and ${Md.bold('Qrafty points are worth nothing')}!`,
     );
   } catch (e: any) {
+    console.error(e);
     return await say(
       "Seems like we are having trouble getting some data... Don't worry, though, your Qrafty points are still worth nothing!",
     );
