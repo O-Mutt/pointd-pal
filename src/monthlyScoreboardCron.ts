@@ -43,16 +43,16 @@ const databaseService = new DatabaseService({ ...procVars });
         if (H.isScoreboardDayOfWeek(monthlyScoreboardDayOfWeek)) {
           //Logger.debug('running the cron job');
 
+          let rank: number = 0;
           // Senders
           const topSenders = await databaseService.getTopSenderInDuration(connection, 10, 30);
           let messages: string[] = [];
-          if (topSenders.length > 0) {
-            for (let i = 0, end = topSenders.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
-              const pointStr = `point${H.getEsOnEndOfWord(topSenders[i].scoreChange)} given`;
-              messages.push(`${i + 1}. ${Md.user(topSenders[i]._id)} (${topSenders[i].scoreChange} ${pointStr})`);
-            }
-          } else {
-            messages.push('No scores to keep track of yet!');
+          rank = 1;
+          for (const sender of topSenders) {
+            const pointStr = `point${H.getEsOnEndOfWord(sender.scoreChange)} given`;
+            console.log(`Top room [i] ${topSenders}[${rank}]`);
+            messages.push(`${rank}. ${Md.user(sender._id)} (${sender.scoreChange} ${pointStr})`);
+            rank++;
           }
 
           const topSenderMessage = buildChartMessage(channelId, `Qrafty 10 Qrafty Point Senders over the last month`, topSenders, messages);
@@ -64,18 +64,17 @@ const databaseService = new DatabaseService({ ...procVars });
 
 
           // Recipients
-          const topRecipient = await databaseService.getTopReceiverInDuration(connection, 10, 30);
+          const topRecipients = await databaseService.getTopReceiverInDuration(connection, 10, 30);
           messages = [];
-          if (topRecipient.length > 0) {
-            for (let i = 0, end = topRecipient.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
-              const pointStr = `point${H.getEsOnEndOfWord(topRecipient[i].scoreChange)} received`;
-              messages.push(`${i + 1}. ${Md.user(topRecipient[i]._id)} (${topRecipient[i].scoreChange} ${pointStr})`);
-            }
-          } else {
-            messages.push('No scores to keep track of yet!');
+          rank = 1;
+          for (const recipient of topRecipients) {
+            const pointStr = `point${H.getEsOnEndOfWord(recipient.scoreChange)} given`;
+            console.log(`Top room [i] ${topRecipients}[${rank}]`);
+            messages.push(`${rank}. ${Md.user(recipient._id)} (${recipient.scoreChange} ${pointStr})`);
+            rank++;
           }
 
-          const topRecipientMessage = buildChartMessage(channelId, `Top 10 Qrafty Point Recipients over the last month`, topRecipient, messages);
+          const topRecipientMessage = buildChartMessage(channelId, `Top 10 Qrafty Point Recipients over the last month`, topRecipients, messages);
           try {
             const result = await app.client.chat.postMessage({ token: botToken, ...topRecipientMessage } as ChatPostMessageArguments);
           } catch (e: any) {
@@ -83,19 +82,17 @@ const databaseService = new DatabaseService({ ...procVars });
           }
 
           // Channel
-          const topRoom = await databaseService.getTopRoomInDuration(connection, 3, 30);
+          const topRooms = await databaseService.getTopRoomInDuration(connection, 3, 30);
           messages = [];
-          if (topRoom.length > 0) {
-            for (let i = 0, end = topRoom.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
-              const pointStr = `point${H.getEsOnEndOfWord(topRoom[i].scoreChange)} given`;
-              console.log(`Top room [i] ${topRoom[i]._id}[${i}]`);
-              messages.push(`${i + 1}. ${Md.channel(topRoom[i]._id)} (${topRoom[i].scoreChange} ${pointStr})`);
-            }
-          } else {
-            messages.push('No scores to keep track of yet!');
+          rank = 1;
+          for (const room of topRooms) {
+            const pointStr = `point${H.getEsOnEndOfWord(room.scoreChange)} given`;
+            console.log(`Top room [i] ${topRooms}[${rank}]`);
+            messages.push(`${rank}. ${Md.channel(room._id)} (${room.scoreChange} ${pointStr})`);
+            rank++;
           }
 
-          const topRoomMessage = buildChartMessage(channelId, `Top 3 Channels that sent the most Qrafty Point over the last month`, topRoom, messages);
+          const topRoomMessage = buildChartMessage(channelId, `Top 3 Channels that sent the most Qrafty Point over the last month`, topRooms, messages, true);
           try {
             const result = await app.client.chat.postMessage({ token: botToken, ...topRoomMessage } as ChatPostMessageArguments);
           } catch (e: any) {
@@ -112,7 +109,7 @@ const databaseService = new DatabaseService({ ...procVars });
   }
 })();
 
-function buildChartMessage(channel: string, title: string, tops: any[], messages: string[]) {
+function buildChartMessage(channel: string, title: string, tops: any[], messages: string[], isChannel: boolean = false) {
   const chartText = title;
   const graphSize = Math.min(tops.length, Math.min(10, 20));
   const chartUrl = new ImageCharts()
@@ -120,7 +117,7 @@ function buildChartMessage(channel: string, title: string, tops: any[], messages
     .chs('999x200')
     .chtt(chartText)
     .chxt('x,y')
-    .chxl(`0:|${_.take(_.map(tops, 'name'), graphSize).join('|')}`)
+    .chxl(`0:|${_.take(_.map(tops, (top) => isChannel ? Md.channel(top._id) : Md.user(top._id)), graphSize).join('|')}`)
     .chd(`a:${_.take(_.map(tops, 'score'), graphSize).join(',')}`)
     .toURL();
 
