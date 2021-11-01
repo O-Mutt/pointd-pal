@@ -136,10 +136,28 @@ export class DatabaseService {
     const topSendersForDuration = await ScoreLog(connection)
       .aggregate([
         {
+          $lookup: {
+            from: 'scores',
+            localField: 'from',
+            foreignField: 'slackId',
+            as: 'user'
+          }
+        },
+        {
+          $unwind: '$user'
+        },
+        {
           $match: { date: { $gt: new Date(new Date().setDate(new Date().getDate() - days)) } },
         },
         {
-          $group: { _id: '$from', scoreChange: { $sum: '$scoreChange' } },
+          $project: {
+            slackId: '$from',
+            name: '$user.name',
+            scoreChange: '$scoreChange'
+          }
+        },
+        {
+          $group: { _id: '$slackId', name: { $first: '$name' }, scoreChange: { $sum: '$scoreChange' } },
         },
         {
           $sort: { scoreChange: -1 },
@@ -154,10 +172,28 @@ export class DatabaseService {
     const topRecipientForDuration = await ScoreLog(connection)
       .aggregate([
         {
+          $lookup: {
+            from: 'scores',
+            localField: 'to',
+            foreignField: 'slackId',
+            as: 'user'
+          }
+        },
+        {
+          $unwind: '$user'
+        },
+        {
           $match: { date: { $gt: new Date(new Date().setDate(new Date().getDate() - days)) } },
         },
         {
-          $group: { _id: '$to', scoreChange: { $sum: '$scoreChange' } },
+          $project: {
+            slackId: '$to',
+            name: '$user.name',
+            scoreChange: '$scoreChange'
+          }
+        },
+        {
+          $group: { _id: '$slackId', name: { $first: '$name' }, scoreChange: { $sum: '$scoreChange' } },
         },
         {
           $sort: { scoreChange: -1 },

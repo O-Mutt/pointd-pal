@@ -4,7 +4,7 @@ export interface IScoreLog extends Document {
   from: string;
   to: string;
   date: Date;
-  room: string;
+  channel: string;
   reason: string;
   scoreChange: number;
 }
@@ -12,7 +12,7 @@ export interface IScoreLog extends Document {
 export const ScoreLogSchema = new Schema({
   from: String,
   to: String,
-  room: String,
+  channel: String,
   reason: String,
   date: {
     type: Date,

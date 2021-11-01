@@ -82,10 +82,14 @@ const databaseService = new DatabaseService({ ...procVars });
           }
 
           // Channel
-          const topRooms = await databaseService.getTopRoomInDuration(connection, 3, 30);
+          let topRooms = await databaseService.getTopRoomInDuration(connection, 3, 30);
           messages = [];
           rank = 1;
           for (const room of topRooms) {
+            const { channel } = await app.client.conversations.info({ token: botToken, channel: room._id });
+            if (channel) {
+              room.name = channel.name;
+            }
             const pointStr = `point${H.getEsOnEndOfWord(room.scoreChange)} given`;
             console.log(`Top room [i] ${JSON.stringify(topRooms)}[${rank}]`);
             messages.push(`${rank}. ${Md.channel(room._id)} (${room.scoreChange} ${pointStr})`);
@@ -117,8 +121,8 @@ function buildChartMessage(channel: string, title: string, tops: any[], messages
     .chs('999x200')
     .chtt(chartText)
     .chxt('x,y')
-    .chxl(`0:|${_.take(_.map(tops, (top) => isChannel ? Md.channel(top._id) : Md.user(top._id)), graphSize).join('|')}`)
-    .chd(`a:${_.take(_.map(tops, 'score'), graphSize).join(',')}`)
+    .chxl(`0:|${_.take(_.map(tops, 'name'), graphSize).join('|')}`)
+    .chd(`a:${_.take(_.map(tops, 'scoreChange'), graphSize).join(',')}`)
     .toURL();
 
   const theMessage = Message({ channel: channel, text: chartText })
