@@ -24,7 +24,7 @@ app.action(
     const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
     const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId as string);
 
-    if (!user.isAdmin) {
+    if (!user.isAdmin || !qraftyConfig) {
       return; //empty section because the user isn't an admin
     }
     const adminSettingsModal = Modal({
@@ -37,14 +37,14 @@ app.action(
         Elements.UserMultiSelect({
           actionId: 'hometab_qraftyAdmins',
           placeholder: 'Additional bot admins',
-        }).initialUsers(qraftyConfig?.qraftyAdmins || []),
+        }).initialUsers(qraftyConfig.qraftyAdmins || []),
       ),
       Blocks.Input({ label: 'Company Name' }).element(
         Elements.TextInput({
           actionId: 'hometab_qraftyCompanyName',
           placeholder: 'Company Name',
           minLength: 2,
-          initialValue: qraftyConfig?.companyName || '',
+          initialValue: qraftyConfig.companyName || '',
         }),
       ),
       Blocks.Input({ label: 'Notifications Channel' }).element(
@@ -52,7 +52,7 @@ app.action(
           actionId: 'hometab_qraftyNotificationsRoom',
           placeholder: '#qrafty-plusplus',
           minLength: 2,
-          initialValue: qraftyConfig?.notificationRoom || '',
+          initialValue: qraftyConfig.notificationRoom || '',
         }),
       ),
       Blocks.Input({ label: 'False Positive Notifications Channel' }).element(
@@ -60,7 +60,7 @@ app.action(
           actionId: 'hometab_qraftyFalsePositiveRoom',
           placeholder: '#qrafty-plusplus-fail',
           minLength: 2,
-          initialValue: qraftyConfig?.falsePositiveRoom || '',
+          initialValue: qraftyConfig.falsePositiveRoom || '',
         }),
       ),
       Blocks.Input({ label: 'Scoreboard Notification Channel' }).element(
@@ -68,7 +68,7 @@ app.action(
           actionId: 'hometab_qraftyScoreboardRoom',
           placeholder: '#qrafty-monthly-scoreboard',
           minLength: 2,
-          initialValue: qraftyConfig?.scoreboardRoom || '',
+          initialValue: qraftyConfig.scoreboardRoom || '',
         }),
       ),
       Blocks.Input({ label: 'Is there a \"Formal\" feedback that you would like frequent senders to be prompted for?' }).element(
@@ -76,7 +76,7 @@ app.action(
           actionId: 'hometab_qraftyFormalFeedbackUrl',
           placeholder: 'https://formal.praise.company.com',
           minLength: 2,
-          initialValue: qraftyConfig?.formalFeedbackUrl || '',
+          initialValue: qraftyConfig.formalFeedbackUrl || '',
         }),
       ),
       Blocks.Input({ label: 'When a user interacts (++ or --) with another user at what increment should they be prompted to send formal praise?' }).element(
@@ -84,37 +84,38 @@ app.action(
           actionId: 'hometab_qraftyFormalFeedbackModulo',
           placeholder: '10',
           minLength: 2,
-          initialValue: qraftyConfig?.formalFeedbackModulo.toString() || '10',
+          initialValue: qraftyConfig.formalFeedbackModulo.toString() || '10',
         }),
       ),
       Blocks.Divider(),
       Blocks.Header({ text: `${Md.emoji('rocket')} Bonusly Integration` }),
-      Blocks.Input({ label: 'Bonusly Enabled' }).element(
-        Elements.StaticSelect({ actionId: 'hometab_bonuslyEnabled' })
-          .initialOption(
-            Bits.Option({
-              text: qraftyConfig.bonusly.enabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
-              value: qraftyConfig.bonusly.enabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
-            }),
-          )
-          .options(
-            Bits.Option({ text: EnabledSettings.ENABLED, value: EnabledSettings.ENABLED }),
-            Bits.Option({ text: EnabledSettings.DISABLED, value: EnabledSettings.DISABLED }),
-          ),
-      ),
+      Blocks.Input({ label: 'Bonusly Enabled' })
+        .element(
+          Elements.StaticSelect({ actionId: 'hometab_bonuslyEnabled' })
+            .initialOption(
+              Bits.Option({
+                text: qraftyConfig.bonuslyConfig?.enabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
+                value: qraftyConfig.bonuslyConfig?.enabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
+              }),
+            )
+            .options(
+              Bits.Option({ text: EnabledSettings.ENABLED, value: EnabledSettings.ENABLED }),
+              Bits.Option({ text: EnabledSettings.DISABLED, value: EnabledSettings.DISABLED }),
+            ),
+        ),
       Blocks.Input({ label: `${Md.emoji('page_facing_up')} Bonusly API Uri` }).element(
         Elements.TextInput({
           actionId: 'hometab_bonuslyUri',
           placeholder: 'https://bonus.ly/api/v1',
           minLength: 8,
-          initialValue: qraftyConfig.bonusly.url?.toString() || '',
+          initialValue: qraftyConfig.bonuslyConfig?.url?.toString() || '',
         }),
       ),
       Blocks.Input({ label: `${Md.emoji('key')} Bonusly API Key` }).element(
         Elements.TextInput({
           actionId: 'hometab_bonuslyAPIKey',
           minLength: 5,
-          initialValue: qraftyConfig.bonusly.apiKey || '',
+          initialValue: qraftyConfig.bonuslyConfig?.apiKey || '',
           placeholder: 'https://bonus.ly/api/v1'
         }),
       ),
@@ -122,7 +123,7 @@ app.action(
         Elements.TextInput({
           actionId: 'hometab_bonuslyDefaultReason',
           minLength: 5,
-          initialValue: qraftyConfig.bonusly.defaultReason || '',
+          initialValue: qraftyConfig.bonuslyConfig?.defaultReason || '',
           placeholder: 'point sent through Qrafty'
         }),
       ),
@@ -130,7 +131,7 @@ app.action(
         Elements.TextInput({
           actionId: 'hometab_bonuslyDefaultHashtag',
           minLength: 3,
-          initialValue: qraftyConfig.bonusly.defaultHashtag || '',
+          initialValue: qraftyConfig.bonuslyConfig?.defaultHashtag || '',
           placeholder: '#excellence'
         }),
       ),
@@ -140,8 +141,8 @@ app.action(
         Elements.StaticSelect({ actionId: 'hometab_qraftyTokenEnabled' })
           .initialOption(
             Bits.Option({
-              text: qraftyConfig?.qryptoEnabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
-              value: qraftyConfig?.qryptoEnabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
+              text: qraftyConfig.qryptoEnabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
+              value: qraftyConfig.qryptoEnabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
             }),
           )
           .options(
@@ -243,7 +244,7 @@ for you to be able to withdraw your crypto. What is your public BEP20 wallet add
       title: `${Md.emoji('gear')} Qrafty Settings`,
       submit: 'Update Settings',
       callbackId: actions.hometab.user_settings_submit,
-    }).blocks(...bonuslyBlocks, ...bonuslyCryptoBlocks, Blocks.Section({ text: 'Hello world' }));
+    }).blocks(...bonuslyBlocks, ...bonuslyCryptoBlocks);
 
     const result = await client.views.open({
       trigger_id: body.trigger_id,

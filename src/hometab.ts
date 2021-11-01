@@ -23,6 +23,7 @@ async function updateHomeTab({ event, context, client, logger }: SlackEventMiddl
     const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId as string);
 
     const hometab = HomeTab({ callbackId: 'hometab' }).blocks(
+      Blocks.Image({ altText: 'Qrafty!', imageUrl: 'https://okeefe.dev/cdn_images/qrafty_header.png' }),
       Blocks.Section({
         text: `${Md.emoji('wave')} Hey ${Md.user(userId)}, I'm Qrafty.`,
       }),

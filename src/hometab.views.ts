@@ -17,6 +17,7 @@ app.view(
     const connection = connectionFactory(teamId);
     const bonusly = await BonuslyConfig(connection).findOneOrCreate();
     const qrafty = await QraftyConfig(connection).findOneOrCreate(teamId as string);
+
     for (const option in view.state.values) {
       for (const key in view.state.values[option]) {
         const state = view.state.values[option][key];
@@ -102,6 +103,7 @@ app.view(
     qrafty.updatedAt = new Date();
     qrafty.bonuslyConfig = bonusly;
     logger.debug(`Updating admin configs for ${teamId} by ${userId}`);
+    await bonusly.save();
     await qrafty.save();
   },
 );
