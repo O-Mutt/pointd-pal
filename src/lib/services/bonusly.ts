@@ -19,9 +19,8 @@ export class BonuslyService {
       return;
     }
     //logger.debug(`Sending a bonusly bonus to ${JSON.stringify(event.recipient.slackEmail)} from ${JSON.stringify(event.sender.slackEmail)}`);
-    console.log("trying to send a bonus", qraftyConfig.bonuslyConfig.get('apiKey', String, { getters: false }), qraftyConfig.bonuslyConfig.apiKey);
     const axios = Axios.create({
-      baseURL: qraftyConfig.bonuslyConfig.url?.toString(),
+      baseURL: qraftyConfig.bonuslyConfig.url.toString(),
       headers: {
         Authorization: `Bearer ${qraftyConfig.bonuslyConfig.get('apiKey', String, { getters: false })}`,
         'Content-Type': 'application/json',
@@ -42,6 +41,7 @@ export class BonuslyService {
 
     for (const recipient of recipients) {
       try {
+        console.log(`send the bonus (${qraftyConfig.bonuslyConfig.url.toString()}) giver: ${sender.email} receiver: ${recipient.email} amount ${amount} hashtag ${hashtag} reason ${reason}`);
         const response = await axios.post(`/bonuses`, {
           giver_email: sender.email,
           receiver_email: recipient.email,
