@@ -137,6 +137,7 @@ app.view(
           }
           case 'hometab_cryptoWalletAddress': {
             user.walletAddress = value;
+            break;
           }
           default: {
             logger.debug(`key not recognized: ${key}`);

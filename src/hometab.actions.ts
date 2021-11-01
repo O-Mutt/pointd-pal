@@ -168,7 +168,7 @@ app.action(
     const userId = body.user.id;
     const connection = connectionFactory(teamId);
     const bonusly = await BonuslyConfig(connection).findOne().exec();
-    const qraftyConfig = await BotToken.findOne().exec();
+    const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId as string);
 
     const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
 
@@ -224,7 +224,7 @@ and a bonusly is included what is the default amount that you would like to send
     }
 
     let bonuslyCryptoBlocks: Appendable<ViewBlockBuilder> = [];
-    if (qraftyConfig?.enabled) {
+    if (qraftyConfig?.qryptoEnabled) {
       bonuslyCryptoBlocks = [
         Blocks.Header({ text: 'Qrafty Token (Crypto)' }),
         Blocks.Divider(),
