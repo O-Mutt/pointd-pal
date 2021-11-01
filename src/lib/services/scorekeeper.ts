@@ -32,7 +32,7 @@ export class ScoreKeeper {
   * incrementValue - [number] the value to change the score by
   * return scoreObject - the new document for the user who received the score
   */
-  async incrementScore(teamId: string, toId: string, fromId: string, channel: string, reason: string, incrementValue: number): Promise<{ toUser: IUser; fromUser: IUser; }> {
+  async incrementScore(teamId: string, toId: string, fromId: string, channel: string, incrementValue: number, reason?: string): Promise<{ toUser: IUser; fromUser: IUser; }> {
     try {
       const toUser = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, toId);
       const fromUser = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, fromId);
@@ -67,7 +67,7 @@ export class ScoreKeeper {
     }
   }
 
-  async transferTokens(teamId: string, toId: string, fromId: string, channel: string, reason: string, numberOfTokens: number): Promise<{ toUser: IUser; fromUser: IUser; }> {
+  async transferTokens(teamId: string, toId: string, fromId: string, channel: string, numberOfTokens: number, reason?: string): Promise<{ toUser: IUser; fromUser: IUser; }> {
     try {
       const toUser = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, toId);
       const fromUser = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, fromId);

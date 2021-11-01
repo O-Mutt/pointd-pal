@@ -162,6 +162,28 @@ export class Helpers {
       defaultDb: env.DEFAULT_DB_NAME || undefined,
     };
   }
+
+  static cleanAndEncode(str: string): string | undefined {
+    if (!str) {
+      return;
+    }
+
+    // this should fix a dumb issue with mac quotes
+    const trimmed = JSON.parse(JSON.stringify(str.trim().toLowerCase()));
+    const buff = Buffer.from(trimmed);
+    const base64data = buff.toString('base64');
+    return base64data;
+  }
+
+  static decode(str: string): string | undefined {
+    if (!str) {
+      return undefined;
+    }
+
+    const buff = Buffer.from(str, 'base64');
+    const text = buff.toString('utf-8');
+    return text;
+  }
 }
 
 type ProcessVariable = {

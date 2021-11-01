@@ -200,17 +200,6 @@ async function migrateFromHubotToBolt({ message, context, logger, say, client })
       delete hubotishUser.token;
       hubotishUser.email = hubotishUser.slackEmail || hubotishUser.email;
       delete hubotishUser.slackEmail;
-      for (const [key, value] of hubotishUser.reasons) {
-        if (isBase64(key)) {
-          const decodedReason = decode(key);
-          hubotishUser.reasons.set(decodedReason, value);
-          console.log("check each reason", key, decodedReason, hubotishUser.reasons[key], hubotishUser.reasons[decodedReason])
-          delete hubotishUser.reasons[key];
-        } else {
-          console.log("reason not base 64", key);
-        }
-      }
-
       for (const [key, value] of hubotishUser.pointsGiven) {
         if (isBase64(key)) {
           const decodedPointGiven = decode(key);
