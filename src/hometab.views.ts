@@ -91,7 +91,7 @@ app.view(
             break;
           }
           default: {
-            logger.debug('key not recognized');
+            logger.debug(`key not recognized: ${key}`);
             break;
           }
         }
@@ -137,7 +137,7 @@ app.view(
             user.walletAddress = value;
           }
           default: {
-            logger.debug('key not recognized');
+            logger.debug(`key not recognized: ${key}`);
             break;
           }
         }
