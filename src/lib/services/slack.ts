@@ -1,7 +1,10 @@
 import { app } from '../../../app';
 
 export class SlackService {
-  static async findOrCreateConversation(token: string, teamId: string, channelName: string): Promise<string | undefined> {
+  static async findOrCreateConversation(token?: string, teamId?: string, channelName?: string): Promise<string | undefined> {
+    if (!token || !teamId || !channelName) {
+      return;
+    }
     let result;
     try {
       result = await app.client.conversations.list({ token: token });

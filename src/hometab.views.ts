@@ -37,12 +37,16 @@ app.view(
             }
             break;
           }
-          case 'hometab_qraftyNotifications': {
+          case 'hometab_qraftyNotificationsRoom': {
             qrafty.notificationRoom = value.toLowerCase();
             break;
           }
           case 'hometab_qraftyFalsePositiveRoom': {
             qrafty.falsePositiveRoom = value.toLowerCase();
+            break;
+          }
+          case 'hometab_qraftyScoreboardRoom': {
+            qrafty.scoreboardRoom = value.toLowerCase();
             break;
           }
           case 'hometab_qraftyFormalFeedbackUrl': {

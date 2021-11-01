@@ -7,6 +7,7 @@ import { IInstallation, Installation } from './installation';
 export interface IQraftyConfig extends Document, AuditTags {
   notificationRoom?: string;
   falsePositiveRoom?: string;
+  scoreboardRoom?: string;
   formalFeedbackUrl?: string;
   formalFeedbackModulo: number;
   reasonsKeyword?: string;
@@ -19,6 +20,7 @@ export interface IQraftyConfig extends Document, AuditTags {
 export const QraftyConfigSchema = new Schema({
   notificationRoom: String,
   falsePositiveRoom: String,
+  scoreboardRoom: String,
   formalFeedbackUrl: String,
   formalFeedbackModulo: {
     type: Number,

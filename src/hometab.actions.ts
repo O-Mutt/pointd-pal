@@ -50,7 +50,7 @@ app.action(
       ),
       Blocks.Input({ label: 'Notifications Channel' }).element(
         Elements.TextInput({
-          actionId: 'hometab_qraftyNotifications',
+          actionId: 'hometab_qraftyNotificationsRoom',
           placeholder: '#qrafty-plusplus',
           minLength: 2,
           initialValue: qraftyConfig?.notificationRoom || '',
@@ -62,6 +62,14 @@ app.action(
           placeholder: '#qrafty-plusplus-fail',
           minLength: 2,
           initialValue: qraftyConfig?.falsePositiveRoom || '',
+        }),
+      ),
+      Blocks.Input({ label: 'Scoreboard Notification Channel' }).element(
+        Elements.TextInput({
+          actionId: 'hometab_qraftyScoreboardRoom',
+          placeholder: '#qrafty-monthly-scoreboard',
+          minLength: 2,
+          initialValue: qraftyConfig?.scoreboardRoom || '',
         }),
       ),
       Blocks.Input({ label: 'Is there a \"Formal\" feedback that you would like frequent senders to be prompted for?' }).element(

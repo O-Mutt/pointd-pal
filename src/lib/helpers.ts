@@ -199,6 +199,12 @@ ${Md.user(to.slackId)} now has ${to.qraftyToken} token${Helpers.getEsOnEndOfWord
   static reverseString(str: string) {
     return str.split("").reverse().join("");
   }
+
+  static isScoreboardDayOfWeek(dayOfWeek: number): boolean {
+    //Logger.debug(`Run the cron but lets check what day it is Moment day: [${moment().day()}], Configured Day of Week: [${monthlyScoreboardDayOfWeek}], isThatDay: [${moment().day() === monthlyScoreboardDayOfWeek}]`);
+    const isToday = moment().day() === dayOfWeek;
+    return isToday;
+  }
 }
 
 type ProcessVariable = {

@@ -61,7 +61,7 @@ export class ScoreKeeper {
       }
 
       //await this.databaseService.savePointsGiven(fromUser, toUser, incrementValue);
-      const newScore: number = (fromUser.pointsGiven.get(toUser.slackId) || 0) + 1;
+      const newScore: number = (fromUser.pointsGiven.get(toUser.slackId) || 0) + Math.abs(incrementValue);
       fromUser.pointsGiven.set(toUser.slackId, newScore);
       fromUser.totalPointsGiven = fromUser.totalPointsGiven + incrementValue;
       if (qraftyConfig.formalFeedbackUrl &&
@@ -130,7 +130,7 @@ export class ScoreKeeper {
         toUser.reasons.set(reason, newReasonScore);
       }
 
-      const newScore: number = (fromUser.pointsGiven.get(toUser.slackId) || 0) + numberOfTokens;
+      const newScore: number = (fromUser.pointsGiven.get(toUser.slackId) || 0) + Math.abs(numberOfTokens);
       fromUser.pointsGiven.set(toUser.slackId, newScore);
       fromUser.totalPointsGiven = fromUser.totalPointsGiven + numberOfTokens;
       try {

@@ -1,17 +1,20 @@
+import { ChatPostMessageArguments } from '@slack/web-api';
 import clark from 'clark';
 import { CronJob } from 'cron';
+import ImageCharts from 'image-charts';
 import _ from 'lodash';
 import moment from 'moment';
-import { Md } from 'slack-block-builder';
+import { Blocks, Md, Message } from 'slack-block-builder';
 
 import { app } from '../app';
-import { Helpers } from './lib/helpers';
+import { Helpers as H } from './lib/helpers';
+import { Installation } from './lib/models/installation';
 import { QraftyConfig } from './lib/models/qraftyConfig';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { DatabaseService } from './lib/services/database';
 import { SlackService } from './lib/services/slack';
 
-const procVars = Helpers.getProcessVariables(process.env);
+const procVars = H.getProcessVariables(process.env);
 const databaseService = new DatabaseService({ ...procVars });
 
 (async () => {
@@ -21,89 +24,118 @@ const databaseService = new DatabaseService({ ...procVars });
   if (!channelId) {
     return;
   } */
-  const channelId = '123';
-  if (true) {
-    return;
-  }
+  const allInstalls = await Installation.find({}).exec();
 
-  const { monthlyScoreboardCron, monthlyScoreboardDayOfWeek } = procVars;
-  const job = new CronJob(
-    monthlyScoreboardCron,
-    async () => {
-      if (isScoreboardDayOfWeek()) {
-        //Logger.debug('running the cron job');
-
-        // Senders
-        const topSenders = await databaseService.getTopSenderInDuration('123', 10, 30);
-        let messages: string[] = [];
-        if (topSenders.length > 0) {
-          for (let i = 0, end = topSenders.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
-            const pointStr = topSenders[i].scoreChange > 1 ? 'points given' : 'point given';
-            messages.push(`${i + 1}. ${Md.user(topSenders[i].slackId)} (${topSenders[i].scoreChange} ${pointStr})`);
-          }
-        } else {
-          messages.push('No scores to keep track of yet!');
+  for (const install of allInstalls) {
+    const { monthlyScoreboardCron, monthlyScoreboardDayOfWeek } = procVars;
+    const job = new CronJob(
+      monthlyScoreboardCron,
+      async () => {
+        const teamId = install?.teamId;
+        const botToken = install?.installation.bot?.token;
+        if (!teamId || !botToken) {
+          return;
         }
-
-        let graphSize = Math.min(topSenders.length, Math.min(10, 20));
-        messages.splice(0, 0, clark(_.take(_.map(topSenders, 'scoreChange'), graphSize)));
-        messages.splice(0, 0, `:tada: The top 10 Qrafty point senders over the last month! :tada:`);
-
-        await app.client.chat.postMessage({
-          channel: channelId,
-          text: messages.join('\n'),
-        });
-
-        // Recipients
-        const topRecipient = await databaseService.getTopReceiverInDuration('123', 10, 30);
-        messages = [];
-        if (topRecipient.length > 0) {
-          for (let i = 0, end = topRecipient.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
-            const pointStr = topRecipient[i].scoreChange > 1 ? 'points received' : 'point received';
-            messages.push(`${i + 1}. ${Md.user(topRecipient[i].slackId)} (${topRecipient[i].scoreChange} ${pointStr})`);
-          }
-        } else {
-          messages.push('No scores to keep track of yet!');
+        const connection = connectionFactory(teamId);
+        const qraftyConfig = await QraftyConfig(connection).findOne().exec();
+        if (!qraftyConfig) {
+          return;
         }
-
-        graphSize = Math.min(topRecipient.length, Math.min(10, 20));
-        messages.splice(0, 0, clark(_.take(_.map(topRecipient, 'scoreChange'), graphSize)));
-        messages.splice(0, 0, `:tada: The top 10 Qrafty point recipients over the last month! :tada:`);
-        await app.client.chat.postMessage({
-          channel: channelId,
-          text: messages.join('\n'),
-        });
-
-        // Channel
-        const topRoom = await databaseService.getTopRoomInDuration('123', 3, 30);
-        messages = [];
-        if (topRoom.length > 0) {
-          for (let i = 0, end = topRoom.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
-            const pointStr = topRoom[i].scoreChange > 1 ? 'points given' : 'point given';
-            messages.push(`${i + 1}. ${Md.channel(topRoom[i].slackId)} (${topRoom[i].scoreChange} ${pointStr})`);
-          }
-        } else {
-          messages.push('No scores to keep track of yet!');
+        const scoreboardRoom = qraftyConfig.scoreboardRoom;
+        const channelId = await SlackService.findOrCreateConversation(botToken, teamId, scoreboardRoom);
+        if (!channelId) {
+          return;
         }
+        if (H.isScoreboardDayOfWeek(monthlyScoreboardDayOfWeek)) {
+          //Logger.debug('running the cron job');
 
-        graphSize = Math.min(topRoom.length, Math.min(10, 20));
-        messages.splice(0, 0, clark(_.take(_.map(topRoom, 'scoreChange'), graphSize)));
-        messages.splice(0, 0, `:tada: The top 3 rooms that sent Qrafty point(s) over the last month! :tada:`);
-        await app.client.chat.postMessage({
-          channel: channelId,
-          text: messages.join('\n'),
-        });
-      }
-    },
-    null,
-    true,
-    'America/Chicago',
-  );
-  job.start();
+          // Senders
+          const topSenders = await databaseService.getTopSenderInDuration(connection, 10, 30);
+          let messages: string[] = [];
+          if (topSenders.length > 0) {
+            for (let i = 0, end = topSenders.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
+              const pointStr = `point${H.getEsOnEndOfWord(topSenders[i].scoreChange)} given`;
+              messages.push(`${i + 1}. ${Md.user(topSenders[i].slackId)} (${topSenders[i].scoreChange} ${pointStr})`);
+            }
+          } else {
+            messages.push('No scores to keep track of yet!');
+          }
 
-  function isScoreboardDayOfWeek() {
-    //Logger.debug(`Run the cron but lets check what day it is Moment day: [${moment().day()}], Configured Day of Week: [${monthlyScoreboardDayOfWeek}], isThatDay: [${moment().day() === monthlyScoreboardDayOfWeek}]`);
-    const isToday = moment().day() === monthlyScoreboardDayOfWeek;
-    return isToday;
+          const topSenderMessage = buildChartMessage(channelId, `Qrafty 10 Qrafty Point Senders over the last month`, topSenders, messages);
+          try {
+            const result = await app.client.chat.postMessage({ token: botToken, ...topSenderMessage } as ChatPostMessageArguments);
+          } catch (e: any) {
+            console.error('error', e.data.response_metadata.message);
+          }
+
+
+          // Recipients
+          const topRecipient = await databaseService.getTopReceiverInDuration(connection, 10, 30);
+          messages = [];
+          if (topRecipient.length > 0) {
+            for (let i = 0, end = topRecipient.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
+              const pointStr = `point${H.getEsOnEndOfWord(topRecipient[i].scoreChange)} received`;
+              messages.push(`${i + 1}. ${Md.user(topRecipient[i].slackId)} (${topRecipient[i].scoreChange} ${pointStr})`);
+            }
+          } else {
+            messages.push('No scores to keep track of yet!');
+          }
+
+          const topRecipientMessage = buildChartMessage(channelId, `Top 10 Qrafty Point Recipients over the last month`, topRecipient, messages);
+          try {
+            const result = await app.client.chat.postMessage({ token: botToken, ...topRecipientMessage } as ChatPostMessageArguments);
+          } catch (e: any) {
+            console.error('error', e.data.response_metadata.message);
+          }
+
+          // Channel
+          const topRoom = await databaseService.getTopRoomInDuration(connection, 3, 30);
+          messages = [];
+          if (topRoom.length > 0) {
+            for (let i = 0, end = topRoom.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
+              const pointStr = `point${H.getEsOnEndOfWord(topRoom[i].scoreChange)} given`;
+              messages.push(`${i + 1}. ${Md.channel(topRoom[i].slackId)} (${topRoom[i].scoreChange} ${pointStr})`);
+            }
+          } else {
+            messages.push('No scores to keep track of yet!');
+          }
+
+          const topRoomMessage = buildChartMessage(channelId, `Top 3 Channels that sent the most Qrafty Point over the last month`, topRoom, messages);
+          try {
+            const result = await app.client.chat.postMessage({ token: botToken, ...topRoomMessage } as ChatPostMessageArguments);
+          } catch (e: any) {
+            console.error('error', e.data.response_metadata.message);
+          }
+
+        }
+      },
+      null,
+      true,
+      'America/Chicago',
+    );
+    job.start();
   }
 })();
+
+function buildChartMessage(channel: string, title: string, tops: any[], messages: string[]) {
+  const chartText = title;
+  const graphSize = Math.min(tops.length, Math.min(10, 20));
+  const chartUrl = new ImageCharts()
+    .cht('bvg')
+    .chs('999x200')
+    .chtt(chartText)
+    .chxt('x,y')
+    .chxl(`0:|${_.take(_.map(tops, 'name'), graphSize).join('|')}`)
+    .chd(`a:${_.take(_.map(tops, 'score'), graphSize).join(',')}`)
+    .toURL();
+
+  const theMessage = Message({ channel: channel, text: chartText })
+    .blocks(
+      Blocks.Header({ text: chartText }),
+      Blocks.Image({ imageUrl: chartUrl, altText: chartText }),
+      Blocks.Section({ text: messages.join('\n') }),
+    )
+    .asUser()
+    .buildToObject();
+  return theMessage;
+}

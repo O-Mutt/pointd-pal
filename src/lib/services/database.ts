@@ -4,11 +4,11 @@ import moment from 'moment';
 import { app } from '../../../app';
 
 import { User, IUser } from '../models/user';
-import { ScoreLog } from '../models/scoreLog';
+import { IScoreLog, ScoreLog } from '../models/scoreLog';
 import { BotToken, IBotToken } from '../models/botToken';
 import { connectionFactory } from './connectionsFactory';
 import { eventBus } from './eventBus';
-import { Md } from 'slack-block-builder';
+import { Connection } from 'mongoose';
 
 export class DatabaseService {
   furtherFeedbackScore: number;
@@ -17,8 +17,6 @@ export class DatabaseService {
   spamMessage: string;
 
   constructor(params) {
-    this.furtherFeedbackScore = params.furtherFeedbackSuggestedScore;
-    this.peerFeedbackUrl = params.peerFeedbackUrl;
     this.spamTimeLimit = params.spamTimeLimit;
     this.spamMessage = params.spamMessage;
   }
@@ -33,16 +31,6 @@ export class DatabaseService {
     return dbUsers;
   }
 
-  async savePlusPlusLog(
-    teamId: string,
-    to: IUser,
-    from: IUser,
-    channel: string,
-    reason: string | undefined,
-    incrementValue: number,
-  ) {
-
-  }
 
   async isSpam(teamId: string, to: IUser, from: IUser) {
     //Logger.debug('spam check');
@@ -57,29 +45,7 @@ export class DatabaseService {
     return isSpam;
   }
 
-  /*
-   * from - database user who is sending the score
-   * to - database user who is receiving the score
-   * score - the number of score that is being sent
-   */
-  async savePointsGiven(from: IUser, to: IUser, score: number) {
-    const newScore: number = (from.pointsGiven.get(to.slackId) || 0) + 1;
-    // even if they are down voting them they should still get a tally (e.g. + 1) as they ++/-- the same person
-    from.pointsGiven.set(to.slackId, newScore);
-    from.totalPointsGiven = from.totalPointsGiven + score;
-    await from.save();
-
-    if (newScore % this.furtherFeedbackScore === 0) {
-      // TODO formal feedback should be in an event to handle it outside of the db service...
-      //Logger.debug(`${from.name} has sent a lot of points to ${to.name} suggesting further feedback ${score}`);
-      /* await app.client.chat.postMessage({
-        channel: from.slackId,
-        text: `Looks like you've given ${Md.user(to.slackId)} quite a few points, maybe you should look at submitting ${this.peerFeedbackUrl}`,
-      }); */
-    }
-  }
-
-  async getTopScores(teamId: string, amount) {
+  async getTopScores(teamId: string, amount: number) {
     const results = await User(connectionFactory(teamId)).find({}).sort({ score: -1, accountLevel: -1 }).limit(amount);
 
     //Logger.debug('Trying to find top scores');
@@ -166,13 +132,8 @@ export class DatabaseService {
     return;
   }
 
-  async getBotWallet(teamId: string): Promise<IBotToken> {
-    const botWallet = await BotToken.findOne({ name: 'qrafty' }).exec();
-    return botWallet as IBotToken;
-  }
-
-  async getTopSenderInDuration(teamId: string, amount = 10, days = 7) {
-    const topSendersForDuration = await ScoreLog(connectionFactory(teamId))
+  async getTopSenderInDuration(connection: Connection, amount: number = 10, days: number = 7): Promise<any[]> {
+    const topSendersForDuration = await ScoreLog(connection)
       .aggregate([
         {
           $match: { date: { $gt: new Date(new Date().setDate(new Date().getDate() - days)) } },
@@ -189,8 +150,8 @@ export class DatabaseService {
     return topSendersForDuration;
   }
 
-  async getTopReceiverInDuration(teamId: string, amount = 10, days = 7) {
-    const topRecipientForDuration = await ScoreLog(connectionFactory(teamId))
+  async getTopReceiverInDuration(connection: Connection, amount: number = 10, days: number = 7): Promise<any[]> {
+    const topRecipientForDuration = await ScoreLog(connection)
       .aggregate([
         {
           $match: { date: { $gt: new Date(new Date().setDate(new Date().getDate() - days)) } },
@@ -207,8 +168,8 @@ export class DatabaseService {
     return topRecipientForDuration;
   }
 
-  async getTopRoomInDuration(teamId: string, amount = 3, days = 7) {
-    const topRoomForDuration = await ScoreLog(connectionFactory(teamId))
+  async getTopRoomInDuration(connection: Connection, amount: number = 3, days: number = 7): Promise<any[]> {
+    const topRoomForDuration = await ScoreLog(connection)
       .aggregate([
         {
           $match: { date: { $gt: new Date(new Date().setDate(new Date().getDate() - days)) } },

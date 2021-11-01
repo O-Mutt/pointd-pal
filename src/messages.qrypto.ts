@@ -6,7 +6,7 @@ import { directMention, Logger } from '@slack/bolt';
 
 import { app } from '../app';
 import { Helpers } from './lib/helpers';
-import { IBotToken } from './lib/models/botToken';
+import { BotToken, IBotToken } from './lib/models/botToken';
 import { User } from './lib/models/user';
 import { regExpCreator } from './lib/regexpCreator';
 import { connectionFactory } from './lib/services/connectionsFactory';
@@ -71,7 +71,10 @@ async function levelUpToLevelThree({ action, body, logger, ack, say }) {
 
 async function botWalletCount({ message, context, logger, say }) {
   const teamId = context.teamId as string;
-  const botWallet: IBotToken = await databaseService.getBotWallet(teamId);
+  const botWallet = await BotToken.findOne({}).exec();
+  if (!botWallet) {
+    return;
+  }
   logger.debug(`Get the bot wallet by user ${message.user.name}, ${botWallet}`);
   let gas;
   try {
