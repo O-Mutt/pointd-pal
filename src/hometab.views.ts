@@ -86,7 +86,7 @@ app.view(
             bonusly.defaultHashtag = value;
             break;
           }
-          case 'homeTab_qraftyTokenEnabled': {
+          case 'hometab_qraftyTokenEnabled': {
             qrafty.qryptoEnabled = value === EnabledSettings.ENABLED;
             break;
           }

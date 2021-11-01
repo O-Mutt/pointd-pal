@@ -21,7 +21,6 @@ app.action(
     const teamId = context.teamId as string;
     const userId = body.user.id;
     const connection = connectionFactory(teamId);
-    const bonusly = await BonuslyConfig(connection).findOneOrCreate();
     const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
     const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId as string);
 
@@ -94,8 +93,8 @@ app.action(
         Elements.StaticSelect({ actionId: 'hometab_bonuslyEnabled' })
           .initialOption(
             Bits.Option({
-              text: bonusly.enabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
-              value: bonusly.enabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
+              text: qraftyConfig.bonusly.enabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
+              value: qraftyConfig.bonusly.enabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
             }),
           )
           .options(
@@ -108,14 +107,14 @@ app.action(
           actionId: 'hometab_bonuslyUri',
           placeholder: 'https://bonus.ly/api/v1',
           minLength: 8,
-          initialValue: bonusly.url?.toString() || '',
+          initialValue: qraftyConfig.bonusly.url?.toString() || '',
         }),
       ),
       Blocks.Input({ label: `${Md.emoji('key')} Bonusly API Key` }).element(
         Elements.TextInput({
           actionId: 'hometab_bonuslyAPIKey',
           minLength: 5,
-          initialValue: bonusly.apiKey || '',
+          initialValue: qraftyConfig.bonusly.apiKey || '',
           placeholder: 'https://bonus.ly/api/v1'
         }),
       ),
@@ -123,7 +122,7 @@ app.action(
         Elements.TextInput({
           actionId: 'hometab_bonuslyDefaultReason',
           minLength: 5,
-          initialValue: bonusly.defaultReason || '',
+          initialValue: qraftyConfig.bonusly.defaultReason || '',
           placeholder: 'point sent through Qrafty'
         }),
       ),
@@ -131,7 +130,7 @@ app.action(
         Elements.TextInput({
           actionId: 'hometab_bonuslyDefaultHashtag',
           minLength: 3,
-          initialValue: bonusly.defaultHashtag || '',
+          initialValue: qraftyConfig.bonusly.defaultHashtag || '',
           placeholder: '#excellence'
         }),
       ),
