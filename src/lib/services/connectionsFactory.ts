@@ -1,7 +1,6 @@
 import { Helpers } from '../helpers';
 
 import mongoose from 'mongoose';
-import { ReadyState } from '../types/Enums';
 
 const procVars = Helpers.getProcessVariables(process.env);
 

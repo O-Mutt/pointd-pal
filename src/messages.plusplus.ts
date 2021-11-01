@@ -3,7 +3,7 @@ import tokenBuddy from 'token-buddy';
 
 
 import { app } from '../app';
-import { Helpers } from './lib/Helpers';
+import { Helpers } from './lib/helpers';
 import { IUser, User } from './lib/models/user';
 import { regExpCreator } from './lib/regexpCreator';
 import { DatabaseService } from './lib/services/database';
