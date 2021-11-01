@@ -5,7 +5,6 @@ import { ChatPostEphemeralArguments } from '@slack/web-api';
 import { app } from '../app';
 import { Installation } from './lib/models/installation';
 import { QraftyConfig } from './lib/models/qraftyConfig';
-import { IUser, User } from './lib/models/user';
 import { BonuslyService } from './lib/services/bonusly';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { eventBus } from './lib/services/eventBus';
@@ -63,7 +62,19 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
   switch (plusPlusEvent.sender.bonuslyPrompt) {
     case PromptSettings.ALWAYS: {
       console.log('Prompt settings, always send');
-      const responses: any[] = await BonuslyService.sendBonus(plusPlusEvent.teamId, plusPlusEvent.sender, plusPlusEvent.recipients, plusPlusEvent.amount, plusPlusEvent.reason);
+      const responses: any[] | undefined = await BonuslyService.sendBonus(plusPlusEvent.teamId, plusPlusEvent.sender, plusPlusEvent.recipients, plusPlusEvent.amount, plusPlusEvent.reason);
+      if (!responses || responses.length < 1) {
+        try {
+          const result = await app.client.chat.postEphemeral({
+            text: `${Md.emoji('thumbsdown')} Bonusly sending failed.`,
+            token: token,
+            user: plusPlusEvent.sender.slackId
+          } as ChatPostEphemeralArguments);
+        } catch (e) {
+          console.log(e);
+        }
+        return;
+      }
       const ppBonusly = new PlusPlusBonusly({
         responses,
         plusPlusEvent,
