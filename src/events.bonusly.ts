@@ -22,21 +22,21 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
   console.log('Handle plusplus for bonusly')
   const connection = connectionFactory(plusPlusEvent.teamId);
   const config = await QraftyConfig(connection).findOneOrCreate(plusPlusEvent.teamId);
-  const sender = await User(connection).findOneBySlackIdOrCreate(plusPlusEvent.teamId, plusPlusEvent.sender.slackId);
   const teamInstallConfig = await Installation.findOne({ teamId: plusPlusEvent.teamId }).exec();
   if (!config.bonuslyConfig?.enabled || !config.bonuslyConfig?.apiKey || !config.bonuslyConfig?.url) {
     console.warn(`one of the configs is disabled Enabled [${config.bonuslyConfig?.enabled}] apiKey[${config.bonuslyConfig?.apiKey}] url[${config.bonuslyConfig?.url}]`);
     return;
   }
 
-  if (!teamInstallConfig?.installation.bot?.token) {
+  const token = teamInstallConfig?.installation.bot?.token;
+  if (!token) {
     console.warn(`This install is missing the bot token, apparently...`);
     return;
   }
-  const token = teamInstallConfig.installation.bot.token;
 
   if (plusPlusEvent.sender.isBot === true) {
     // bots can't send ++ let alone bonusly bonuses
+    console.error('How is a bot trying to send points?', plusPlusEvent.sender);
     return;
   }
   if (plusPlusEvent.sender.slackId && !plusPlusEvent.sender.email) {
@@ -58,8 +58,9 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
     return;
   }
 
-  switch (sender.bonuslyPrompt) {
+  switch (plusPlusEvent.sender.bonuslyPrompt) {
     case PromptSettings.ALWAYS: {
+      console.log('Prompt settings, always send');
       const responses: any[] = await BonuslyService.sendBonus(plusPlusEvent.teamId, plusPlusEvent.sender, plusPlusEvent.recipients, plusPlusEvent.amount, plusPlusEvent.reason);
       const ppBonusly = new PlusPlusBonusly({
         responses,
@@ -70,7 +71,8 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
       break;
     }
     case PromptSettings.PROMPT: {
-      const bonuslyAmount: number = sender.bonuslyScoreOverride || plusPlusEvent.amount;
+      console.log('Prompt settings, prompt');
+      const bonuslyAmount: number = plusPlusEvent.sender.bonuslyScoreOverride || plusPlusEvent.amount;
       const totalBonuslyPoints: number = bonuslyAmount * plusPlusEvent.recipients.length;
       const totalQraftyPoints: number = plusPlusEvent.amount * plusPlusEvent.recipients.length;
       const message = Message({ text: `Should we include ${bonuslyAmount} bonusly points with your Qrafty points?`, channel: plusPlusEvent.channel })
@@ -98,7 +100,9 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
       break;
     }
     case PromptSettings.NEVER:
+      console.log('Prompt settings, never');
     default:
+      console.log('Prompt settings, default fall through');
       break;
   }
 }
