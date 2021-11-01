@@ -15,10 +15,11 @@ export class BonuslyService {
   static async sendBonus(teamId: string, sender: IUser, recipients: IUser[], amount: number, reason?: string) {
     const qraftyConfig = await QraftyConfig(connectionFactory(teamId)).findOneOrCreate(teamId);
     //logger.debug(`Sending a bonusly bonus to ${JSON.stringify(event.recipient.slackEmail)} from ${JSON.stringify(event.sender.slackEmail)}`);
+    console.log("trying to send a bonus", qraftyConfig.bonuslyConfig?.get('apiKey', String, { getter: false }), qraftyConfig.bonuslyConfig?.apiKey);
     const axios = Axios.create({
       baseURL: qraftyConfig.bonuslyConfig?.url?.toString(),
       headers: {
-        Authorization: `Bearer ${qraftyConfig.bonuslyConfig?.get('apiKey', null, { getter: false })}`,
+        Authorization: `Bearer ${qraftyConfig.bonuslyConfig?.get('apiKey', String, { getter: false })}`,
         'Content-Type': 'application/json',
       },
     });
