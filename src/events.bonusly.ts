@@ -24,10 +24,12 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
   const sender = await User(connection).findOneBySlackIdOrCreate(plusPlusEvent.teamId, plusPlusEvent.sender.slackId);
   const teamInstallConfig = await Installation.findOne({ teamId: plusPlusEvent.teamId }).exec();
   if (!config.bonuslyConfig?.enabled || !config.bonuslyConfig?.apiKey || !config.bonuslyConfig?.url) {
+    console.warn(`one of the configs is disabled Enabled [${config.bonuslyConfig?.enabled}] apiKey[${config.bonuslyConfig?.apiKey}] url[${config.bonuslyConfig?.url}]`);
     return;
   }
 
   if (!teamInstallConfig?.installation.bot?.token) {
+    console.warn(`This install is missing the bot token, aparently...`);
     return;
   }
   const token = teamInstallConfig.installation.bot.token;

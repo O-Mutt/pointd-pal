@@ -238,22 +238,24 @@ async function multipleUsersVote({ message, context, logger, say }) {
     }
   }
   messages = messages.filter((message) => !!message); // de-dupe
-  logger.debug(`These are the messages \n ${messages.join(' ')} `);
-  const sayResponse = await say(messages.join('\n'));
-  const plusPlusEvent = new PlusPlus({
-    notificationMessage: notificationMessage.join('\n'),
-    sender,
-    recipients: to,
-    direction: operator,
-    amount: 1,
-    channel,
-    reason: cleanReason,
-    teamId: teamId,
-    originalMessage: messages.join('\n'),
-    originalMessageTs: sayResponse.ts as string,
-  });
+  if (messages) {
+    logger.debug(`These are the messages \n ${messages.join(' ')} `);
+    const sayResponse = await say(messages.join('\n'));
+    const plusPlusEvent = new PlusPlus({
+      notificationMessage: notificationMessage.join('\n'),
+      sender,
+      recipients: to,
+      direction: operator,
+      amount: 1,
+      channel,
+      reason: cleanReason,
+      teamId: teamId,
+      originalMessage: messages.join('\n'),
+      originalMessageTs: sayResponse.ts as string,
+    });
 
-  eventBus.emit(PlusPlusEventName, plusPlusEvent);
+    eventBus.emit(PlusPlusEventName, plusPlusEvent);
+  }
 }
 
 async function eraseUserScore({ message, context, say }) {
