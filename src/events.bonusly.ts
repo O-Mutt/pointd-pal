@@ -40,6 +40,7 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
     return;
   }
   if (plusPlusEvent.sender.slackId && !plusPlusEvent.sender.email) {
+    console.log('sender email missing but has slackId', plusPlusEvent.sender);
     const failureEvent = new PlusPlusFailure({
       notificationMessage: `${Md.user(plusPlusEvent.sender.slackId)} is trying to send a bonusly but their email is missing in ${Md.channel(plusPlusEvent.channel as string)}`,
       sender: plusPlusEvent.sender,
@@ -58,6 +59,7 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
     return;
   }
 
+  console.log('Before the switch, ', plusPlusEvent.sender.bonuslyPrompt);
   switch (plusPlusEvent.sender.bonuslyPrompt) {
     case PromptSettings.ALWAYS: {
       console.log('Prompt settings, always send');
