@@ -22,6 +22,7 @@ export let app = new App({
     "channels:history",
     "channels:manage",
     "channels:read",
+    "channels:join",
     "chat:write",
     "commands",
     "groups:history",

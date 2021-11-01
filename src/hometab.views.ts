@@ -20,7 +20,7 @@ app.view(
     for (const option in view.state.values) {
       for (const key in view.state.values[option]) {
         const state = view.state.values[option][key];
-        let value = (state.value || state.selected_option?.value) as string;
+        let value = (state.selected_option?.value || state.value) as string;
         const selectedUsers = state.selected_users as string[];
         switch (key) {
           case 'hometab_qraftyCompanyName': {
