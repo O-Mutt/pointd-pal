@@ -50,7 +50,7 @@ const databaseService = new DatabaseService({ ...procVars });
           rank = 1;
           for (const sender of topSenders) {
             const pointStr = `point${H.getEsOnEndOfWord(sender.scoreChange)} given`;
-            console.log(`Top room [i] ${topSenders}[${rank}]`);
+            console.log(`Top room [i] ${JSON.stringify(topSenders)}[${rank}]`);
             messages.push(`${rank}. ${Md.user(sender._id)} (${sender.scoreChange} ${pointStr})`);
             rank++;
           }
@@ -69,7 +69,7 @@ const databaseService = new DatabaseService({ ...procVars });
           rank = 1;
           for (const recipient of topRecipients) {
             const pointStr = `point${H.getEsOnEndOfWord(recipient.scoreChange)} given`;
-            console.log(`Top room [i] ${topRecipients}[${rank}]`);
+            console.log(`Top room [i] ${JSON.stringify(topRecipients)}[${rank}]`);
             messages.push(`${rank}. ${Md.user(recipient._id)} (${recipient.scoreChange} ${pointStr})`);
             rank++;
           }
@@ -87,7 +87,7 @@ const databaseService = new DatabaseService({ ...procVars });
           rank = 1;
           for (const room of topRooms) {
             const pointStr = `point${H.getEsOnEndOfWord(room.scoreChange)} given`;
-            console.log(`Top room [i] ${topRooms}[${rank}]`);
+            console.log(`Top room [i] ${JSON.stringify(topRooms)}[${rank}]`);
             messages.push(`${rank}. ${Md.channel(room._id)} (${room.scoreChange} ${pointStr})`);
             rank++;
           }
