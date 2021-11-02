@@ -16,7 +16,7 @@ export const QraftyInstallStore: InstallationStore = {
     }
 
     if (teamId) {
-      await Installation.remove({ teamId });
+      await Installation.deleteOne({ teamId });
       await Installation.create({
         teamId,
         installation,

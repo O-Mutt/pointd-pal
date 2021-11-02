@@ -1,18 +1,20 @@
 import {
-  Appendable, Bits, Blocks, Elements, Md, Modal, ViewBlockBuilder
+  Appendable, Bits, BlockBuilder, Blocks, Elements, Md, Modal, ModalBuilder, ViewBlockBuilder
 } from 'slack-block-builder';
 
-import { AllMiddlewareArgs, BlockButtonAction, SlackActionMiddlewareArgs } from '@slack/bolt';
+import { AllMiddlewareArgs, BlockButtonAction, BlockStaticSelectAction, SlackActionMiddlewareArgs } from '@slack/bolt';
 import { View } from '@slack/types';
 
 import { app } from '../app';
-import { BonuslyConfig } from './lib/models/bonuslyConfig';
+import { BonuslyConfig, IBonuslyConfig } from './lib/models/bonuslyConfig';
 import { BotToken } from './lib/models/botToken';
 import { User } from './lib/models/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { actions } from './lib/types/Actions';
 import { EnabledSettings, PromptSettings } from './lib/types/Enums';
-import { QraftyConfig } from './lib/models/qraftyConfig';
+import { IQraftyConfig, QraftyConfig } from './lib/models/qraftyConfig';
+import { blocks } from './lib/types/BlockIds';
+import { ViewsUpdateArguments } from '@slack/web-api';
 
 app.action(
   actions.hometab.admin_settings,
@@ -22,138 +24,16 @@ app.action(
     const userId = body.user.id;
     const connection = connectionFactory(teamId);
     const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
-    const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId as string);
+    const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId);
 
     if (!user.isAdmin || !qraftyConfig) {
       return; //empty section because the user isn't an admin
     }
-    const adminSettingsModal = Modal({
-      title: `${Md.emoji('gear')} Qrafty Settings`,
-      submit: 'Update Settings',
-      callbackId: actions.hometab.admin_settings_submit,
-    }).blocks(
-      Blocks.Header({ text: 'Basic Settings' }),
-      Blocks.Input({ label: 'Qrafty Admins' }).element(
-        Elements.UserMultiSelect({
-          actionId: 'hometab_qraftyAdmins',
-          placeholder: 'Additional bot admins',
-        }).initialUsers(qraftyConfig.qraftyAdmins || []),
-      ),
-      Blocks.Input({ label: 'Company Name' }).element(
-        Elements.TextInput({
-          actionId: 'hometab_qraftyCompanyName',
-          placeholder: 'Company Name',
-          minLength: 2,
-          initialValue: qraftyConfig.companyName || '',
-        }),
-      ),
-      Blocks.Input({ label: 'Notifications Channel' }).element(
-        Elements.TextInput({
-          actionId: 'hometab_qraftyNotificationsRoom',
-          placeholder: '#qrafty-plusplus',
-          minLength: 2,
-          initialValue: qraftyConfig.notificationRoom || '',
-        }),
-      ),
-      Blocks.Input({ label: 'False Positive Notifications Channel' }).element(
-        Elements.TextInput({
-          actionId: 'hometab_qraftyFalsePositiveRoom',
-          placeholder: '#qrafty-plusplus-fail',
-          minLength: 2,
-          initialValue: qraftyConfig.falsePositiveRoom || '',
-        }),
-      ),
-      Blocks.Input({ label: 'Scoreboard Notification Channel' }).element(
-        Elements.TextInput({
-          actionId: 'hometab_qraftyScoreboardRoom',
-          placeholder: '#qrafty-monthly-scoreboard',
-          minLength: 2,
-          initialValue: qraftyConfig.scoreboardRoom || '',
-        }),
-      ),
-      Blocks.Input({ label: 'Is there a \"Formal\" feedback that you would like frequent senders to be prompted for?' }).element(
-        Elements.TextInput({
-          actionId: 'hometab_qraftyFormalFeedbackUrl',
-          placeholder: 'https://formal.praise.company.com',
-          minLength: 2,
-          initialValue: qraftyConfig.formalFeedbackUrl || '',
-        }),
-      ),
-      Blocks.Input({ label: 'When a user interacts (++ or --) with another user at what increment should they be prompted to send formal praise?' }).element(
-        Elements.TextInput({
-          actionId: 'hometab_qraftyFormalFeedbackModulo',
-          placeholder: '10',
-          minLength: 2,
-          initialValue: qraftyConfig.formalFeedbackModulo.toString() || '10',
-        }),
-      ),
-      Blocks.Divider(),
-      Blocks.Header({ text: `${Md.emoji('rocket')} Bonusly Integration` }),
-      Blocks.Input({ label: 'Bonusly Enabled' })
-        .element(
-          Elements.StaticSelect({ actionId: 'hometab_bonuslyEnabled' })
-            .initialOption(
-              Bits.Option({
-                text: qraftyConfig.bonuslyConfig?.enabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
-                value: qraftyConfig.bonuslyConfig?.enabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
-              }),
-            )
-            .options(
-              Bits.Option({ text: EnabledSettings.ENABLED, value: EnabledSettings.ENABLED }),
-              Bits.Option({ text: EnabledSettings.DISABLED, value: EnabledSettings.DISABLED }),
-            ),
-        ),
-      Blocks.Input({ label: `${Md.emoji('page_facing_up')} Bonusly API Uri` }).element(
-        Elements.TextInput({
-          actionId: 'hometab_bonuslyUri',
-          placeholder: 'https://bonus.ly/api/v1',
-          minLength: 8,
-          initialValue: qraftyConfig.bonuslyConfig?.url?.toString() || '',
-        }),
-      ),
-      Blocks.Input({ label: `${Md.emoji('key')} Bonusly API Key` }).element(
-        Elements.TextInput({
-          actionId: 'hometab_bonuslyAPIKey',
-          minLength: 5,
-          initialValue: qraftyConfig.bonuslyConfig?.apiKey || '',
-        }),
-      ),
-      Blocks.Input({ label: `${Md.emoji('gift')} Default reason` }).element(
-        Elements.TextInput({
-          actionId: 'hometab_bonuslyDefaultReason',
-          minLength: 5,
-          initialValue: qraftyConfig.bonuslyConfig?.defaultReason || '',
-          placeholder: 'point sent through Qrafty'
-        }),
-      ),
-      Blocks.Input({ label: `${Md.emoji('hash')} Default hashtag` }).element(
-        Elements.TextInput({
-          actionId: 'hometab_bonuslyDefaultHashtag',
-          minLength: 3,
-          initialValue: qraftyConfig.bonuslyConfig?.defaultHashtag || '',
-          placeholder: '#excellence'
-        }),
-      ),
-      Blocks.Divider(),
-      Blocks.Header({ text: 'Qrypto' }),
-      Blocks.Input({ label: 'Qrypto (Crypto) Enabled' }).element(
-        Elements.StaticSelect({ actionId: 'hometab_qraftyTokenEnabled' })
-          .initialOption(
-            Bits.Option({
-              text: qraftyConfig.qryptoEnabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
-              value: qraftyConfig.qryptoEnabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
-            }),
-          )
-          .options(
-            Bits.Option({ text: EnabledSettings.ENABLED, value: EnabledSettings.ENABLED }),
-            Bits.Option({ text: EnabledSettings.DISABLED, value: EnabledSettings.DISABLED }),
-          ),
-      ),
-    );
+    const adminSettingsModal = buildAdminModal(qraftyConfig).buildToObject();
 
     const result = await client.views.open({
       trigger_id: body.trigger_id,
-      view: adminSettingsModal.buildToObject() as View,
+      view: adminSettingsModal,
     });
   },
 );
@@ -167,7 +47,7 @@ app.action(
     const userId = body.user.id;
     const connection = connectionFactory(teamId);
     const bonusly = await BonuslyConfig(connection).findOne().exec();
-    const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId as string);
+    const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId);
 
     const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
 
@@ -276,3 +156,162 @@ app.action(
     return;
   }
 )
+
+app.action(blocks.hometab.admin.bonusly.enabled,
+  async ({ ack, client, body, context, action }: SlackActionMiddlewareArgs<BlockStaticSelectAction> & AllMiddlewareArgs) => {
+    await ack();
+    console.log('in the bonusly enabled action');
+    const teamId = context.teamId as string;
+    const connection = connectionFactory(teamId);
+    const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId);
+
+    const updatedView = buildAdminModal(qraftyConfig, action.selected_option.value === EnabledSettings.ENABLED).buildToObject();
+    await client.views.update({
+      view_id: body.view?.id,
+      hash: body.view?.hash,
+      view: updatedView
+    } as ViewsUpdateArguments)
+  }
+);
+
+function buildBonuslyEnabledBlocks(bonuslyConfig: IBonuslyConfig | undefined, enabledOverride: boolean = false) {
+  let blockBuilder: Appendable<BlockBuilder> = [];
+  if (enabledOverride === true || bonuslyConfig?.enabled === true) {
+    blockBuilder.push(
+      Blocks.Input({ label: `${Md.emoji('page_facing_up')} Bonusly API Uri`, blockId: blocks.hometab.admin.bonusly.apiUrl }).element(
+        Elements.TextInput({
+          actionId: blocks.hometab.admin.bonusly.apiUrl,
+          placeholder: 'https://bonus.ly/api/v1',
+          minLength: 8,
+          initialValue: bonuslyConfig?.url?.toString() || '',
+        }),
+      ).optional(),
+      Blocks.Input({ label: `${Md.emoji('key')} Bonusly API Key`, blockId: blocks.hometab.admin.bonusly.apiKey }).element(
+        Elements.TextInput({
+          actionId: blocks.hometab.admin.bonusly.apiKey,
+          minLength: 5,
+          initialValue: bonuslyConfig?.apiKey || '',
+        }),
+      ),
+      Blocks.Input({ label: `${Md.emoji('gift')} Default reason`, blockId: blocks.hometab.admin.bonusly.defaultReason }).element(
+        Elements.TextInput({
+          actionId: blocks.hometab.admin.bonusly.defaultReason,
+          minLength: 5,
+          initialValue: bonuslyConfig?.defaultReason || '',
+          placeholder: 'point sent through Qrafty'
+        }),
+      ),
+      Blocks.Input({ label: `${Md.emoji('hash')} Default hashtag`, blockId: blocks.hometab.admin.bonusly.defaultHashtag }).element(
+        Elements.TextInput({
+          actionId: blocks.hometab.admin.bonusly.defaultHashtag,
+          minLength: 3,
+          initialValue: bonuslyConfig?.defaultHashtag || '',
+          placeholder: '#excellence'
+        }),
+      ));
+  }
+  return blockBuilder;
+}
+
+
+function buildAdminModal(qraftyConfig: IQraftyConfig, enabledOverride: boolean = false): ModalBuilder {
+  return Modal({
+    title: `${Md.emoji('gear')} Qrafty Settings`,
+    submit: 'Update Settings',
+    callbackId: actions.hometab.admin_settings_submit,
+  }).blocks(
+    Blocks.Header({ text: 'Basic Settings' }),
+    Blocks.Input({ label: 'Qrafty Admins', blockId: blocks.hometab.admin.basic.admins }).element(
+      Elements.UserMultiSelect({
+        actionId: blocks.hometab.admin.basic.admins,
+        placeholder: 'Additional bot admins',
+      }).initialUsers(qraftyConfig.qraftyAdmins || []),
+    ).optional(),
+    Blocks.Input({ label: 'Company Name', blockId: blocks.hometab.admin.basic.companyName }).element(
+      Elements.TextInput({
+        actionId: blocks.hometab.admin.basic.companyName,
+        placeholder: 'Company Name',
+        minLength: 2,
+        initialValue: qraftyConfig.companyName || '',
+      }),
+    ).optional(),
+    Blocks.Input({ label: 'Notifications Channel', blockId: blocks.hometab.admin.basic.notificationChannel }).element(
+      Elements.TextInput({
+        actionId: blocks.hometab.admin.basic.notificationChannel,
+        placeholder: 'qrafty-plusplus',
+        minLength: 2,
+        initialValue: qraftyConfig.notificationRoom || '',
+      }),
+    ).optional(),
+    Blocks.Input({ label: 'False Positive Notifications Channel', blockId: blocks.hometab.admin.basic.falsePositiveNotificationChannel }).element(
+      Elements.TextInput({
+        actionId: blocks.hometab.admin.basic.falsePositiveNotificationChannel,
+        placeholder: 'qrafty-plusplus-fail',
+        minLength: 2,
+        initialValue: qraftyConfig.falsePositiveRoom || '',
+      }),
+    ).optional(),
+    Blocks.Input({ label: 'Scoreboard Notification Channel', blockId: blocks.hometab.admin.basic.scoreboardChannel }).element(
+      Elements.TextInput({
+        actionId: blocks.hometab.admin.basic.scoreboardChannel,
+        placeholder: 'qrafty-monthly-scoreboard',
+        minLength: 2,
+        initialValue: qraftyConfig.scoreboardRoom || '',
+      }),
+    ).optional(),
+    Blocks.Input({
+      label: 'Is there a \"Formal\" feedback that you would like frequent senders to be prompted for?',
+      blockId: blocks.hometab.admin.basic.formalPraiseUrl
+    }).element(
+      Elements.TextInput({
+        actionId: blocks.hometab.admin.basic.formalPraiseUrl,
+        placeholder: 'https://formal.praise.company.com',
+        minLength: 2,
+        initialValue: qraftyConfig.formalFeedbackUrl || '',
+      }),
+    ).optional(),
+    Blocks.Input({
+      label: 'When a user interacts (++ or --) with another user at what increment should they be prompted to send formal praise?',
+      blockId: blocks.hometab.admin.basic.formalPraiseMod
+    }).element(
+      Elements.TextInput({
+        actionId: blocks.hometab.admin.basic.formalPraiseMod,
+        placeholder: '10',
+        minLength: 2,
+        initialValue: qraftyConfig.formalFeedbackModulo.toString() || '10',
+      }),
+    ).optional(),
+    Blocks.Divider(),
+    Blocks.Header({ text: `${Md.emoji('rocket')} Bonusly Integration` }),
+    Blocks.Input({ label: 'Bonusly Enabled', blockId: blocks.hometab.admin.bonusly.enabled })
+      .element(
+        Elements.StaticSelect({ actionId: blocks.hometab.admin.bonusly.enabled })
+          .initialOption(
+            Bits.Option({
+              text: qraftyConfig.bonuslyConfig?.enabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
+              value: qraftyConfig.bonuslyConfig?.enabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
+            }),
+          )
+          .options(
+            Bits.Option({ text: EnabledSettings.ENABLED, value: EnabledSettings.ENABLED }),
+            Bits.Option({ text: EnabledSettings.DISABLED, value: EnabledSettings.DISABLED }),
+          ),
+      ),
+    ...buildBonuslyEnabledBlocks(qraftyConfig.bonuslyConfig, enabledOverride),
+    Blocks.Divider(),
+    Blocks.Header({ text: 'Qrypto' }),
+    Blocks.Input({ label: 'Qrypto (Crypto) Enabled', blockId: blocks.hometab.admin.qrypto.enabled }).element(
+      Elements.StaticSelect({ actionId: blocks.hometab.admin.qrypto.enabled })
+        .initialOption(
+          Bits.Option({
+            text: qraftyConfig.qryptoEnabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
+            value: qraftyConfig.qryptoEnabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
+          }),
+        )
+        .options(
+          Bits.Option({ text: EnabledSettings.ENABLED, value: EnabledSettings.ENABLED }),
+          Bits.Option({ text: EnabledSettings.DISABLED, value: EnabledSettings.DISABLED }),
+        ),
+    ),
+  );
+}
