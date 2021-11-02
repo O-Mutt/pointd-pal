@@ -265,7 +265,7 @@ for you to be able to withdraw your crypto. What is your public BEP20 wallet add
           actionId: blocks.hometab.user.qrypto.walletAddress,
           initialValue: user.walletAddress || '',
         }),
-      )
+      ).optional()
     );
   }
   return qryptoBlocks
