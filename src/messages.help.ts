@@ -63,9 +63,8 @@ async function tellHowMuchPointsAreWorth({ payload, logger, message, context, sa
       url: 'https://api.coinbase.com/v2/exchange-rates?currency=BTC',
     });
 
-    console.log(eth);
-    const ethInUsd = eth.rates.USD;
-    const btcInUsd = btc.rates.USD;
+    const ethInUsd = eth.data.rates.USD;
+    const btcInUsd = btc.data.rates.USD;
     return say(
       `A Bitcoin is worth $${btcInUsd} USD right now, Ethereum is $${ethInUsd} USD, and ${Md.bold('Qrafty points are worth nothing')}!`,
     );
