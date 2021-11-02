@@ -165,12 +165,12 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
 
   if (message) {
     let threadTs;
-    if (args.message.thread_ts) {
-      threadTs = args.message.thread_ts;
+    if (message.thread_ts) {
+      threadTs = message.thread_ts;
     } else {
-      threadTs = args.message.ts;
+      threadTs = message.ts;
     }
-    const sayResponse = await args.say({ text: theMessage, thread_ts: threadTs });
+    const sayResponse = await say({ text: theMessage, thread_ts: threadTs });
     const plusPlusEvent = new PlusPlus({
       notificationMessage: `${Md.user(response.fromUser.slackId)} sent ${amount} Qrafty point${parseInt(amount, 10) > 1 ? 's' : ''} to ${Md.user(response.toUser.slackId)} in ${Md.channel(channel)}`,
       recipients: [response.toUser],
