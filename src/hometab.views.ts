@@ -13,7 +13,6 @@ import { EnabledSettings } from './lib/types/Enums';
 app.view(
   actions.hometab.admin_settings_submit,
   async ({ ack, context, body, logger, view }: SlackViewMiddlewareArgs<ViewSubmitAction> & AllMiddlewareArgs) => {
-    await ack();
     const teamId = context.teamId as string;
     const userId = body.user.id;
 
@@ -139,6 +138,8 @@ app.view(
         errors: errors
       });
       return;
+    } else {
+      await ack();
     }
 
     qrafty.updatedBy = userId;
@@ -153,7 +154,6 @@ app.view(
 app.view(
   actions.hometab.user_settings_submit,
   async ({ ack, context, body, logger, view }: SlackViewMiddlewareArgs<ViewSubmitAction> & AllMiddlewareArgs) => {
-    await ack();
     const teamId = context.teamId as string;
     const userId = body.user.id;
 
@@ -203,6 +203,8 @@ app.view(
         errors: errors
       });
       return;
+    } else {
+      await ack();
     }
     user.updatedAt = new Date();
     user.updatedBy = user.slackId;

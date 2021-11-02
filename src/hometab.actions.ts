@@ -38,16 +38,13 @@ app.action(
   },
 );
 
-app.action(
-  actions.hometab.user_settings,
+app.action(actions.hometab.user_settings,
   async ({ ack, client, context, body }: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
     await ack();
-    let bonuslyBlocks: Appendable<ViewBlockBuilder> = [];
     const teamId = context.teamId as string;
     const userId = body.user.id;
     const connection = connectionFactory(teamId);
     const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId);
-
     const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
 
     if (!user || !qraftyConfig || !qraftyConfig.bonuslyConfig) {
@@ -71,8 +68,7 @@ app.action(
   },
 );
 
-app.action(
-  actions.hometab.sync_admins,
+app.action(actions.hometab.sync_admins,
   async ({ ack, body, context }: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
     await ack();
     const teamId = context.teamId as string;
