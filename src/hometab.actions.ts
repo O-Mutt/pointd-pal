@@ -54,6 +54,7 @@ app.action(
       return;
     }
 
+    console.log('user for user settings', user)
     const userSettingsModal = Modal({
       title: `${Md.emoji('gear')} Qrafty Settings`,
       submit: 'Update Settings',
