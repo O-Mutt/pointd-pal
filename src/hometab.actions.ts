@@ -283,7 +283,7 @@ function buildAdminModal(qraftyConfig: IQraftyConfig, enabledOverride: boolean =
     ).optional(),
     Blocks.Divider(),
     Blocks.Header({ text: `${Md.emoji('rocket')} Bonusly Integration` }),
-    Blocks.Input({ label: 'Bonusly Enabled', blockId: blocks.hometab.admin.bonusly.enabled })
+    Blocks.Input({ label: 'Bonusly Enabled', blockId: blocks.hometab.admin.bonusly.enabled }).dispatchAction(true)
       .element(
         Elements.StaticSelect({ actionId: blocks.hometab.admin.bonusly.enabled })
           .initialOption(
