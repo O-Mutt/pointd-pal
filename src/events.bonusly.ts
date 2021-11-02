@@ -152,47 +152,47 @@ async function handleBonuslySent(event: PlusPlusBonusly) {
       // logger.error('there was an issue sending a bonus', e.response.message);
       bonuslyMessages.push(`Sorry, there was an issue sending your bonusly bonus: ${event.responses[i].message}`);
     }
+  }
 
-    if (event.sender.bonuslyPointsDM) {
-      try {
-        await app.client.chat.postMessage({
-          token: token,
-          channel: event.sender.slackId,
-          text: dms.join('\n'),
-        });
-      } catch (e) {
-        // logger.error('error sending dm for bonus', e)
-      }
-    }
-
+  if (event.sender.bonuslyPointsDM) {
     try {
-      let originalMessageText = event.originalMessage;
-      if (!originalMessageText) {
-        const { messages } = await app.client.conversations.history({
-          token,
-          channel: event.channel,
-          latest: event.originalMessageTs,
-          inclusive: true,
-          limit: 1
-        });
-
-        if (!messages || messages.length !== 1) {
-          console.error('couldn\'t find the message to update');
-          return;
-        }
-        originalMessageText = messages[0].text
-      }
-
-
-      await app.client.chat.update({
+      await app.client.chat.postMessage({
         token: token,
-        ts: event.originalMessageTs,
-        channel: event.channel,
-        text: `${originalMessageText}\n*Bonusly:*\n${bonuslyMessages.join('\n')}`,
+        channel: event.sender.slackId,
+        text: dms.join('\n'),
       });
     } catch (e) {
-      console.error('error sending dm for bonus', e)
+      // logger.error('error sending dm for bonus', e)
     }
+  }
+
+  try {
+    let originalMessageText = event.originalMessage;
+    if (!originalMessageText) {
+      const { messages } = await app.client.conversations.history({
+        token,
+        channel: event.channel,
+        latest: event.originalMessageTs,
+        inclusive: true,
+        limit: 1
+      });
+
+      if (!messages || messages.length !== 1) {
+        console.error('couldn\'t find the message to update');
+        return;
+      }
+      originalMessageText = messages[0].text
+    }
+
+
+    await app.client.chat.update({
+      token: token,
+      ts: event.originalMessageTs,
+      channel: event.channel,
+      text: `${originalMessageText}\n*Bonusly:*\n${bonuslyMessages.join('\n')}`,
+    });
+  } catch (e) {
+    console.error('error sending dm for bonus', e)
   }
 }
 

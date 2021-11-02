@@ -16,7 +16,8 @@ app.action(actions.bonusly.prompt_confirm, async (actionArgs: SlackActionMiddlew
   const sender = await User(connection).findOneBySlackIdOrCreate(bonuslyPayload.teamId, bonuslyPayload.sender);
   const recipients: IUser[] = [];
   for (const recipient of bonuslyPayload.recipients) {
-    recipients.push(await User(connection).findOneBySlackIdOrCreate(bonuslyPayload.teamId, recipient));
+    const recip = await User(connection).findOneBySlackIdOrCreate(bonuslyPayload.teamId, recipient)
+    recipients.push(recip);
   }
   const responses: any[] | undefined =
     await BonuslyService.sendBonus(
