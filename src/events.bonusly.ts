@@ -86,29 +86,33 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
     case PromptSettings.PROMPT: {
       console.log('Prompt settings, prompt');
       const bonuslyAmount: number = plusPlusEvent.sender.bonuslyScoreOverride || plusPlusEvent.amount;
+      console.log("prompt stringify", JSON.stringify({ ...plusPlusEvent, amount: bonuslyAmount }));
       const totalBonuslyPoints: number = bonuslyAmount * plusPlusEvent.recipients.length;
       const totalQraftyPoints: number = plusPlusEvent.amount * plusPlusEvent.recipients.length;
+      const recipientSlackIds = plusPlusEvent.recipients.map((recipient) => Md.user(recipient.slackId)).join(', ');
       const message = Message({ text: `Should we include ${bonuslyAmount} bonusly points with your Qrafty points?`, channel: plusPlusEvent.channel })
         .blocks(
           Blocks.Header({ text: `Should we include ${bonuslyAmount} Bonusly points (per recipient), ${totalBonuslyPoints} total, with your Qrafty points?` }),
-          Blocks.Section({ text: `You are sending ${plusPlusEvent.amount} Qrafty Points (per recipient), ${totalQraftyPoints} total, to ${plusPlusEvent.recipients.map((recipient) => Md.user(recipient.slackId)).join(', ')}. Would you like to include ${bonuslyAmount} per user, ${totalBonuslyPoints} total, bonusly bonus with these?` }),
+          Blocks.Section({
+            text: `You are sending ${plusPlusEvent.amount} Qrafty Points (per recipient), ${totalQraftyPoints} total, to ${recipientSlackIds
+              }. Would you like to include ${bonuslyAmount} per user, ${totalBonuslyPoints} total, bonusly bonus with these?`
+          }),
           Blocks.Actions().elements(
             Elements.Button({ text: ConfirmOrCancel.CONFIRM, actionId: actions.bonusly.prompt_confirm, value: JSON.stringify({ ...plusPlusEvent, amount: bonuslyAmount }) }),
             Elements.Button({ text: ConfirmOrCancel.CANCEL, actionId: actions.bonusly.prompt_cancel })
           )
         )
         .ephemeral(true)
-        .asUser()
-        .buildToObject();
+        .asUser();
 
       try {
         const result = await app.client.chat.postEphemeral({
-          ...message,
+          ...message.buildToObject(),
           token: token,
           user: plusPlusEvent.sender.slackId
         } as ChatPostEphemeralArguments);
       } catch (e) {
-        console.log(e);
+        console.error(e, message.printPreviewUrl());
       }
       break;
     }

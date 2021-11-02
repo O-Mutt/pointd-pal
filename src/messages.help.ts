@@ -42,13 +42,12 @@ async function respondWithHelpGuidance({ client, message, say }) {
         })
         : undefined,
     )
-    .asUser()
-    .buildToObject();
+    .asUser();
 
   try {
-    const result = await client.chat.postMessage(theMessage as ChatPostMessageArguments);
+    const result = await client.chat.postMessage(theMessage.buildToObject() as ChatPostMessageArguments);
   } catch (e: any) {
-    console.error('error', e.data.response_metadata.message);
+    console.error('error', e.data.response_metadata.message, theMessage.printPreviewUrl());
   }
 }
 

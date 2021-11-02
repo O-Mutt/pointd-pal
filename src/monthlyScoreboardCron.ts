@@ -95,13 +95,12 @@ const databaseService = new DatabaseService({ ...procVars });
               Blocks.Divider(),
               ...topRoomBlocks,
             )
-            .asUser()
-            .buildToObject();
+            .asUser();
 
           try {
-            const result = await app.client.chat.postMessage({ token: botToken, ...theMessage } as ChatPostMessageArguments);
+            const result = await app.client.chat.postMessage({ token: botToken, ...theMessage.buildToObject() } as ChatPostMessageArguments);
           } catch (e: any) {
-            console.error('error', e.data.response_metadata.message);
+            console.error('error', e.data.response_metadata.message, theMessage.printPreviewUrl());
           }
 
         }

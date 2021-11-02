@@ -80,7 +80,8 @@ async function logAndNotifySpam({ sender, recipient, message, reason, teamId }: 
       channel: sender.slackId,
       text: `${message}\n\n${reason}`,
     });
-  } catch (error) {
+  } catch (e: any | unknown) {
+    console.error(e)
     // logger.error(error);
   }
 }

@@ -115,13 +115,12 @@ async function respondWithLeaderLoserBoard({ client, message, context, logger, s
       Blocks.Image({ imageUrl: chartUrl, altText: chartText }),
       Blocks.Section({ text: messages.join('\n') }),
     )
-    .asUser()
-    .buildToObject();
+    .asUser();
 
   try {
-    const result = await client.chat.postMessage(theMessage as ChatPostMessageArguments);
+    const result = await client.chat.postMessage(theMessage.buildToObject() as ChatPostMessageArguments);
   } catch (e: any) {
-    console.error('error', e.data.response_metadata.message);
+    console.error('error', e.data.response_metadata.message, theMessage.printPreviewUrl());
   }
 }
 
@@ -163,14 +162,14 @@ async function respondWithLeaderLoserTokenBoard({ message, context, client }) {
       Blocks.Image({ imageUrl: chartUrl, altText: chartText }),
       Blocks.Section({ text: messages.join('\n') }),
     )
-    .asUser()
-    .buildToObject();
+    .asUser();
 
   try {
-    const result = await client.chat.postMessage(theMessage as ChatPostMessageArguments);
+    const result = await client.chat.postMessage(theMessage.buildToObject() as ChatPostMessageArguments);
   } catch (e: any) {
-    console.error('error', e.data.response_metadata.message);
+    console.error('error', e.data.response_metadata.message, theMessage.printPreviewUrl());
   }
+}
 }
 
 async function getTopPointSenders({ message, context, client }) {
@@ -207,12 +206,11 @@ async function getTopPointSenders({ message, context, client }) {
       Blocks.Image({ imageUrl: chartUrl, altText: chartText }),
       Blocks.Section({ text: messages.join('\n') }),
     )
-    .asUser()
-    .buildToObject();
+    .asUser();
 
   try {
-    const result = await client.chat.postMessage(theMessage as ChatPostMessageArguments);
+    const result = await client.chat.postMessage(theMessage.buildToObject() as ChatPostMessageArguments);
   } catch (e: any) {
-    console.error('error', e.data.response_metadata.message);
+    console.error('error', e.data.response_metadata.message, theMessage.printPreviewUrl());
   }
 }
