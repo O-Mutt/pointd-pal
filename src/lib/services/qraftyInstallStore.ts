@@ -8,18 +8,34 @@ export const QraftyInstallStore: InstallationStore = {
     if (installation.isEnterpriseInstall && installation.enterprise !== undefined) {
       // support for org-wide app installation
       console.log("[INSTALL] org wide", installation.enterprise.id);
-      await Installation.findOneOrCreate(
-        installation.enterprise.id,
-        installation,
+      await Installation.findOneAndUpdate(
+        {
+          teamId: installation.enterprise.id
+        },
+        {
+          teamId: installation.enterprise.id,
+          installation,
+        },
+        {
+          upsert: true
+        }
       );
       return;
     }
     if (installation.team !== undefined) {
       // single team app installation
       console.log("[INSTALL] single team", installation.team.id);
-      await Installation.findOneOrCreate(
-        installation.team.id,
-        installation,
+      await Installation.findOneAndUpdate(
+        {
+          teamId: installation.team.id
+        },
+        {
+          teamId: installation.team.id,
+          installation,
+        },
+        {
+          upsert: true
+        }
       );
       return;
     }
