@@ -5,7 +5,7 @@ import ImageCharts from 'image-charts';
 import { directMention } from '@slack/bolt';
 
 import { app } from '../app';
-import { Helpers } from './lib/helpers';
+import { Helpers as H } from './lib/helpers';
 import { regExpCreator } from './lib/regexpCreator';
 import { DatabaseService } from './lib/services/database';
 import { Blocks, Md, Message } from 'slack-block-builder';
@@ -14,7 +14,7 @@ import { ESMap } from 'typescript';
 import { IUser, User } from './lib/models/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
 
-const procVars = Helpers.getProcessVariables(process.env);
+const procVars = H.getProcessVariables(process.env);
 const databaseService = new DatabaseService({ ...procVars });
 
 app.message(regExpCreator.createAskForScoreRegExp(), directMention(), respondWithScore);
@@ -72,19 +72,14 @@ async function respondWithScore({ message, context, logger, say }) {
     reasonsStr = `\n\n:star: Here are some reasons :star:\n${reasonMessageArray.join('\n')}`;
   }
 
-  let threadTs;
-  if (message.thread_ts) {
-    threadTs = message.thread_ts;
-  } else {
-    threadTs = message.ts;
-  }
-  const sayResponse = await say({ text: `${baseString}${reasonsStr}`, thread_ts: threadTs });
+  const sayArgs = H.getSayMessageArgs(message, `${baseString}${reasonsStr}`);
+  const sayResponse = await say(sayArgs);
 }
 
 async function respondWithLeaderLoserBoard({ client, message, context, logger, say }) {
   const { topOrBottom, digits }: { topOrBottom: string; digits: number } = context.matches.groups;
   const teamId = context.teamId as string;
-  const topOrBottomString = Helpers.capitalizeFirstLetter(topOrBottom);
+  const topOrBottomString = H.capitalizeFirstLetter(topOrBottom);
   const methodName = `get${topOrBottomString}Scores`;
   const tops = await databaseService[methodName](teamId, digits);
 
@@ -94,7 +89,7 @@ async function respondWithLeaderLoserBoard({ client, message, context, logger, s
       if (tops[i].accountLevel && tops[i].accountLevel > 1) {
         const tokenStr = tops[i].qraftyToken > 1 ? 'Tokens' : 'Token';
         messages.push(
-          `${i + 1}. ${Md.user(tops[i].slackId)}: ${tops[i].score} (*${tops[i].qraftyToken} ${Helpers.capitalizeFirstLetter(
+          `${i + 1}. ${Md.user(tops[i].slackId)}: ${tops[i].score} (*${tops[i].qraftyToken} ${H.capitalizeFirstLetter(
             'qrafty',
           )} ${tokenStr}*)`,
         );
@@ -135,7 +130,7 @@ async function respondWithLeaderLoserBoard({ client, message, context, logger, s
 async function respondWithLeaderLoserTokenBoard({ message, context, client }) {
   const { topOrBottom, digits }: { topOrBottom: string; digits: number } = context.matches.groups;
   const teamId = context.teamId as string;
-  const topOrBottomString = Helpers.capitalizeFirstLetter(topOrBottom);
+  const topOrBottomString = H.capitalizeFirstLetter(topOrBottom);
   const methodName = `get${topOrBottomString}Tokens`;
   const tops = await databaseService[methodName](teamId, digits);
 
@@ -182,7 +177,7 @@ async function respondWithLeaderLoserTokenBoard({ message, context, client }) {
 async function getTopPointSenders({ message, context, client }) {
   const { topOrBottom, digits }: { topOrBottom: string; digits: number } = context.matches.groups;
   const teamId = context.teamId as string;
-  const topOrBottomString = Helpers.capitalizeFirstLetter(topOrBottom);
+  const topOrBottomString = H.capitalizeFirstLetter(topOrBottom);
   const methodName = `get${topOrBottomString}Sender`;
   const tops = await databaseService[methodName](teamId, digits);
 

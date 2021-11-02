@@ -1,5 +1,5 @@
 import { Connection, Document, Model, Schema } from 'mongoose';
-import { Helpers } from '../helpers';
+import { Helpers as H } from '../helpers';
 
 
 export interface IBonuslyConfig extends Document {
@@ -15,7 +15,7 @@ export const BonuslyConfigSchema = new Schema({
   url: String,
   apiKey: {
     type: String,
-    get: key => Helpers.obfuscate(key, 3)
+    get: key => H.obfuscate(key, 3)
   },
   defaultReason: {
     type: String,

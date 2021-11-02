@@ -4,12 +4,12 @@ import { directMention } from '@slack/bolt';
 import { Member } from '@slack/web-api/dist/response/UsersListResponse';
 
 import { app } from '../app';
-import { Helpers } from './lib/helpers';
+import { Helpers as H } from './lib/helpers';
 import { IUser, User } from './lib/models/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { DatabaseService } from './lib/services/database';
 
-const procVars = Helpers.getProcessVariables(process.env);
+const procVars = H.getProcessVariables(process.env);
 
 // we should use `directMention() once the code "works"
 app.message('try to map all slack users to db users', directMention(), mapUsersToDb);

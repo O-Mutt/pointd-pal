@@ -1,5 +1,6 @@
+import { SlackEventMiddlewareArgs } from '@slack/bolt';
 import moment from 'moment';
-import { Md } from 'slack-block-builder';
+import { Md, SlackMessageDto } from 'slack-block-builder';
 import { IUser } from './models/user';
 import { regExpCreator } from './regexpCreator';
 
@@ -204,6 +205,13 @@ ${Md.user(to.slackId)} now has ${to.qraftyToken} token${Helpers.getEsOnEndOfWord
     //Logger.debug(`Run the cron but lets check what day it is Moment day: [${moment().day()}], Configured Day of Week: [${monthlyScoreboardDayOfWeek}], isThatDay: [${moment().day() === monthlyScoreboardDayOfWeek}]`);
     const isToday = moment().day() === dayOfWeek;
     return isToday;
+  }
+
+  static getSayMessageArgs(message: any, text: string): any {
+    if (message.thread_ts) {
+      return { text, thread_ts: message.thread_ts };
+    }
+    return { text };
   }
 }
 

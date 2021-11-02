@@ -3,7 +3,7 @@ import tokenBuddy from 'token-buddy';
 
 
 import { app } from '../app';
-import { Helpers } from './lib/helpers';
+import { Helpers as H } from './lib/helpers';
 import { IUser, User } from './lib/models/user';
 import { regExpCreator } from './lib/regexpCreator';
 import { DatabaseService } from './lib/services/database';
@@ -19,7 +19,7 @@ import {
 import { AllMiddlewareArgs, directMention, SlackEventMiddlewareArgs } from '@slack/bolt';
 import { connectionFactory } from './lib/services/connectionsFactory';
 
-const procVars = Helpers.getProcessVariables(process.env);
+const procVars = H.getProcessVariables(process.env);
 const scoreKeeper = new ScoreKeeper({ ...procVars });
 const databaseService = new DatabaseService({ ...procVars });
 
@@ -62,7 +62,7 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
   const teamId = args.body.team_id;
   const { channel, user: from } = args.message;
   let { premessage, userId, operator, conjunction, reason } = args.context.matches.groups;
-  const cleanReason = Helpers.cleanAndEncode(reason);
+  const cleanReason = H.cleanAndEncode(reason);
 
 
   if (userId.charAt(0).toLowerCase() === 's') {
@@ -71,7 +71,7 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
     return await multipleUsersVote(args);
   }
 
-  if (Helpers.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
+  if (H.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
     // circuit break a plus plus
     const failureEvent = new PlusPlusFailure({
       notificationMessage: `False positive detected in ${Md.channel(channel)} from ${Md.user(from)}: \nPre - Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText} `,
@@ -97,16 +97,11 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
     return;
   }
 
-  const theMessage = Helpers.getMessageForNewScore(toUser, cleanReason);
+  const theMessage = H.getMessageForNewScore(toUser, cleanReason);
 
   if (theMessage) {
-    let threadTs;
-    if (args.message.thread_ts) {
-      threadTs = args.message.thread_ts;
-    } else {
-      threadTs = args.message.ts;
-    }
-    const sayResponse = await args.say({ text: theMessage, thread_ts: threadTs });
+    const sayArgs = H.getSayMessageArgs(args.message, theMessage);
+    const sayResponse = await args.say(sayArgs);
     const plusPlusEvent = new PlusPlus({
       notificationMessage: `${Md.user(fromUser.slackId)} ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
         } a Qrafty point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'
@@ -130,7 +125,7 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
   const fullText = context.matches.input;
   const teamId = context.teamId as string;
   let { premessage, userId, amount, conjunction, reason } = context.matches.groups;
-  const cleanReason = Helpers.cleanAndEncode(reason);
+  const cleanReason = H.cleanAndEncode(reason);
 
   const { channel, user: from } = message;
   if (!conjunction && reason) {
@@ -156,7 +151,7 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
     return;
   }
 
-  const theMessage = Helpers.getMessageForTokenTransfer(
+  const theMessage = H.getMessageForTokenTransfer(
     response.toUser,
     response.fromUser,
     amount,
@@ -164,13 +159,8 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
   );
 
   if (message) {
-    let threadTs;
-    if (message.thread_ts) {
-      threadTs = message.thread_ts;
-    } else {
-      threadTs = message.ts;
-    }
-    const sayResponse = await say({ text: theMessage, thread_ts: threadTs });
+    const sayArgs = H.getSayMessageArgs(message, theMessage);
+    const sayResponse = await say(sayArgs);
     const plusPlusEvent = new PlusPlus({
       notificationMessage: `${Md.user(response.fromUser.slackId)} sent ${amount} Qrafty point${parseInt(amount, 10) > 1 ? 's' : ''} to ${Md.user(response.toUser.slackId)} in ${Md.channel(channel)}`,
       recipients: [response.toUser],
@@ -191,13 +181,13 @@ async function multipleUsersVote({ message, context, logger, say }) {
   const fullText = context.matches.input;
   const teamId = context.teamId as string;
   let { premessage, allUsers, operator, conjunction, reason } = context.matches.groups;
-  const cleanReason = Helpers.cleanAndEncode(reason);
+  const cleanReason = H.cleanAndEncode(reason);
 
   const { channel, user: from } = message;
   if (!allUsers) {
     return;
   }
-  if (Helpers.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
+  if (H.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
     // circuit break a plus plus
     const failureEvent = new PlusPlusFailure({
       notificationMessage: `False positive detected in ${Md.channel(channel)} from ${Md.user(from)
@@ -240,7 +230,7 @@ async function multipleUsersVote({ message, context, logger, say }) {
       logger.debug(
         `clean names map[${toUserId}]: ${response.toUser.score}, the reason ${cleanReason ? response.toUser.reasons.get(cleanReason) : 'n/a'} `,
       );
-      messages.push(Helpers.getMessageForNewScore(response.toUser, cleanReason));
+      messages.push(H.getMessageForNewScore(response.toUser, cleanReason));
       to.push(response.toUser);
       notificationMessage.push(
         `${Md.user(response.fromUser.slackId)} ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
@@ -252,13 +242,8 @@ async function multipleUsersVote({ message, context, logger, say }) {
   messages = messages.filter((message) => !!message); // de-dupe
   if (messages) {
     logger.debug(`These are the messages \n ${messages.join(' ')} `);
-    let threadTs;
-    if (message.thread_ts) {
-      threadTs = message.thread_ts;
-    } else {
-      threadTs = message.ts;
-    }
-    const sayResponse = await say({ text: messages.join('\n'), thread_ts: threadTs });
+    const sayArgs = H.getSayMessageArgs(message, messages.join('\n'));
+    const sayResponse = await say(sayArgs);
     const plusPlusEvent = new PlusPlus({
       notificationMessage: notificationMessage.join('\n'),
       sender,
@@ -282,7 +267,7 @@ async function eraseUserScore({ message, context, say }) {
   const teamId = context.teamId as string;
   const { premessage, userId, conjunction, reason } = context.matches.groups;
   const { channel, user: from } = message;
-  const cleanReason = Helpers.cleanAndEncode(reason);
+  const cleanReason = H.cleanAndEncode(reason);
 
   const fromUser = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, from);
   const toBeErased = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, userId);
@@ -298,13 +283,9 @@ async function eraseUserScore({ message, context, say }) {
     const messageText = !reason
       ? `Erased the following reason from ${Md.user(userId)}: ${reason} `
       : `Erased points for ${Md.user(userId)} `;
-    let threadTs;
-    if (message.thread_ts) {
-      threadTs = message.thread_ts;
-    } else {
-      threadTs = message.ts;
-    }
-    const sayResponse = await say({ text: messageText, thread_ts: threadTs });
+
+    const sayArgs = H.getSayMessageArgs(message, messageText);
+    const sayResponse = await say(sayArgs);
   }
 }
 

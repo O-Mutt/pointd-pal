@@ -5,7 +5,7 @@ import tokenBuddy from 'token-buddy';
 import { directMention, Logger } from '@slack/bolt';
 
 import { app } from '../app';
-import { Helpers } from './lib/helpers';
+import { Helpers as H } from './lib/helpers';
 import { BotToken, IBotToken } from './lib/models/botToken';
 import { User } from './lib/models/user';
 import { regExpCreator } from './lib/regexpCreator';
@@ -14,7 +14,7 @@ import { DatabaseService } from './lib/services/database';
 import { actions } from './lib/types/Actions';
 import { ConfirmOrCancel } from './lib/types/Enums';
 
-const procVars = Helpers.getProcessVariables(process.env);
+const procVars = H.getProcessVariables(process.env);
 const databaseService = new DatabaseService({ ...procVars });
 
 app.message(regExpCreator.getBotWallet(), directMention(), botWalletCount);
@@ -25,7 +25,7 @@ app.message(regExpCreator.createLevelUpAccount(), directMention(), levelUpAccoun
 app.action('confirm_levelup', levelUpToLevelThree);
 
 async function levelUpAccount({ message, context, logger, say }) {
-  if (!Helpers.isPrivateMessage(message.channel)) {
+  if (!H.isPrivateMessage(message.channel)) {
     return await say(`You should only execute a level up from within the context of a DM with Qrafty`);
   }
   const teamId = context.teamId as string;
@@ -37,7 +37,7 @@ async function levelUpAccount({ message, context, logger, say }) {
       .blocks(
         Blocks.Section({
           text: `You are already Level 2, ${Md.user(user.slackId)
-            }. It looks as if you are ready for Level 3 where you can deposit/withdraw ${Helpers.capitalizeFirstLetter(
+            }. It looks as if you are ready for Level 3 where you can deposit/withdraw ${H.capitalizeFirstLetter(
               'qrafty',
             )} Tokens!`,
         }),
@@ -57,7 +57,7 @@ async function levelUpAccount({ message, context, logger, say }) {
 
   await say(
     `${Md.user(user.slackId)
-    }, we are going to level up your account to Level 2! This means you will start getting ${Helpers.capitalizeFirstLetter(
+    }, we are going to level up your account to Level 2! This means you will start getting ${H.capitalizeFirstLetter(
       'qrafty',
     )} Tokens as well as points!`,
   );

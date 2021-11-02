@@ -1,8 +1,8 @@
-import { Helpers } from '../helpers';
+import { Helpers as H } from '../helpers';
 
 import mongoose from 'mongoose';
 
-const procVars = Helpers.getProcessVariables(process.env);
+const procVars = H.getProcessVariables(process.env);
 
 const connections: { [key: string]: mongoose.Connection } = {};
 export function connectionFactory(teamId?: string): mongoose.Connection {
