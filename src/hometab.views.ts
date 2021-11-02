@@ -79,9 +79,10 @@ app.view(
           case blocks.hometab.admin.basic.formalPraiseMod: {
             const modulo = parseInt(textInputValue, 10);
             if (isNaN(modulo)) {
-              errors[blocks.hometab.admin.basic.formalPraiseMod, 'Formal praise increment must be a number'];
+              errors[blocks.hometab.admin.basic.formalPraiseMod] = 'Formal praise increment must be a number';
+            } else {
+              qrafty.formalFeedbackModulo = modulo;
             }
-            qrafty.formalFeedbackModulo = modulo;
             break;
           }
           case blocks.hometab.admin.bonusly.enabled: {
@@ -99,7 +100,7 @@ app.view(
                 }
                 bonusly.url = new URL(textInputValue);
               } catch (e) {
-                errors[blocks.hometab.admin.bonusly.apiUrl, 'The Bonusly API Url is invalid.'];
+                errors[blocks.hometab.admin.bonusly.apiUrl] = 'The Bonusly API Url is invalid.';
                 logger.warn('There was an error thrown when trying to set the bonusly url');
               }
             }
@@ -174,8 +175,9 @@ app.view(
             const parsedOverride = parseInt(value, 10);
             if (isNaN(parsedOverride)) {
               errors[blocks.hometab.user.bonusly.scoreOverride] = 'The score override must be a number.';
+            } else {
+              user.bonuslyScoreOverride = parsedOverride;
             }
-            user.bonuslyScoreOverride = parsedOverride;
             break;
           }
           case blocks.hometab.user.bonusly.pointsDm: {
