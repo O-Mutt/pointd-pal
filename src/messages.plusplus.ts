@@ -100,7 +100,13 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
   const theMessage = Helpers.getMessageForNewScore(toUser, cleanReason);
 
   if (theMessage) {
-    const sayResponse = await args.say(theMessage);
+    let threadTs;
+    if (args.message.thread_ts) {
+      threadTs = args.message.thread_ts;
+    } else {
+      threadTs = args.message.ts;
+    }
+    const sayResponse = await args.say({ text: theMessage, thread_ts: threadTs });
     const plusPlusEvent = new PlusPlus({
       notificationMessage: `${Md.user(fromUser.slackId)} ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
         } a Qrafty point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'
@@ -158,7 +164,13 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
   );
 
   if (message) {
-    const sayResponse = await say(theMessage);
+    let threadTs;
+    if (args.message.thread_ts) {
+      threadTs = args.message.thread_ts;
+    } else {
+      threadTs = args.message.ts;
+    }
+    const sayResponse = await args.say({ text: theMessage, thread_ts: threadTs });
     const plusPlusEvent = new PlusPlus({
       notificationMessage: `${Md.user(response.fromUser.slackId)} sent ${amount} Qrafty point${parseInt(amount, 10) > 1 ? 's' : ''} to ${Md.user(response.toUser.slackId)} in ${Md.channel(channel)}`,
       recipients: [response.toUser],
@@ -240,7 +252,13 @@ async function multipleUsersVote({ message, context, logger, say }) {
   messages = messages.filter((message) => !!message); // de-dupe
   if (messages) {
     logger.debug(`These are the messages \n ${messages.join(' ')} `);
-    const sayResponse = await say(messages.join('\n'));
+    let threadTs;
+    if (message.thread_ts) {
+      threadTs = message.thread_ts;
+    } else {
+      threadTs = message.ts;
+    }
+    const sayResponse = await say({ text: messages.join('\n'), thread_ts: threadTs });
     const plusPlusEvent = new PlusPlus({
       notificationMessage: notificationMessage.join('\n'),
       sender,
@@ -277,10 +295,16 @@ async function eraseUserScore({ message, context, say }) {
   erased = await scoreKeeper.erase(teamId, toBeErased, fromUser, channel, cleanReason);
 
   if (erased) {
-    const message = !reason
+    const messageText = !reason
       ? `Erased the following reason from ${Md.user(userId)}: ${reason} `
       : `Erased points for ${Md.user(userId)} `;
-    await say(message);
+    let threadTs;
+    if (message.thread_ts) {
+      threadTs = message.thread_ts;
+    } else {
+      threadTs = message.ts;
+    }
+    const sayResponse = await say({ text: messageText, thread_ts: threadTs });
   }
 }
 

@@ -45,6 +45,7 @@ async function respondWithScore({ message, context, logger, say }) {
     )}`;
   }
 
+  let reasonsStr: string = '';
   const keys: string[] = [];
   user.reasons.forEach((points, key) => {
     keys.push(key);
@@ -68,9 +69,16 @@ async function respondWithScore({ message, context, logger, say }) {
       reasonMessageArray.push(`_${reason}_: ${points} ${pointStr}`);
     });
 
-    return await say(`${baseString}\n\n:star: Here are some reasons :star:\n${reasonMessageArray.join('\n')}`);
+    reasonsStr = `\n\n:star: Here are some reasons :star:\n${reasonMessageArray.join('\n')}`;
   }
-  return await say(`${baseString}`);
+
+  let threadTs;
+  if (message.thread_ts) {
+    threadTs = message.thread_ts;
+  } else {
+    threadTs = message.ts;
+  }
+  const sayResponse = await say({ text: `${baseString}${reasonsStr}`, thread_ts: threadTs });
 }
 
 async function respondWithLeaderLoserBoard({ client, message, context, logger, say }) {
