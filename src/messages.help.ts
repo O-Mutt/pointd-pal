@@ -63,6 +63,7 @@ async function tellHowMuchPointsAreWorth({ payload, logger, message, context, sa
       url: 'https://api.coinbase.com/v2/exchange-rates?currency=BTC',
     });
 
+    console.log(eth);
     const ethInUsd = eth.rates.USD;
     const btcInUsd = btc.rates.USD;
     return say(
