@@ -280,7 +280,7 @@ async function eraseUserScore({ message, context, say }) {
   erased = await scoreKeeper.erase(teamId, toBeErased, fromUser, channel, cleanReason);
 
   if (erased) {
-    const messageText = !reason
+    const messageText = reason
       ? `Erased the following reason from ${Md.user(userId)}: ${reason} `
       : `Erased points for ${Md.user(userId)} `;
 

@@ -30,19 +30,15 @@ async function respondWithScore({ message, context, logger, say }) {
 
   let tokenString = '.';
   if (user.accountLevel > 1) {
-    tokenString = ` (*${user.qraftyToken} Qrafty `;
-    tokenString = tokenString.concat(user.qraftyToken && user.qraftyToken > 1 ? 'Tokens*).' : 'Token*).');
+    tokenString = ` (*${user.qraftyToken} Qrafty Token${H.getEsOnEndOfWord(user.qraftyToken)}*).`;
   }
 
-  const scoreStr = user.score > 1 ? 'points' : 'point';
-  let baseString = `${Md.user(user.slackId)} has ${user.score} ${scoreStr}${tokenString}`;
-  baseString += `\nAccount Level: ${user.accountLevel}`;
-  baseString += `\nTotal Points Given: ${user.totalPointsGiven}`;
+  let baseString = `${Md.user(user.slackId)} has ${Md.bold(user.score.toString())} ${Md.bold('point' + H.getEsOnEndOfWord(user.score))}${tokenString}`;
+  baseString += `\n${Md.italic('Account Level')}: ${user.accountLevel}`;
+  baseString += `\n${Md.italic('Total Points Given')}: ${user.totalPointsGiven}`;
   if (user.robotDay) {
     const dateObj = new Date(user.robotDay);
-    baseString += `\n:birthday: Qraftyday is ${moment(dateObj).format(
-      'MM-DD-yyyy',
-    )}`;
+    baseString += `\n:birthday: ${Md.bold('Qraftyday')} is ${Md.bold(moment(dateObj).format('MM-DD-yyyy'))}`;
   }
 
   let reasonsStr: string = '';
@@ -50,7 +46,7 @@ async function respondWithScore({ message, context, logger, say }) {
   user.reasons.forEach((points, key) => {
     keys.push(key);
   });
-  logger.debug("all the keys!", user.reasons.keys());
+  logger.debug("all the keys!", user.reasons.keys(), keys);
   if (keys.length > 1) {
     let sampleReasons: ESMap<string, number> = new Map();
     const maxReasons = keys.length >= 5 ? 5 : keys.length;
