@@ -8,7 +8,7 @@ import { View } from '@slack/types';
 import { app } from '../app';
 import { BonuslyConfig, IBonuslyConfig } from './lib/models/bonuslyConfig';
 import { BotToken } from './lib/models/botToken';
-import { User } from './lib/models/user';
+import { IUser, User } from './lib/models/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { actions } from './lib/types/Actions';
 import { EnabledSettings, PromptSettings } from './lib/types/Enums';
@@ -46,84 +46,22 @@ app.action(
     const teamId = context.teamId as string;
     const userId = body.user.id;
     const connection = connectionFactory(teamId);
-    const bonusly = await BonuslyConfig(connection).findOne().exec();
     const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId);
 
     const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
 
-    if (bonusly?.enabled) {
-      bonuslyBlocks = [
-        Blocks.Header({ text: 'Bonusly Integration Settings' }),
-        Blocks.Divider(),
-        Blocks.Section({ text: 'Bonusly Config' }),
-        Blocks.Input({
-          label: `When sending a ${Md.codeInline('++')} \
-we can also send a bonusly bonus. We can always send one, prompt you every time, or never send a bonus.`,
-        }).element(
-          Elements.StaticSelect({ actionId: 'hometab_bonuslyPrompt' })
-            .initialOption(
-              user?.bonuslyPrompt
-                ? Bits.Option({
-                  text: user?.bonuslyPrompt,
-                  value: user?.bonuslyPrompt,
-                })
-                : undefined,
-            )
-            .options(
-              Bits.Option({ text: PromptSettings.ALWAYS, value: PromptSettings.ALWAYS }),
-              Bits.Option({ text: PromptSettings.PROMPT, value: PromptSettings.PROMPT }),
-              Bits.Option({ text: PromptSettings.NEVER, value: PromptSettings.NEVER }),
-            ),
-        ),
-        Blocks.Input({
-          label: `When we send a ${Md.codeInline('++')} \
-and a bonusly is included what is the default amount that you would like to send?`,
-        }).element(
-          Elements.TextInput({
-            actionId: 'hometab_bonuslyScoreOverride',
-            initialValue: user?.bonuslyScoreOverride?.toString() || '1',
-          }),
-        ),
-        Blocks.Input({ label: `When you send a Bonusly would you like Qrafty to DM you to tell you about your remaining balance?` }).element(
-          Elements.StaticSelect({ actionId: 'hometab_bonuslyPointsDM' })
-            .initialOption(
-              user?.bonuslyPointsDM
-                ? Bits.Option({
-                  text: user?.bonuslyPointsDM ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
-                  value: user?.bonuslyPointsDM ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
-                })
-                : undefined,
-            )
-            .options(
-              Bits.Option({ text: EnabledSettings.ENABLED, value: EnabledSettings.ENABLED }),
-              Bits.Option({ text: EnabledSettings.DISABLED, value: EnabledSettings.DISABLED })
-            ),
-        ),
-      ];
-    }
-
-    let bonuslyCryptoBlocks: Appendable<ViewBlockBuilder> = [];
-    if (qraftyConfig?.qryptoEnabled) {
-      bonuslyCryptoBlocks = [
-        Blocks.Header({ text: 'Qrafty Token (Crypto)' }),
-        Blocks.Divider(),
-        Blocks.Input({
-          label: `When you level up your account we will need your wallet public address \
-for you to be able to withdraw your crypto. What is your public BEP20 wallet address?`,
-        }).element(
-          Elements.TextInput({
-            actionId: 'hometab_cryptoWalletAddress',
-            initialValue: user?.walletAddress || '',
-          }),
-        ),
-      ];
+    if (!user || !qraftyConfig || !qraftyConfig.bonuslyConfig) {
+      return;
     }
 
     const userSettingsModal = Modal({
       title: `${Md.emoji('gear')} Qrafty Settings`,
       submit: 'Update Settings',
       callbackId: actions.hometab.user_settings_submit,
-    }).blocks(...bonuslyBlocks, ...bonuslyCryptoBlocks);
+    }).blocks(
+      ...buildBonuslyUserBlocks(qraftyConfig.bonuslyConfig, user),
+      ...buildQryptoUserBlocks(qraftyConfig, user)
+    );
 
     const result = await client.views.open({
       trigger_id: body.trigger_id,
@@ -174,7 +112,7 @@ app.action(blocks.hometab.admin.bonusly.enabled,
   }
 );
 
-function buildBonuslyEnabledBlocks(bonuslyConfig: IBonuslyConfig | undefined, enabledOverride: boolean = false) {
+function buildBonuslyAdminBlocks(bonuslyConfig: IBonuslyConfig | undefined, enabledOverride: boolean = false) {
   let blockBuilder: Appendable<BlockBuilder> = [];
   if (enabledOverride === true || bonuslyConfig?.enabled === true) {
     blockBuilder.push(
@@ -212,7 +150,6 @@ function buildBonuslyEnabledBlocks(bonuslyConfig: IBonuslyConfig | undefined, en
   }
   return blockBuilder;
 }
-
 
 function buildAdminModal(qraftyConfig: IQraftyConfig, enabledOverride: boolean = false): ModalBuilder {
   return Modal({
@@ -297,7 +234,7 @@ function buildAdminModal(qraftyConfig: IQraftyConfig, enabledOverride: boolean =
             Bits.Option({ text: EnabledSettings.DISABLED, value: EnabledSettings.DISABLED }),
           ),
       ),
-    ...buildBonuslyEnabledBlocks(qraftyConfig.bonuslyConfig, enabledOverride),
+    ...buildBonuslyAdminBlocks(qraftyConfig.bonuslyConfig, enabledOverride),
     Blocks.Divider(),
     Blocks.Header({ text: 'Qrypto' }),
     Blocks.Input({ label: 'Qrypto (Crypto) Enabled', blockId: blocks.hometab.admin.qrypto.enabled }).element(
@@ -314,4 +251,81 @@ function buildAdminModal(qraftyConfig: IQraftyConfig, enabledOverride: boolean =
         ),
     ),
   );
+}
+
+function buildQryptoUserBlocks(qraftyConfig: IQraftyConfig, user: IUser) {
+  let qryptoBlocks: Appendable<ViewBlockBuilder> = [];
+  if (qraftyConfig.qryptoEnabled) {
+    qryptoBlocks.push(
+      Blocks.Header({ text: 'Qrafty Token (Crypto)' }),
+      Blocks.Divider(),
+      Blocks.Input({
+        label: `When you level up your account we will need your wallet public address \
+for you to be able to withdraw your crypto. What is your public BEP20 wallet address?`,
+        blockId: blocks.hometab.user.qrypto.walletAddress
+      }).element(
+        Elements.TextInput({
+          actionId: blocks.hometab.user.qrypto.walletAddress,
+          initialValue: user.walletAddress || '',
+        }),
+      )
+    );
+  }
+  return qryptoBlocks
+}
+
+function buildBonuslyUserBlocks(bonuslyConfig: IBonuslyConfig, user: IUser) {
+  let bonuslyBlocks: Appendable<ViewBlockBuilder> = [];
+  if (bonuslyConfig.enabled) {
+    bonuslyBlocks.push(
+      Blocks.Header({ text: 'Bonusly Integration Settings' }),
+      Blocks.Divider(),
+      Blocks.Section({ text: 'Bonusly Config' }),
+      Blocks.Input({
+        label: `When sending a ${Md.codeInline('++')} we can also send a bonusly bonus. We can always send one, prompt you every time, or never send a bonus.`,
+        blockId: blocks.hometab.user.bonusly.prompt
+      }).element(
+        Elements.StaticSelect({ actionId: blocks.hometab.user.bonusly.prompt })
+          .initialOption(
+            user.bonuslyPrompt
+              ? Bits.Option({
+                text: user.bonuslyPrompt,
+                value: user.bonuslyPrompt,
+              })
+              : undefined,
+          )
+          .options(
+            Bits.Option({ text: PromptSettings.ALWAYS, value: PromptSettings.ALWAYS }),
+            Bits.Option({ text: PromptSettings.PROMPT, value: PromptSettings.PROMPT }),
+            Bits.Option({ text: PromptSettings.NEVER, value: PromptSettings.NEVER }),
+          ),
+      ),
+      Blocks.Input({
+        label: `When we send a ${Md.codeInline('++')} and a bonusly is included what is the default amount that you would like to send?`,
+        blockId: blocks.hometab.user.bonusly.scoreOverride
+      }).element(
+        Elements.TextInput({
+          actionId: blocks.hometab.user.bonusly.scoreOverride,
+          initialValue: user.bonuslyScoreOverride?.toString() || '1',
+        }),
+      ),
+      Blocks.Input({
+        label: `When you send a Bonusly would you like Qrafty to DM you to tell you about your remaining balance?`,
+        blockId: blocks.hometab.user.bonusly.pointsDm
+      }).element(
+        Elements.StaticSelect({ actionId: blocks.hometab.user.bonusly.pointsDm })
+          .initialOption(
+            Bits.Option({
+              text: user.bonuslyPointsDM ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
+              value: user.bonuslyPointsDM ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
+            })
+          )
+          .options(
+            Bits.Option({ text: EnabledSettings.ENABLED, value: EnabledSettings.ENABLED }),
+            Bits.Option({ text: EnabledSettings.DISABLED, value: EnabledSettings.DISABLED })
+          ),
+      ),
+    );
+  }
+  return bonuslyBlocks;
 }

@@ -2,27 +2,34 @@ export const blocks = {
   hometab: {
     admin: {
       basic: {
-        admins: 'hometab-qrafty-admins',
-        companyName: 'hometab-company-name',
-        notificationChannel: 'hometab-notif-channel',
-        falsePositiveNotificationChannel: 'hometab-false-notif-channel',
-        scoreboardChannel: 'hometab-scoreboard-channel',
-        formalPraiseUrl: 'hometab-formal-url',
-        formalPraiseMod: 'hometab-formal-mod',
+        admins: 'hometab-a-qrafty-admins',
+        companyName: 'hometab-a-company-name',
+        notificationChannel: 'hometab-a-notif-channel',
+        falsePositiveNotificationChannel: 'hometab-a-false-notif-channel',
+        scoreboardChannel: 'hometab-a-scoreboard-channel',
+        formalPraiseUrl: 'hometab-a-formal-url',
+        formalPraiseMod: 'hometab-a-formal-mod',
       },
       bonusly: {
-        enabled: 'hometab-bon-enabled',
-        apiUrl: 'hometab-bon-url',
-        apiKey: 'hometab-bon-key',
-        defaultReason: 'hometab-bon-reason',
-        defaultHashtag: 'hometab-bon-hash',
+        enabled: 'hometab-a-bon-enabled',
+        apiUrl: 'hometab-a-bon-url',
+        apiKey: 'hometab-a-bon-key',
+        defaultReason: 'hometab-a-bon-reason',
+        defaultHashtag: 'hometab-a-bon-hash',
       },
       qrypto: {
-        enabled: 'hometab-qrypto-enabled'
+        enabled: 'hometab-a-qrypto-enabled'
       }
     },
     user: {
-
+      bonusly: {
+        pointsDm: 'hometab-u-bonusly-pointsDM',
+        scoreOverride: 'hometab-u-bonusly-scoreOverride',
+        prompt: 'hometab-u-bonusly-prompt',
+      },
+      qrypto: {
+        walletAddress: 'hometab-u-qrypto-wallet'
+      }
     }
   }
 };

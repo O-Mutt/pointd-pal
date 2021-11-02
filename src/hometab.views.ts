@@ -22,7 +22,7 @@ app.view(
     const bonusly = await BonuslyConfig(connection).findOneOrCreate();
     const qrafty = await QraftyConfig(connection).findOneOrCreate(teamId as string);
 
-    const errors: ESMap<string, string> = new Map();
+    const errors: { [blockId: string]: string; } = {};
     for (const option in view.state.values) {
       for (const key in view.state.values[option]) {
         const state = view.state.values[option][key];
@@ -44,27 +44,33 @@ app.view(
             break;
           }
           case blocks.hometab.admin.basic.notificationChannel: {
-            let lowerCaseRoomName = textInputValue.toLowerCase();
-            if (lowerCaseRoomName.indexOf('#') === 0) {
-              lowerCaseRoomName.substring(1, lowerCaseRoomName.length);
+            if (textInputValue) {
+              let lowerCaseRoomName = textInputValue.toLowerCase();
+              if (lowerCaseRoomName.indexOf('#') === 0) {
+                lowerCaseRoomName.substring(1, lowerCaseRoomName.length);
+              }
             }
-            qrafty.notificationRoom = textInputValue.toLowerCase();
+            qrafty.notificationRoom = textInputValue;
             break;
           }
           case blocks.hometab.admin.basic.falsePositiveNotificationChannel: {
-            let lowerCaseRoomName = textInputValue.toLowerCase();
-            if (lowerCaseRoomName.indexOf('#') === 0) {
-              lowerCaseRoomName.substring(1, lowerCaseRoomName.length);
+            if (textInputValue) {
+              let lowerCaseRoomName = textInputValue.toLowerCase();
+              if (lowerCaseRoomName.indexOf('#') === 0) {
+                lowerCaseRoomName.substring(1, lowerCaseRoomName.length);
+              }
             }
-            qrafty.falsePositiveRoom = textInputValue.toLowerCase();
+            qrafty.falsePositiveRoom = textInputValue;
             break;
           }
           case blocks.hometab.admin.basic.scoreboardChannel: {
-            let lowerCaseRoomName = textInputValue.toLowerCase();
-            if (lowerCaseRoomName.indexOf('#') === 0) {
-              lowerCaseRoomName.substring(1, lowerCaseRoomName.length);
+            if (textInputValue) {
+              let lowerCaseRoomName = textInputValue.toLowerCase();
+              if (lowerCaseRoomName.indexOf('#') === 0) {
+                lowerCaseRoomName.substring(1, lowerCaseRoomName.length);
+              }
             }
-            qrafty.scoreboardRoom = textInputValue.toLowerCase();
+            qrafty.scoreboardRoom = textInputValue;
             break;
           }
           case blocks.hometab.admin.basic.formalPraiseUrl: {
@@ -74,7 +80,7 @@ app.view(
           case blocks.hometab.admin.basic.formalPraiseMod: {
             const modulo = parseInt(textInputValue, 10);
             if (isNaN(modulo)) {
-              errors.set(blocks.hometab.admin.basic.formalPraiseMod, 'Formal praise increment must be a number');
+              errors[blocks.hometab.admin.basic.formalPraiseMod, 'Formal praise increment must be a number'];
             }
             qrafty.formalFeedbackModulo = modulo;
             break;
@@ -85,14 +91,18 @@ app.view(
             break;
           }
           case blocks.hometab.admin.bonusly.apiUrl: {
-            try {
-              if (textInputValue.charAt(textInputValue.length - 1) === '/') {
-                textInputValue = textInputValue.substring(0, textInputValue.length - 1);
+            if (!textInputValue || textInputValue.length === 0) {
+              bonusly.url = undefined;
+            } else {
+              try {
+                if (textInputValue.charAt(textInputValue.length - 1) === '/') {
+                  textInputValue = textInputValue.substring(0, textInputValue.length - 1);
+                }
+                bonusly.url = new URL(textInputValue);
+              } catch (e) {
+                errors[blocks.hometab.admin.bonusly.apiUrl, 'The Bonusly API Url is invalid.'];
+                logger.warn('There was an error thrown when trying to set the bonusly url');
               }
-              bonusly.url = new URL(textInputValue);
-            } catch (e) {
-              errors.set(blocks.hometab.admin.bonusly.apiUrl, 'The Bonusly API Url is invalid.');
-              logger.warn('There was an error thrown when trying to set the bonusly url');
             }
             break;
           }
@@ -123,6 +133,14 @@ app.view(
       }
     }
 
+    if (Object.keys(errors).length > 0) {
+      await ack({
+        response_action: 'errors',
+        errors: errors
+      });
+      return;
+    }
+
     qrafty.updatedBy = userId;
     qrafty.updatedAt = new Date();
     qrafty.bonuslyConfig = bonusly;
@@ -142,24 +160,32 @@ app.view(
     const connection = connectionFactory(teamId);
     const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
 
+    const errors: { [blockId: string]: string; } = {};
     for (const option in view.state.values) {
       for (const key in view.state.values[option]) {
         const value: string = (view.state.values[option][key].value ||
           view.state.values[option][key].selected_option?.value) as string;
         switch (key) {
-          case 'hometab_bonuslyPrompt': {
+          case blocks.hometab.user.bonusly.prompt: {
             user.bonuslyPrompt = value;
             break;
           }
-          case 'hometab_bonuslyScoreOverride': {
-            user.bonuslyScoreOverride = parseInt(value, 10);
+          case blocks.hometab.user.bonusly.scoreOverride: {
+            const parsedOverride = parseInt(value, 10);
+            if (isNaN(parsedOverride)) {
+              errors[blocks.hometab.user.bonusly.scoreOverride] = 'The score override must be a number.';
+            }
+            user.bonuslyScoreOverride = parsedOverride;
             break;
           }
-          case 'hometab_bonuslyPointsDM': {
+          case blocks.hometab.user.bonusly.pointsDm: {
             user.bonuslyPointsDM = value === EnabledSettings.ENABLED;
             break;
           }
-          case 'hometab_cryptoWalletAddress': {
+          case blocks.hometab.user.qrypto.walletAddress: {
+            if (!/^0x[a-fA-F0-9]{40}$/.test(value)) {
+              errors[blocks.hometab.user.qrypto.walletAddress] = 'Your wallet address is invalid.';
+            }
             user.walletAddress = value;
             break;
           }
@@ -170,7 +196,16 @@ app.view(
         }
       }
     }
+
+    if (Object.keys(errors).length > 0) {
+      await ack({
+        response_action: 'errors',
+        errors: errors
+      });
+      return;
+    }
     user.updatedAt = new Date();
+    user.updatedBy = user.slackId;
     logger.debug(`Updating user configs for ${teamId} by ${userId}`);
     await user.save();
   },
