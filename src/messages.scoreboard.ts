@@ -47,15 +47,14 @@ async function respondWithScore({ message, context, logger, say }) {
     keys.push(key);
   });
   logger.debug("all the keys!", user.reasons.keys(), keys);
-  if (keys.length > 1) {
+  if (keys.length > 0) {
     let sampleReasons: ESMap<string, number> = new Map();
     const maxReasons = keys.length >= 5 ? 5 : keys.length;
     do {
       const randomNumber = _.random(0, keys.length - 1);
       const reason = keys[randomNumber];
       const value = user.reasons.get(reason) as number;
-      sampleReasons.set(reason, value);
-      //sampleReasons[reason] = value;
+      sampleReasons.set(H.decode(reason) || '', value);
       logger.debug('loop the reasons!', reason, value);
     } while (sampleReasons.size < maxReasons);
 
