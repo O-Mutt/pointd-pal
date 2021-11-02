@@ -13,7 +13,7 @@ export class BonuslyService {
    * @param {string} slackId the slack id of the user to find
    * @returns the user from the scores db, undefined if not found
    */
-  static async sendBonus(teamId: string, sender: IUser, recipients: IUser[], amount: number, reason?: string) {
+  static async sendBonus(teamId: string, senderEmail: string, recipientEmails: string[], amount: number, reason?: string) {
     const qraftyConfig = await QraftyConfig(connectionFactory(teamId)).findOneOrCreate(teamId);
     if (!qraftyConfig.bonuslyConfig || qraftyConfig.bonuslyConfig.enabled !== true || !qraftyConfig.bonuslyConfig.url || !qraftyConfig.bonuslyConfig.apiKey) {
       console.error('bonusly config missing for the team');
@@ -42,12 +42,12 @@ export class BonuslyService {
 
     let data: any[] = [];
 
-    for (const recipient of recipients) {
+    for (const recipientEmail of recipientEmails) {
       try {
-        console.log(`send the bonus (${qraftyConfig.bonuslyConfig.url.toString()}) giver: ${sender.email} receiver: ${recipient.email} amount ${amount} hashtag ${hashtag} reason ${reason}`);
+        console.log(`send the bonus (${qraftyConfig.bonuslyConfig.url.toString()}) giver: ${senderEmail} receiver: ${recipientEmail} amount ${amount} hashtag ${hashtag} reason ${reason}`);
         const response = await axios.post(`/bonuses`, {
-          giver_email: sender.email,
-          receiver_email: recipient.email,
+          giver_email: senderEmail,
+          receiver_email: recipientEmail,
           amount: amount,
           hashtag,
           reason,

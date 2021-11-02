@@ -1,3 +1,4 @@
+import { BonuslyPayload } from '../../actions.bonusly';
 import { IUser, UserInterface } from '../models/user';
 import { DirectionEnum } from './Enums';
 
@@ -58,7 +59,7 @@ export class PlusPlusSpam extends EventWithTeamId {
 
 export const PlusPlusBonuslyEventName = 'plus-plus-bonusly-sent';
 export class PlusPlusBonusly {
-  plusPlusEvent: PlusPlus;
+  bonuslyPayload: BonuslyPayload;
   responses: any[];
   sender: IUser;
 
