@@ -1,4 +1,3 @@
-import { BonuslyPayload } from '../../actions.bonusly';
 import { IUser, UserInterface } from '../models/user';
 import { DirectionEnum } from './Enums';
 
@@ -59,11 +58,30 @@ export class PlusPlusSpam extends EventWithTeamId {
 
 export const PlusPlusBonuslyEventName = 'plus-plus-bonusly-sent';
 export class PlusPlusBonusly {
-  bonuslyPayload: BonuslyPayload;
+  teamId: string;
+  channel: string;
   responses: any[];
   sender: IUser;
+  recipients: IUser[];
+  originalMessage?: string;
+  originalMessageTs: string;
 
   constructor(init: Partial<PlusPlusBonusly>) {
+    Object.assign(this, init);
+  }
+}
+
+export class BonuslyPayload {
+  responses?: any[];
+  teamId: string;
+  channel: string;
+  sender: string;
+  recipients: string[];
+  amount: number;
+  originalMessageTs: string;
+  reason?: string;
+
+  constructor(init: Partial<BonuslyPayload>) {
     Object.assign(this, init);
   }
 }

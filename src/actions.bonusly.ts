@@ -2,32 +2,27 @@ import { AllMiddlewareArgs, BlockButtonAction, SlackActionMiddlewareArgs, SayArg
 import { Md } from "slack-block-builder";
 import { app } from "../app";
 import { BonuslyService } from "./lib/services/bonusly";
+import { connectionFactory } from "./lib/services/connectionsFactory";
 import { eventBus } from "./lib/services/eventBus";
 import { actions } from "./lib/types/Actions";
-import { PlusPlusBonusly, PlusPlusBonuslyEventName } from "./lib/types/Events";
+import { BonuslyPayload, PlusPlusBonusly, PlusPlusBonuslyEventName } from "./lib/types/Events";
+import { IUser, User } from './lib/models/user';
 
-
-export interface BonuslyPayload {
-  teamId: string,
-  channel: string,
-  senderEmail: string,
-  senderSlackId: string,
-  recipientEmails: string[],
-  recipientSlackIds: string[],
-  amount: number,
-  originalMessage: string,
-  originalMessageTs: string,
-  reason?: string
-};
 
 app.action(actions.bonusly.prompt_confirm, async (actionArgs: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
   await actionArgs.ack();
-  const bonuslyPayload: BonuslyPayload = JSON.parse(actionArgs.payload.value) as BonuslyPayload;
+  const bonuslyPayload = JSON.parse(actionArgs.payload.value) as BonuslyPayload;
+  const connection = connectionFactory(bonuslyPayload.teamId);
+  const sender = await User(connection).findOneBySlackIdOrCreate(bonuslyPayload.teamId, bonuslyPayload.sender);
+  const recipients: IUser[] = [];
+  for (const recipient of bonuslyPayload.recipients) {
+    recipients.push(await User(connection).findOneBySlackIdOrCreate(bonuslyPayload.teamId, recipient));
+  }
   const responses: any[] | undefined =
     await BonuslyService.sendBonus(
       bonuslyPayload.teamId,
-      bonuslyPayload.senderEmail,
-      bonuslyPayload.recipientEmails,
+      sender.email as string,
+      recipients.map(rec => rec.email as string),
       bonuslyPayload.amount,
       bonuslyPayload.reason);
   if (!responses || responses.length < 1) {
@@ -37,8 +32,12 @@ app.action(actions.bonusly.prompt_confirm, async (actionArgs: SlackActionMiddlew
 
   const ppBonusly = new PlusPlusBonusly({
     responses,
-    bonuslyPayload
-  })
+    teamId: bonuslyPayload.teamId,
+    sender,
+    recipients,
+    originalMessageTs: bonuslyPayload.originalMessageTs,
+    channel: bonuslyPayload.channel
+  });
   await actionArgs.respond({ text: `${Md.emoji('ok_hand')} Bonusly sent.`, delete_original: true } as RespondArguments)
   eventBus.emit(PlusPlusBonuslyEventName, ppBonusly);
 });

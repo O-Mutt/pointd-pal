@@ -11,9 +11,9 @@ import { eventBus } from './lib/services/eventBus';
 import { actions } from './lib/types/Actions';
 import { ConfirmOrCancel, PromptSettings } from './lib/types/Enums';
 import {
+  BonuslyPayload,
   PlusPlus, PlusPlusBonusly, PlusPlusBonuslyEventName, PlusPlusEventName, PlusPlusFailure, PlusPlusFailureEventName
 } from './lib/types/Events';
-import { BonuslyPayload } from './actions.bonusly';
 
 eventBus.on(PlusPlusEventName, sendBonuslyBonus);
 eventBus.on(PlusPlusBonuslyEventName, handleBonuslySent);
@@ -80,7 +80,12 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
       const bonuslyPayload = buildBonuslyPayload(plusPlusEvent, plusPlusEvent.amount);
       const ppBonusly = new PlusPlusBonusly({
         responses,
-        bonuslyPayload
+        teamId: plusPlusEvent.teamId,
+        channel: plusPlusEvent.channel,
+        originalMessageTs: plusPlusEvent.originalMessageTs,
+        originalMessage: plusPlusEvent.originalMessage,
+        recipients: plusPlusEvent.recipients,
+        sender: plusPlusEvent.sender
       })
       eventBus.emit(PlusPlusBonuslyEventName, ppBonusly);
       break;
@@ -127,30 +132,32 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
 }
 
 
-async function handleBonuslySent(plusPlusBonuslyEvent: PlusPlusBonusly) {
-  const messages: string[] = [];
+async function handleBonuslySent(event: PlusPlusBonusly) {
+  const bonuslyMessages: string[] = [];
   const dms: string[] = [];
-  console.log("This is the handle bonusly sent: ", plusPlusBonuslyEvent);
-  const teamInstallConfig = await Installation.findOne({ teamId: plusPlusBonuslyEvent.bonuslyPayload.teamId }).exec();
+  console.log("This is the handle bonusly sent: ", event);
+  const teamInstallConfig = await Installation.findOne({ teamId: event.teamId }).exec();
   if (!teamInstallConfig?.installation.bot?.token) {
     return;
   }
   const token = teamInstallConfig.installation.bot.token;
-  for (let i = 0; i < plusPlusBonuslyEvent.responses.length; i++) {
-    if (plusPlusBonuslyEvent.responses[i].success === true) {
-      messages.push(`We sent a Bonusly for ${plusPlusBonuslyEvent.responses[i].result.amount_with_currency} to ${Md.user(plusPlusBonuslyEvent.bonuslyPayload.recipientSlackIds[i])}.`);
+  for (let i = 0; i < event.responses.length; i++) {
+    if (event.responses[i].success === true) {
+      bonuslyMessages.push(`We sent a Bonusly for ${event.responses[i].result.amount_with_currency
+        } to ${Md.user(event.recipients[i].slackId)}.`);
       // logger.debug('bonusly point was sent and we caught the event.');
-      dms.push(`We sent ${Md.user(plusPlusBonuslyEvent.bonuslyPayload.recipientSlackIds[i])} ${plusPlusBonuslyEvent.responses[i].result.amount_with_currency} via Bonusly. You now have ${plusPlusBonuslyEvent.responses[i].result.giver.giving_balance_with_currency} left.`);
+      dms.push(`We sent ${Md.user(event.recipients[i].slackId)} ${event.responses[i].result.amount_with_currency
+        } via Bonusly. You now have ${event.responses[i].result.giver.giving_balance_with_currency} left.`);
     } else {
       // logger.error('there was an issue sending a bonus', e.response.message);
-      messages.push(`Sorry, there was an issue sending your bonusly bonus: ${plusPlusBonuslyEvent.responses[i].message}`);
+      bonuslyMessages.push(`Sorry, there was an issue sending your bonusly bonus: ${event.responses[i].message}`);
     }
 
-    if (plusPlusBonuslyEvent.sender.bonuslyPointsDM) {
+    if (event.sender.bonuslyPointsDM) {
       try {
         await app.client.chat.postMessage({
           token: token,
-          channel: plusPlusBonuslyEvent.bonuslyPayload.senderSlackId,
+          channel: event.sender.slackId,
           text: dms.join('\n'),
         });
       } catch (e) {
@@ -159,30 +166,45 @@ async function handleBonuslySent(plusPlusBonuslyEvent: PlusPlusBonusly) {
     }
 
     try {
+      let originalMessageText = event.originalMessage;
+      if (!originalMessageText) {
+        const { messages } = await app.client.conversations.history({
+          token,
+          channel: event.channel,
+          latest: event.originalMessageTs,
+          inclusive: true,
+          limit: 1
+        });
+
+        if (!messages || messages.length !== 1) {
+          console.error('couldn\'t find the message to update');
+          return;
+        }
+        originalMessageText = messages[0].text
+      }
+
+
       await app.client.chat.update({
         token: token,
-        ts: plusPlusBonuslyEvent.bonuslyPayload.originalMessageTs,
-        channel: plusPlusBonuslyEvent.bonuslyPayload.channel,
-        text: `${plusPlusBonuslyEvent.bonuslyPayload.originalMessage}\n*Bonusly:*\n${messages.join('\n')}`,
+        ts: event.originalMessageTs,
+        channel: event.channel,
+        text: `${originalMessageText}\n*Bonusly:*\n${bonuslyMessages.join('\n')}`,
       });
     } catch (e) {
-      // logger.error('error sending dm for bonus', e)
+      console.error('error sending dm for bonus', e)
     }
   }
 }
 
 function buildBonuslyPayload(plusPlus: PlusPlus, bonuslyAmount: number): BonuslyPayload {
-  const bonuslyPayload: BonuslyPayload = {
+  const bonuslyPayload = new BonuslyPayload({
     teamId: plusPlus.teamId,
     channel: plusPlus.channel,
-    senderEmail: plusPlus.sender.email,
-    senderSlackId: plusPlus.sender.slackId,
-    recipientEmails: plusPlus.recipients.map(recipient => recipient.email),
-    recipientSlackIds: plusPlus.recipients.map(recipient => recipient.slackId),
+    sender: plusPlus.sender.slackId,
+    recipients: plusPlus.recipients.map(recipient => recipient.slackId),
     amount: bonuslyAmount,
-    originalMessage: plusPlus.originalMessage,
     originalMessageTs: plusPlus.originalMessageTs,
     reason: plusPlus.reason,
-  } as BonuslyPayload;
+  });
   return bonuslyPayload;
 }
