@@ -170,7 +170,6 @@ async function respondWithLeaderLoserTokenBoard({ message, context, client }) {
     console.error('error', e.data.response_metadata.message, theMessage.printPreviewUrl());
   }
 }
-}
 
 async function getTopPointSenders({ message, context, client }) {
   const { topOrBottom, digits }: { topOrBottom: string; digits: number } = context.matches.groups;

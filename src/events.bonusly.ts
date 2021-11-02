@@ -112,7 +112,7 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
           user: plusPlusEvent.sender.slackId
         } as ChatPostEphemeralArguments);
       } catch (e) {
-        console.error(e, message.printPreviewUrl());
+        console.error("post for ephemeral", e, message.printPreviewUrl());
       }
       break;
     }
