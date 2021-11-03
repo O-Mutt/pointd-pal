@@ -185,7 +185,7 @@ app.view(
             break;
           }
           case blocks.hometab.user.qrypto.walletAddress: {
-            if (!/^0x[a-fA-F0-9]{40}$/.test(value)) {
+            if (value && !/^0x[a-fA-F0-9]{40}$/.test(value)) {
               errors[blocks.hometab.user.qrypto.walletAddress] = 'Your wallet address is invalid.';
             }
             user.walletAddress = value;
