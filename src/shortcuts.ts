@@ -151,6 +151,7 @@ app.view(
           thread_ts: messageTs
         }
       );
+      console.log("the message post response", postResp);
       const plusPlusEvent = new PlusPlus({
         notificationMessage: notificationMessage.join('\n'),
         sender,

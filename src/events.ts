@@ -30,6 +30,7 @@ async function sendPlusPlusNotification(plusPlusEvent: PlusPlus) {
     return;
   }
   try {
+    console.log('look up the permalink', channelId, plusPlusEvent.originalMessageTs);
     const { permalink } = await app.client.chat.getPermalink({
       token: botToken,
       channel: channelId,
@@ -38,6 +39,10 @@ async function sendPlusPlusNotification(plusPlusEvent: PlusPlus) {
     if (permalink) {
       plusPlusEvent.notificationMessage = `${plusPlusEvent.notificationMessage} ${Md.link(permalink, 'view here')}`
     }
+  } catch (e: any | unknown) {
+    console.error('There was an error getting the permalink');
+  }
+  try {
     const result = await app.client.chat.postMessage({
       token: botToken,
       channel: channelId,
