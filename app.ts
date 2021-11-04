@@ -56,11 +56,13 @@ import './src/events';
 import './src/migrations';
 import './src/monthlyScoreboardCron';
 
-
 // hometab
 import './src/hometab';
 import './src/hometab.actions';
 import './src/hometab.views';
+
+//shortcuts
+import './src/shortcuts';
 
 app.action('button_click', async ({ body, ack, say }) => {
   // Acknowledge the action
