@@ -81,6 +81,7 @@ export class BonuslyPayload {
   amount: number;
   originalMessageTs: string;
   reason?: string;
+  isThread: boolean = false;
 
   constructor(init: Partial<BonuslyPayload>) {
     Object.assign(this, init);

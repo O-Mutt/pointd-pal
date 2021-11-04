@@ -170,10 +170,10 @@ async function handleBonuslySent(event: PlusPlusBonusly) {
     }
   }
 
-  try {
-    let originalMessageText = event.originalMessage;
-    if (!originalMessageText) {
-      console.log('the original message was missing the text for the event', event);
+  let originalMessageText = event.originalMessage;
+  if (!originalMessageText) {
+    console.log('the original message was missing the text for the event', event);
+    try {
       const { messages } = await app.client.conversations.history({
         token,
         channel: event.channel,
@@ -187,9 +187,13 @@ async function handleBonuslySent(event: PlusPlusBonusly) {
         return;
       }
       originalMessageText = messages[0].text
+      console.log("the message found", messages[0]);
+    } catch (e) {
+      console.error('error looking up old message', e)
     }
+  }
 
-
+  try {
     await app.client.chat.update({
       token: token,
       ts: event.originalMessageTs,
@@ -197,7 +201,7 @@ async function handleBonuslySent(event: PlusPlusBonusly) {
       text: `${originalMessageText}\n*Bonusly:*\n${bonuslyMessages.join('\n')}`,
     });
   } catch (e) {
-    console.error('error sending dm for bonus', e)
+    console.error('error updating the original message with bonusly bits', e)
   }
 }
 
@@ -209,6 +213,7 @@ function buildBonuslyPayload(plusPlus: PlusPlus, bonuslyAmount: number): Bonusly
     recipients: plusPlus.recipients.map(recipient => recipient.slackId),
     amount: bonuslyAmount,
     originalMessageTs: plusPlus.originalMessageTs,
+    isThread: plusPlus.isThread,
     reason: plusPlus.reason,
   });
   return bonuslyPayload;
