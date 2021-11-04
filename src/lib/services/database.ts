@@ -1,24 +1,23 @@
 /* eslint-disable no-restricted-syntax */
 import moment from 'moment';
-
-import { app } from '../../../app';
-
-import { User, IUser } from '../models/user';
-import { IScoreLog, ScoreLog } from '../models/scoreLog';
-import { BotToken, IBotToken } from '../models/botToken';
-import { connectionFactory } from './connectionsFactory';
-import { eventBus } from './eventBus';
 import { Connection } from 'mongoose';
 
+import { app } from '../../../app';
+import { Helpers as H } from '../helpers';
+import { BotToken, IBotToken } from '../models/botToken';
+import { IScoreLog, ScoreLog } from '../models/scoreLog';
+import { IUser, User } from '../models/user';
+import { connectionFactory } from './connectionsFactory';
+import { eventBus } from './eventBus';
+
 export class DatabaseService {
-  furtherFeedbackScore: number;
-  peerFeedbackUrl: string;
   spamTimeLimit: number;
   spamMessage: string;
 
-  constructor(params) {
-    this.spamTimeLimit = params.spamTimeLimit;
-    this.spamMessage = params.spamMessage;
+  constructor() {
+    const { spamMessage, spamTimeLimit } = H.getProcessVariables(process.env);
+    this.spamMessage = spamMessage;
+    this.spamTimeLimit = spamTimeLimit;
   }
 
   /*

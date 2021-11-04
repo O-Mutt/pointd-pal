@@ -31,5 +31,12 @@ export const blocks = {
         walletAddress: 'hometab-u-qrypto-wallet'
       }
     }
+  },
+  shortcuts: {
+    message: {
+      recipients: 'shortcut-message-recipients',
+      operator: 'shortcuts-message-operator',
+      reason: 'shortcuts-message-reason'
+    }
   }
 };

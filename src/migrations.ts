@@ -9,7 +9,7 @@ import { IUser, User } from './lib/models/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { DatabaseService } from './lib/services/database';
 
-const procVars = H.getProcessVariables(process.env);
+new DatabaseService();
 
 // we should use `directMention() once the code "works"
 app.message('try to map all slack users to db users', directMention(), mapUsersToDb);
@@ -29,7 +29,6 @@ async function mapUsersToDb({ message, context, client, logger, say }) {
     await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
     return;
   }
-  const databaseService = new DatabaseService({ ...procVars });
 
   const members: Member[] = (await client.users.list()).members;
 
@@ -57,7 +56,6 @@ async function mapMoreUserFieldsBySlackId({ message, context, client, logger, sa
     await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
     return;
   }
-  const databaseService = new DatabaseService({ ...procVars });
 
 
   const members: Member[] = (await client.users.list()).members;
@@ -93,7 +91,6 @@ async function mapSingleUserToDb({ message, context, client, logger, say }) {
 
   // do the mention dance
   const to = { slackId: 'drp', name: 'derrp' };
-  const databaseService = new DatabaseService({ ...procVars });
 
 
   const { user } = await client.users.info({ user: to.slackId });
@@ -125,8 +122,6 @@ async function unmapUsersToDb({ message, context, logger, say }) {
     await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
     return;
   }
-  const databaseService = new DatabaseService({ ...procVars });
-
 
   try {
     await User(connectionFactory(teamId))
@@ -149,7 +144,6 @@ async function mapSlackIdToEmail({ message, context, logger, say, client }) {
     return;
   }
 
-  const databaseService = new DatabaseService({ ...procVars });
 
 
   try {

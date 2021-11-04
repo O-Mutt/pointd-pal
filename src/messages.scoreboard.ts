@@ -15,7 +15,7 @@ import { IUser, User } from './lib/models/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
 
 const procVars = H.getProcessVariables(process.env);
-const databaseService = new DatabaseService({ ...procVars });
+const databaseService = new DatabaseService();
 
 app.message(regExpCreator.createAskForScoreRegExp(), directMention(), respondWithScore);
 app.message(regExpCreator.createTopBottomRegExp(), directMention(), respondWithLeaderLoserBoard);

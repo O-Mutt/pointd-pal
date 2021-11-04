@@ -15,7 +15,7 @@ import { actions } from './lib/types/Actions';
 import { ConfirmOrCancel } from './lib/types/Enums';
 
 const procVars = H.getProcessVariables(process.env);
-const databaseService = new DatabaseService({ ...procVars });
+const databaseService = new DatabaseService();
 
 app.message(regExpCreator.getBotWallet(), directMention(), botWalletCount);
 

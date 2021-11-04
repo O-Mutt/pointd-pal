@@ -163,7 +163,7 @@ ${Md.user(to.slackId)} now has ${to.qraftyToken} token${Helpers.getEsOnEndOfWord
     };
   }
 
-  static cleanAndEncode(str: string): string | undefined {
+  static cleanAndEncode(str: string | null | undefined): string | undefined {
     if (!str) {
       return;
     }

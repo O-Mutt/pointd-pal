@@ -21,7 +21,6 @@ export enum ConfirmOrCancel {
   CANCEL = 'Cancel',
 }
 
-
 export enum DirectionEnum {
   PLUS = '++',
   MINUS = '--',

@@ -13,5 +13,9 @@ export const actions = {
   bonusly: {
     prompt_confirm: 'BONUSLY_PROMPT_CONFIRM',
     prompt_cancel: 'BONUSLY_PROMPT_CANCEL',
+  },
+  shortcuts: {
+    message: 'message_plusplus',
+    global: 'global_plusplus'
   }
 };

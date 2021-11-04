@@ -15,7 +15,7 @@ import { DatabaseService } from './lib/services/database';
 import { SlackService } from './lib/services/slack';
 
 const procVars = H.getProcessVariables(process.env);
-const databaseService = new DatabaseService({ ...procVars });
+const databaseService = new DatabaseService();
 
 (async () => {
   const allInstalls = await Installation.find({}).exec();

@@ -10,23 +10,18 @@ import { ChatPostMessageArguments } from '@slack/web-api';
 import { app } from '../../../app';
 import { Installation } from '../models/installation';
 import { ScoreLog } from '../models/scoreLog';
+import { Helpers as H } from '../helpers';
 
 export class ScoreKeeper {
   databaseService: DatabaseService;
   spamMessage: string;
   /*
-  * params.robot
-  * params.peerFeedbackUrl
-  * params.furtherFeedbackSuggestedScore
   * params.spamMessage
-  * params.mongoUri
   */
-  constructor(params) {
-    for (const key in params) {
-      this[key] = params[key];
-    }
-    this.spamMessage = params.spamMessage;
-    this.databaseService = new DatabaseService(params);
+  constructor() {
+    const { spamMessage } = H.getProcessVariables(process.env);
+    this.spamMessage = spamMessage;
+    this.databaseService = new DatabaseService();
   }
 
   /*

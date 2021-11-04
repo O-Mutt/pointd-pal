@@ -20,8 +20,8 @@ import { AllMiddlewareArgs, directMention, SlackEventMiddlewareArgs } from '@sla
 import { connectionFactory } from './lib/services/connectionsFactory';
 
 const procVars = H.getProcessVariables(process.env);
-const scoreKeeper = new ScoreKeeper({ ...procVars });
-const databaseService = new DatabaseService({ ...procVars });
+const scoreKeeper = new ScoreKeeper();
+const databaseService = new DatabaseService();
 
 if (procVars.magicIv && procVars.magicNumber) {
   databaseService.getMagicSecretStringNumberValue().then((databaseMagicString: string) => {
