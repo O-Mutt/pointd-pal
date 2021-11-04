@@ -146,7 +146,7 @@ app.view(
       logger.debug(`These are the messages \n ${messages.join(' ')} `);
       const postResp = await client.chat.postMessage(
         {
-          text: messages.join(' '),
+          text: messages.join('\n'),
           channel: channel,
           thread_ts: messageTs
         }

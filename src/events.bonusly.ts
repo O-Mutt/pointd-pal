@@ -169,6 +169,7 @@ async function handleBonuslySent(event: PlusPlusBonusly) {
   try {
     let originalMessageText = event.originalMessage;
     if (!originalMessageText) {
+      console.log('the original message was missing the text for the event', event);
       const { messages } = await app.client.conversations.history({
         token,
         channel: event.channel,
