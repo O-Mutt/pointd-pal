@@ -18,6 +18,7 @@ import {
 } from './lib/types/Events';
 import { AllMiddlewareArgs, directMention, SlackEventMiddlewareArgs } from '@slack/bolt';
 import { connectionFactory } from './lib/services/connectionsFactory';
+import { ChatPostMessageResponse } from '@slack/web-api';
 
 const procVars = H.getProcessVariables(process.env);
 const scoreKeeper = new ScoreKeeper();
@@ -101,7 +102,8 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
 
   if (theMessage) {
     const sayArgs = H.getSayMessageArgs(args.message, theMessage);
-    const sayResponse = await args.say(sayArgs);
+    const sayResponse: ChatPostMessageResponse = await args.say(sayArgs);
+
     const plusPlusEvent = new PlusPlus({
       notificationMessage: `${Md.user(fromUser.slackId)} ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
         } a Qrafty point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'
@@ -114,7 +116,7 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
       reason: cleanReason,
       teamId: teamId,
       originalMessage: theMessage,
-      originalMessageTs: sayResponse.ts as string,
+      originalMessageTs: sayResponse.message?.ts as string,
     });
 
     eventBus.emit(PlusPlusEventName, plusPlusEvent);

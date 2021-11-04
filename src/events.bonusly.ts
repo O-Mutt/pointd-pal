@@ -59,6 +59,11 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
     return;
   }
 
+  const bonuslyAmount: number = plusPlusEvent.sender.bonuslyScoreOverride || plusPlusEvent.amount;
+  const totalBonuslyPoints: number = bonuslyAmount * plusPlusEvent.recipients.length;
+  const totalQraftyPoints: number = plusPlusEvent.amount * plusPlusEvent.recipients.length;
+  const recipientSlackIds = plusPlusEvent.recipients.map((recipient) => Md.user(recipient.slackId)).join(', ');
+  const bonuslyPayload = buildBonuslyPayload(plusPlusEvent, bonuslyAmount);
   console.log('Before the switch, ', plusPlusEvent.sender.bonuslyPrompt);
   switch (plusPlusEvent.sender.bonuslyPrompt) {
     case PromptSettings.ALWAYS: {
@@ -77,7 +82,7 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
         }
         return;
       }
-      const bonuslyPayload = buildBonuslyPayload(plusPlusEvent, plusPlusEvent.amount);
+
       const ppBonusly = new PlusPlusBonusly({
         responses,
         teamId: plusPlusEvent.teamId,
@@ -92,11 +97,6 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
     }
     case PromptSettings.PROMPT: {
       console.log('Prompt settings, prompt');
-      const bonuslyAmount: number = plusPlusEvent.sender.bonuslyScoreOverride || plusPlusEvent.amount;
-      const totalBonuslyPoints: number = bonuslyAmount * plusPlusEvent.recipients.length;
-      const totalQraftyPoints: number = plusPlusEvent.amount * plusPlusEvent.recipients.length;
-      const recipientSlackIds = plusPlusEvent.recipients.map((recipient) => Md.user(recipient.slackId)).join(', ');
-      const bonuslyPayload = buildBonuslyPayload(plusPlusEvent, bonuslyAmount);
       const message = Message({ text: `Should we include ${bonuslyAmount} bonusly points with your Qrafty points?`, channel: plusPlusEvent.channel })
         .blocks(
           Blocks.Header({ text: `Should we include ${bonuslyAmount} Bonusly points (per recipient), ${totalBonuslyPoints} total, with your Qrafty points?` }),
