@@ -17,14 +17,19 @@ import { eventBus } from './lib/services/eventBus';
 const scoreKeeper = new ScoreKeeper();
 
 app.shortcut(actions.shortcuts.message, async ({ shortcut, ack, body, client }: SlackShortcutMiddlewareArgs<MessageShortcut> & AllMiddlewareArgs) => {
-  await ack();
-  const channel = body.channel
+  console.log('shorytcut open');
+  try {
+    await ack();
+    const channel = body.channel
 
-  const modalView = buildMessagePlusPlusModal(channel);
-  const result = await client.views.open({
-    trigger_id: shortcut.trigger_id,
-    view: modalView
-  })
+    const modalView = buildMessagePlusPlusModal(channel);
+    const result = await client.views.open({
+      trigger_id: shortcut.trigger_id,
+      view: modalView
+    })
+  } catch (e: any | unknown) {
+    console.log('shorytcut errr', e);
+  }
 });
 
 function buildMessagePlusPlusModal(channel): SlackModalDto {
