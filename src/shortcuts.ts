@@ -13,29 +13,38 @@ import { blocks } from './lib/types/BlockIds';
 import { DirectionEnum } from './lib/types/Enums';
 import { PlusPlus, PlusPlusEventName } from './lib/types/Events';
 import { eventBus } from './lib/services/eventBus';
+import { ChatGetPermalinkResponse } from '@slack/web-api';
 
 const scoreKeeper = new ScoreKeeper();
 
-app.shortcut(actions.shortcuts.message, async ({ shortcut, ack, body, client }: SlackShortcutMiddlewareArgs<MessageShortcut> & AllMiddlewareArgs) => {
-  console.log('shorytcut open');
-  try {
-    await ack();
-    const channel = body.channel
+app.shortcut(actions.shortcuts.message,
+  async ({ shortcut, ack, body, client }: SlackShortcutMiddlewareArgs<MessageShortcut> & AllMiddlewareArgs) => {
+    console.log('shortcut open');
+    try {
+      await ack();
+      const channel = body.channel.id;
+      const messageTs = body.message.ts;
+      const { permalink }: ChatGetPermalinkResponse = await client.chat.getPermalink({ channel, message_ts: messageTs });
 
-    const modalView = buildMessagePlusPlusModal(channel);
-    const result = await client.views.open({
-      trigger_id: shortcut.trigger_id,
-      view: modalView
-    })
-  } catch (e: any | unknown) {
-    console.log('shorytcut errr', e);
-  }
-});
 
-function buildMessagePlusPlusModal(channel): SlackModalDto {
-  const jsonPrivateMetaData = {
-    channel
-  };
+      const json: any = {
+        channel,
+        messageTs,
+        permalink
+      }
+
+      const modalView = buildMessagePlusPlusModal(json, permalink);
+      const result = await client.views.open({
+        trigger_id: shortcut.trigger_id,
+        view: modalView
+      })
+    } catch (e: any | unknown) {
+      console.log('shortcut err', e);
+    }
+  });
+
+function buildMessagePlusPlusModal(privateViewMetadataJson: JSON, permalink: string | undefined): SlackModalDto {
+
   return Modal({
     title: `${Md.emoji('rocket')} Send a PlusPlus`,
     submit: 'Send',
@@ -51,7 +60,7 @@ function buildMessagePlusPlusModal(channel): SlackModalDto {
     Blocks.Input({ label: 'Are you giving them a point (++) or taking one away (--)?', blockId: blocks.shortcuts.message.operator }).element(
       Elements.StaticSelect({
         actionId: blocks.shortcuts.message.operator,
-        placeholder: 'Jill Example',
+        placeholder: '++',
       }).options(
         Bits.Option({ text: DirectionEnum.PLUS, value: DirectionEnum.PLUS }),
         Bits.Option({ text: DirectionEnum.MINUS, value: DirectionEnum.MINUS }),
@@ -61,19 +70,19 @@ function buildMessagePlusPlusModal(channel): SlackModalDto {
       Elements.TextInput({
         actionId: blocks.shortcuts.message.reason,
         placeholder: 'Being the best co-worker in the world',
-      }),
+      }).initialValue(permalink ? `${Md.link(permalink, 'this message')}` : undefined),
     ).optional(),
-  ).privateMetaData(JSON.stringify(jsonPrivateMetaData))
+  ).privateMetaData(JSON.stringify(privateViewMetadataJson))
     .buildToObject();
 }
 
 app.view(
   actions.shortcuts.message,
-  async ({ ack, context, body, logger, view, respond }: SlackViewMiddlewareArgs<ViewSubmitAction> & AllMiddlewareArgs) => {
+  async ({ ack, context, body, logger, view, respond, client }: SlackViewMiddlewareArgs<ViewSubmitAction> & AllMiddlewareArgs) => {
     await ack();
     const teamId = context.teamId as string;
     const from = body.user.id;
-    const { channel } = JSON.parse(view.private_metadata);
+    const { channel, messageTs, permalink } = JSON.parse(view.private_metadata);
 
     let idArray: string[] = [];
     let operator: DirectionEnum = DirectionEnum.PLUS;
@@ -82,6 +91,7 @@ app.view(
     for (const option in view.state.values) {
       for (const key in view.state.values[option]) {
         const state = view.state.values[option][key];
+        console.log("each key state:", state);
         switch (key) {
           case blocks.shortcuts.message.recipients: {
             idArray = state.selected_users as string[];
@@ -100,7 +110,7 @@ app.view(
     }
 
 
-    idArray = idArray.filter((id) => id === from);
+    idArray = idArray.filter((id) => id !== from);
     const cleanReason = H.cleanAndEncode(reason);
     const increment: number = operator === DirectionEnum.PLUS ? 1 : -1;
 
@@ -134,7 +144,13 @@ app.view(
     messages = messages.filter((message) => !!message); // de-dupe
     if (messages) {
       logger.debug(`These are the messages \n ${messages.join(' ')} `);
-      const sayResponse = await respond({ text: messages.join('\n') });
+      const postResp = await client.chat.postMessage(
+        {
+          text: messages.join(' '),
+          channel: channel,
+          thread_ts: messageTs
+        }
+      );
       const plusPlusEvent = new PlusPlus({
         notificationMessage: notificationMessage.join('\n'),
         sender,
@@ -145,7 +161,7 @@ app.view(
         reason: cleanReason,
         teamId: teamId,
         originalMessage: messages.join('\n'),
-        originalMessageTs: sayResponse.ts as string,
+        originalMessageTs: postResp.message?.ts as string,
       });
 
       eventBus.emit(PlusPlusEventName, plusPlusEvent);

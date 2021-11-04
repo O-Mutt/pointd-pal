@@ -28,11 +28,20 @@ async function sendPlusPlusNotification(plusPlusEvent: PlusPlus) {
     return;
   }
   try {
+    const { permalink } = await app.client.chat.getPermalink({
+      token: botToken,
+      channel: channelId,
+      message_ts: plusPlusEvent.originalMessageTs
+    });
+    if (permalink) {
+      plusPlusEvent.notificationMessage = `${plusPlusEvent.notificationMessage} ${Md.link(permalink, 'view here')}`
+    }
     const result = await app.client.chat.postMessage({
       token: botToken,
       channel: channelId,
       text: plusPlusEvent.notificationMessage,
     });
+
   } catch (error: any | unknown) {
     console.error('There was an error when posting the `++` event to the notifications room', error.message)
     // logger.error(error);
