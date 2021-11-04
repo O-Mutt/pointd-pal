@@ -162,7 +162,7 @@ app.view(
         reason: cleanReason,
         teamId: teamId,
         originalMessage: messages.join('\n'),
-        originalMessageTs: postResp.message?.ts as string,
+        originalMessageTs: postResp.message?.thread_ts as string,
       });
 
       eventBus.emit(PlusPlusEventName, plusPlusEvent);
