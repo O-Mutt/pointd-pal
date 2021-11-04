@@ -113,11 +113,15 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
         .asUser();
 
       try {
-        const result = await app.client.chat.postEphemeral({
+        const postMessage: ChatPostEphemeralArguments = {
           ...message.buildToObject(),
           token: token,
-          user: plusPlusEvent.sender.slackId
-        } as ChatPostEphemeralArguments);
+          user: plusPlusEvent.sender.slackId,
+        };
+        if (plusPlusEvent.isThread) {
+          postMessage.thread_ts = plusPlusEvent.originalMessageTs;
+        }
+        const result = await app.client.chat.postEphemeral(postMessage);
       } catch (e) {
         console.error("post for ephemeral", e, message.printPreviewUrl());
       }

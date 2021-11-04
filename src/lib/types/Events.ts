@@ -20,6 +20,7 @@ export class PlusPlus extends EventWithTeamId {
   originalMessageTs: string;
   notificationMessage?: string;
   reason?: string;
+  isThread: boolean = false;
 
   // https://stackoverflow.com/a/37682352/593154
   constructor(init: Partial<PlusPlus> & EventWithTeamId) {

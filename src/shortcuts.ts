@@ -163,6 +163,7 @@ app.view(
         teamId: teamId,
         originalMessage: messages.join('\n'),
         originalMessageTs: postResp.message?.thread_ts as string,
+        isThread: true
       });
 
       eventBus.emit(PlusPlusEventName, plusPlusEvent);

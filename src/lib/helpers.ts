@@ -208,10 +208,24 @@ ${Md.user(to.slackId)} now has ${to.qraftyToken} token${Helpers.getEsOnEndOfWord
   }
 
   static getSayMessageArgs(message: any, text: string): any {
-    if (message.thread_ts) {
+    if (Helpers.isMessageInThread(message)) {
       return { text, thread_ts: message.thread_ts };
     }
     return { text };
+  }
+
+  static getMessageTs(message: any): string {
+    if (Helpers.isMessageInThread(message)) {
+      return message.thread_ts;
+    }
+    return message.ts;
+  }
+
+  static isMessageInThread(message): boolean {
+    if (message.thread_ts) {
+      return true;
+    }
+    return false;
   }
 }
 
