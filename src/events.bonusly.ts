@@ -1,6 +1,6 @@
 import { Blocks, Elements, Md, Message } from 'slack-block-builder';
 
-import { ChatPostEphemeralArguments } from '@slack/web-api';
+import { ChatPostEphemeralArguments, ChatUpdateArguments, ConversationsHistoryArguments } from '@slack/web-api';
 
 import { app } from '../app';
 import { Installation } from './lib/models/installation';
@@ -10,16 +10,13 @@ import { connectionFactory } from './lib/services/connectionsFactory';
 import { eventBus } from './lib/services/eventBus';
 import { actions } from './lib/types/Actions';
 import { ConfirmOrCancel, PromptSettings } from './lib/types/Enums';
-import {
-  BonuslyPayload,
-  PlusPlus, PlusPlusBonusly, PlusPlusBonuslyEventName, PlusPlusEventName, PlusPlusFailure, PlusPlusFailureEventName
-} from './lib/types/Events';
+import { PPBonuslySentEvent, PPBonuslySentEventName, PPEvent, PPEventName, PPFailureEvent, PPFailureEventName, TerseBonuslySentPayload } from './lib/types/Events';
 
-eventBus.on(PlusPlusEventName, sendBonuslyBonus);
-eventBus.on(PlusPlusBonuslyEventName, handleBonuslySent);
+eventBus.on(PPEventName, sendBonuslyBonus);
+eventBus.on(PPBonuslySentEventName, handleBonuslySent);
 
-async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
-  console.log('Handle plusplus for bonusly')
+async function sendBonuslyBonus(plusPlusEvent: PPEvent) {
+  console.log('Caught plus plus event and will handle sending a bonusly')
   const connection = connectionFactory(plusPlusEvent.teamId);
   const config = await QraftyConfig(connection).findOneOrCreate(plusPlusEvent.teamId);
   const teamInstallConfig = await Installation.findOne({ teamId: plusPlusEvent.teamId }).exec();
@@ -41,13 +38,14 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
   }
   if (plusPlusEvent.sender.slackId && !plusPlusEvent.sender.email) {
     console.log('sender email missing but has slackId', plusPlusEvent.sender);
-    const failureEvent = new PlusPlusFailure({
+    const failureEvent: PPFailureEvent = {
       notificationMessage: `${Md.user(plusPlusEvent.sender.slackId)} is trying to send a bonusly but their email is missing in ${Md.channel(plusPlusEvent.channel as string)}`,
-      sender: plusPlusEvent.sender,
+      sender: plusPlusEvent.sender.slackId,
+      recipients: plusPlusEvent.recipients.map((rec) => rec.slackId),
       channel: plusPlusEvent.channel,
       teamId: plusPlusEvent.teamId
-    })
-    eventBus.emit(PlusPlusFailureEventName, failureEvent);
+    };
+    eventBus.emit(PPFailureEventName, failureEvent);
     return;
   }
 
@@ -75,7 +73,8 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
           const result = await app.client.chat.postEphemeral({
             text: `${Md.emoji('thumbsdown')} Bonusly sending failed.`,
             token: token,
-            user: plusPlusEvent.sender.slackId
+            user: plusPlusEvent.sender.slackId,
+            channel: plusPlusEvent.channel
           } as ChatPostEphemeralArguments);
         } catch (e) {
           console.log(e);
@@ -83,16 +82,17 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
         return;
       }
 
-      const ppBonusly = new PlusPlusBonusly({
+      const ppBonusly: PPBonuslySentEvent = {
         responses,
         teamId: plusPlusEvent.teamId,
         channel: plusPlusEvent.channel,
         originalMessageTs: plusPlusEvent.originalMessageTs,
+        originalMessageIsThread: plusPlusEvent.isThread,
         originalMessage: plusPlusEvent.originalMessage,
         recipients: plusPlusEvent.recipients,
         sender: plusPlusEvent.sender
-      })
-      eventBus.emit(PlusPlusBonuslyEventName, ppBonusly);
+      };
+      eventBus.emit(PPBonuslySentEventName, ppBonusly);
       break;
     }
     case PromptSettings.PROMPT: {
@@ -136,7 +136,7 @@ async function sendBonuslyBonus(plusPlusEvent: PlusPlus) {
 }
 
 
-async function handleBonuslySent(event: PlusPlusBonusly) {
+async function handleBonuslySent(event: PPBonuslySentEvent) {
   const bonuslyMessages: string[] = [];
   const dms: string[] = [];
   console.log("This is the handle bonusly sent: ", event);
@@ -145,16 +145,17 @@ async function handleBonuslySent(event: PlusPlusBonusly) {
     return;
   }
   const token = teamInstallConfig.installation.bot.token;
+
   for (let i = 0; i < event.responses.length; i++) {
     if (event.responses[i].success === true) {
-      bonuslyMessages.push(`We sent a Bonusly for ${event.responses[i].result.amount_with_currency
+      bonuslyMessages.push(`We sent a Bonusly for ${event.responses[i].amount_with_currency
         } to ${Md.user(event.recipients[i].slackId)}.`);
       // logger.debug('bonusly point was sent and we caught the event.');
-      dms.push(`We sent ${Md.user(event.recipients[i].slackId)} ${event.responses[i].result.amount_with_currency
-        } via Bonusly. You now have ${event.responses[i].result.giver.giving_balance_with_currency} left.`);
+      dms.push(`We sent as Bonusly to ${Md.user(event.recipients[i].slackId)} for ${event.responses[i].amount_with_currency
+        }. You now have ${event.responses[i].giving_balance_with_currency} left.`);
     } else {
       // logger.error('there was an issue sending a bonus', e.response.message);
-      bonuslyMessages.push(`Sorry, there was an issue sending your bonusly bonus: ${event.responses[i].message}`);
+      dms.push(`Sorry, there was an issue sending your bonusly to ${Md.user(event.recipients[i].slackId)}: ${event.responses[i].message}`);
     }
   }
 
@@ -174,15 +175,17 @@ async function handleBonuslySent(event: PlusPlusBonusly) {
   if (!originalMessageText) {
     console.log('the original message was missing the text for the event', event);
     try {
-      const { messages } = await app.client.conversations.history({
+      const historyArgs: ConversationsHistoryArguments = {
         token,
         channel: event.channel,
         latest: event.originalMessageTs,
         inclusive: true,
         limit: 1
-      });
+      };
+      const { messages } = await app.client.conversations.history(historyArgs);
 
-      if (!messages || messages.length !== 1) {
+      console.log("all of the messages found:", messages);
+      if (!messages || messages.length < 1) {
         console.error('couldn\'t find the message to update');
         return;
       }
@@ -194,27 +197,28 @@ async function handleBonuslySent(event: PlusPlusBonusly) {
   }
 
   try {
-    await app.client.chat.update({
+    const updateArgs: ChatUpdateArguments = {
       token: token,
       ts: event.originalMessageTs,
       channel: event.channel,
       text: `${originalMessageText}\n*Bonusly:*\n${bonuslyMessages.join('\n')}`,
-    });
+    };
+    await app.client.chat.update(updateArgs);
   } catch (e) {
     console.error('error updating the original message with bonusly bits', e)
   }
 }
 
-function buildBonuslyPayload(plusPlus: PlusPlus, bonuslyAmount: number): BonuslyPayload {
-  const bonuslyPayload = new BonuslyPayload({
+function buildBonuslyPayload(plusPlus: PPEvent, bonuslyAmount: number): TerseBonuslySentPayload {
+  const bonuslyPayload: TerseBonuslySentPayload = {
     teamId: plusPlus.teamId,
     channel: plusPlus.channel,
-    sender: plusPlus.sender.slackId,
-    recipients: plusPlus.recipients.map(recipient => recipient.slackId),
+    senderId: plusPlus.sender.slackId,
+    recipientIds: plusPlus.recipients.map(recipient => recipient.slackId),
     amount: bonuslyAmount,
     originalMessageTs: plusPlus.originalMessageTs,
-    isThread: plusPlus.isThread,
+    originalMessageIsThread: plusPlus.isThread,
     reason: plusPlus.reason,
-  });
+  };
   return bonuslyPayload;
 }

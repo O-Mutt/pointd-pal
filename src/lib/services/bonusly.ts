@@ -52,7 +52,20 @@ export class BonuslyService {
           hashtag,
           reason,
         });
-        data.push(response.data);
+        if (response.data.success === false) {
+          const values = {
+            success: false,
+            message: response.data.message
+          }
+          data.push(values);
+        } else {
+          const values = {
+            success: true,
+            amount_with_currency: response.data.result.amount_with_currency,
+            giving_balance_with_currency: response.data.result.giver.giving_balance_with_currency
+          }
+          data.push(values);
+        }
       } catch (e: any | unknown) {
         const isAxiosError = Axios.isAxiosError(e)
         if (isAxiosError) {

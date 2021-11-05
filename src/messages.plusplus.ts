@@ -14,9 +14,9 @@ import { ScoreKeeper } from './lib/services/scorekeeper';
 import * as token from './lib/token.json';
 import { DirectionEnum } from './lib/types/Enums';
 import {
-  PlusPlus, PlusPlusEventName, PlusPlusFailure, PlusPlusFailureEventName, PlusPlusSpam
+  PPEvent, PPEventName, PPFailureEvent, PPFailureEventName
 } from './lib/types/Events';
-import { AllMiddlewareArgs, directMention, SlackEventMiddlewareArgs } from '@slack/bolt';
+import { directMention } from '@slack/bolt';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { ChatPostMessageResponse } from '@slack/web-api';
 
@@ -74,13 +74,15 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
 
   if (H.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
     // circuit break a plus plus
-    const failureEvent = new PlusPlusFailure({
+    const failureEvent: PPFailureEvent = {
+      sender: from as string,
+      recipients: userId as string,
       notificationMessage: `False positive detected in ${Md.channel(channel)} from ${Md.user(from)}: \nPre - Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText} `,
       channel: channel,
       teamId: teamId,
-    });
-    console.log('emit an event', PlusPlusFailureEventName, failureEvent)
-    eventBus.emit(PlusPlusFailureEventName, failureEvent);
+    };
+    console.log('emit an event', PPFailureEventName, failureEvent)
+    eventBus.emit(PPFailureEventName, failureEvent);
     return;
   }
   const increment = operator.match(regExpCreator.positiveOperators) ? 1 : -1;
@@ -104,7 +106,7 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
     const sayArgs = H.getSayMessageArgs(args.message, theMessage);
     const sayResponse: ChatPostMessageResponse = await args.say(sayArgs);
 
-    const plusPlusEvent = new PlusPlus({
+    const plusPlusEvent: PPEvent = {
       notificationMessage: `${Md.user(fromUser.slackId)} ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
         } a Qrafty point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'
         } ${Md.user(toUser.slackId)} in ${Md.channel(channel)}`,
@@ -118,9 +120,9 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
       originalMessage: theMessage,
       originalMessageTs: H.getMessageTs(sayResponse.message) as string,
       isThread: H.isMessageInThread(sayResponse.message)
-    });
+    };
 
-    eventBus.emit(PlusPlusEventName, plusPlusEvent);
+    eventBus.emit(PPEventName, plusPlusEvent);
   }
 }
 
@@ -133,13 +135,15 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
   const { channel, user: from } = message;
   if (!conjunction && reason) {
     // circuit break a plus plus
-    const failureEvent = new PlusPlusFailure({
+    const failureEvent: PPFailureEvent = {
+      sender: from as string,
+      recipients: userId as string,
       notificationMessage: `False positive detected in ${Md.channel(channel)} from ${Md.user(from)
         }: \nPre - Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText} `,
       channel: channel,
       teamId: teamId,
-    });
-    eventBus.emit(PlusPlusFailureEventName, failureEvent);
+    };
+    eventBus.emit(PPFailureEventName, failureEvent);
     return;
   }
 
@@ -164,7 +168,7 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
   if (message) {
     const sayArgs = H.getSayMessageArgs(message, theMessage);
     const sayResponse = await say(sayArgs);
-    const plusPlusEvent = new PlusPlus({
+    const plusPlusEvent: PPEvent = {
       notificationMessage: `${Md.user(response.fromUser.slackId)} sent ${amount} Qrafty point${parseInt(amount, 10) > 1 ? 's' : ''} to ${Md.user(response.toUser.slackId)} in ${Md.channel(channel)}`,
       recipients: [response.toUser],
       sender: response.fromUser,
@@ -176,8 +180,8 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
       originalMessage: theMessage,
       originalMessageTs: H.getMessageTs(sayResponse.message),
       isThread: H.isMessageInThread(sayResponse.message)
-    });
-    eventBus.emit(PlusPlusEventName, plusPlusEvent);
+    };
+    eventBus.emit(PPEventName, plusPlusEvent);
   }
 }
 
@@ -193,13 +197,15 @@ async function multipleUsersVote({ message, context, logger, say }) {
   }
   if (H.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
     // circuit break a plus plus
-    const failureEvent = new PlusPlusFailure({
+    const failureEvent: PPFailureEvent = {
+      sender: from as string,
+      recipients: allUsers as string[],
       notificationMessage: `False positive detected in ${Md.channel(channel)} from ${Md.user(from)
         }: \nPre - Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText} `,
       channel: channel,
       teamId: teamId,
-    });
-    eventBus.emit(PlusPlusFailureEventName, failureEvent);
+    };
+    eventBus.emit(PPFailureEventName, failureEvent);
     return;
   }
 
@@ -220,7 +226,7 @@ async function multipleUsersVote({ message, context, logger, say }) {
   let messages: string[] = [];
   let notificationMessage: string[] = [];
   let sender: IUser | undefined = undefined;
-  let to: IUser[] = [];
+  let recipients: IUser[] = [];
   for (const toUserId of cleanedIdArray) {
     let response: { toUser: IUser; fromUser: IUser };
     try {
@@ -235,7 +241,7 @@ async function multipleUsersVote({ message, context, logger, say }) {
         `clean names map[${toUserId}]: ${response.toUser.score}, the reason ${cleanReason ? response.toUser.reasons.get(cleanReason) : 'n/a'} `,
       );
       messages.push(H.getMessageForNewScore(response.toUser, cleanReason));
-      to.push(response.toUser);
+      recipients.push(response.toUser);
       notificationMessage.push(
         `${Md.user(response.fromUser.slackId)} ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
         } a Qrafty point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'
@@ -243,15 +249,16 @@ async function multipleUsersVote({ message, context, logger, say }) {
       );
     }
   }
+
   messages = messages.filter((message) => !!message); // de-dupe
   if (messages) {
     logger.debug(`These are the messages \n ${messages.join(' ')} `);
     const sayArgs = H.getSayMessageArgs(message, messages.join('\n'));
     const sayResponse = await say(sayArgs);
-    const plusPlusEvent = new PlusPlus({
+    const plusPlusEvent: PPEvent = {
       notificationMessage: notificationMessage.join('\n'),
-      sender,
-      recipients: to,
+      sender: sender as IUser,
+      recipients,
       direction: operator,
       amount: 1,
       channel,
@@ -260,9 +267,9 @@ async function multipleUsersVote({ message, context, logger, say }) {
       originalMessage: messages.join('\n'),
       originalMessageTs: H.getMessageTs(sayResponse.message),
       isThread: H.isMessageInThread(sayResponse.message)
-    });
+    };
 
-    eventBus.emit(PlusPlusEventName, plusPlusEvent);
+    eventBus.emit(PPEventName, plusPlusEvent);
   }
 }
 

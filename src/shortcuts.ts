@@ -1,19 +1,22 @@
 import { Bits, Blocks, Elements, Md, Modal, Option } from 'slack-block-builder';
 import { SlackModalDto } from 'slack-block-builder/dist/lib';
 
-import { AllMiddlewareArgs, MessageShortcut, SlackShortcut, SlackShortcutMiddlewareArgs, SlackViewMiddlewareArgs, ViewSubmitAction } from '@slack/bolt';
+import {
+  AllMiddlewareArgs, MessageShortcut, SlackShortcut, SlackShortcutMiddlewareArgs,
+  SlackViewMiddlewareArgs, ViewSubmitAction
+} from '@slack/bolt';
 import { View } from '@slack/types';
+import { ChatGetPermalinkResponse } from '@slack/web-api';
 
 import { app } from '../app';
 import { Helpers as H } from './lib/helpers';
 import { IUser } from './lib/models/user';
+import { eventBus } from './lib/services/eventBus';
 import { ScoreKeeper } from './lib/services/scorekeeper';
 import { actions } from './lib/types/Actions';
 import { blocks } from './lib/types/BlockIds';
 import { DirectionEnum } from './lib/types/Enums';
-import { PlusPlus, PlusPlusEventName } from './lib/types/Events';
-import { eventBus } from './lib/services/eventBus';
-import { ChatGetPermalinkResponse } from '@slack/web-api';
+import { PPEvent, PPEventName } from './lib/types/Events';
 
 const scoreKeeper = new ScoreKeeper();
 
@@ -118,7 +121,7 @@ app.view(
     let messages: string[] = [];
     let notificationMessage: string[] = [];
     let sender: IUser | undefined = undefined;
-    let to: IUser[] = [];
+    let recipients: IUser[] = [];
     for (const toUserId of idArray) {
       let response: { toUser: IUser; fromUser: IUser };
       try {
@@ -133,7 +136,7 @@ app.view(
           `clean names map[${toUserId}]: ${response.toUser.score}, the reason ${cleanReason ? response.toUser.reasons.get(cleanReason) : 'n/a'} `,
         );
         messages.push(H.getMessageForNewScore(response.toUser, cleanReason));
-        to.push(response.toUser);
+        recipients.push(response.toUser);
         notificationMessage.push(
           `${Md.user(response.fromUser.slackId)} ${increment === 1 ? 'sent' : 'removed'
           } a Qrafty point ${increment === 1 ? 'to' : 'from'
@@ -152,10 +155,10 @@ app.view(
         }
       );
       console.log("the message post response", postResp);
-      const plusPlusEvent = new PlusPlus({
+      const plusPlusEvent: PPEvent = {
         notificationMessage: notificationMessage.join('\n'),
-        sender,
-        recipients: to,
+        sender: sender as IUser,
+        recipients: recipients,
         direction: operator,
         amount: 1,
         channel,
@@ -164,9 +167,9 @@ app.view(
         originalMessage: messages.join('\n'),
         originalMessageTs: postResp.message?.thread_ts as string,
         isThread: true
-      });
+      };
 
-      eventBus.emit(PlusPlusEventName, plusPlusEvent);
+      eventBus.emit(PPEventName, plusPlusEvent);
     }
   }
 );

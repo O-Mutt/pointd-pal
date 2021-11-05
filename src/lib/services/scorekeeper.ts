@@ -1,6 +1,6 @@
 import { DatabaseService } from './database';
 import { IUser, User } from '../models/user';
-import { PlusPlusSpam, PlusPlusSpamEventName } from '../types/Events';
+import { PPSpamEvent, PPSpamEventName } from '../types/Events';
 import { eventBus } from './eventBus';
 import { Md } from 'slack-block-builder';
 import { connectionFactory } from './connectionsFactory';
@@ -162,15 +162,15 @@ export class ScoreKeeper {
   async isSpam(teamId: string, recipient: IUser, sender: IUser) {
     const isSpam = await this.databaseService.isSpam(teamId, recipient, sender);
     if (isSpam) {
-      const spamEvent = new PlusPlusSpam({
+      const spamEvent: PPSpamEvent = {
         recipient,
         sender,
-        message: this.spamMessage,
+        notificationMessage: this.spamMessage,
         reason: `You recently sent ${Md.user(recipient.slackId)} a point.`,
         teamId,
-      });
+      };
 
-      eventBus.emit(PlusPlusSpamEventName, spamEvent);
+      eventBus.emit(PPSpamEventName, spamEvent);
     }
     return isSpam;
   }
@@ -179,14 +179,14 @@ export class ScoreKeeper {
     //Logger.debug(`Checking if is to self. To [${to.name}] From [${from.name}], Valid: ${to.name !== from.name}`);
     const isToSelf = recipient.slackId === sender.slackId;
     if (isToSelf) {
-      const spamEvent = new PlusPlusSpam({
+      const spamEvent: PPSpamEvent = {
         recipient,
         sender,
-        message: this.spamMessage,
+        notificationMessage: this.spamMessage,
         reason: 'Looks like you may be trying to send a point to yourself.',
         teamId
-      });
-      eventBus.emit(PlusPlusSpamEventName, spamEvent);
+      };
+      eventBus.emit(PPSpamEventName, spamEvent);
     }
     return isToSelf;
   }
