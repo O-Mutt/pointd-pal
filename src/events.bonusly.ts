@@ -156,6 +156,7 @@ async function handleBonuslySent(event: PPBonuslySentEvent) {
         }. You now have ${event.responses[i].giving_balance_with_currency} left.`);
     } else {
       // logger.error('there was an issue sending a bonus', e.response.message);
+      bonuslyMessages.push(`Sorry, there was an issue sending your bonusly to ${Md.user(event.recipients[i].slackId)}.`);
       dms.push(`Sorry, there was an issue sending your bonusly to ${Md.user(event.recipients[i].slackId)}: ${event.responses[i].message}`);
     }
   }
@@ -181,9 +182,9 @@ async function handleBonuslySent(event: PPBonuslySentEvent) {
         const repliesArgs: ConversationsRepliesArguments = {
           token,
           channel: event.channel,
-          ts: event.originalMessageParentTs,
-          latest: event.originalMessageTs,
-          limit: 1,
+          ts: event.originalMessageTs,
+          latest: event.originalMessageParentTs,
+          limit: 10,
           inclusive: true
         };
         const response = await app.client.conversations.replies(repliesArgs);
@@ -194,7 +195,7 @@ async function handleBonuslySent(event: PPBonuslySentEvent) {
           channel: event.channel,
           latest: event.originalMessageTs,
           inclusive: true,
-          limit: 1
+          limit: 10
         };
         const response = await app.client.conversations.history(historyArgs);
         messages = response.messages;
