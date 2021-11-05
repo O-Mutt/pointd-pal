@@ -19,7 +19,8 @@ export class BonuslyService {
       console.error('bonusly config missing for the team');
       return;
     }
-    //logger.debug(`Sending a bonusly bonus to ${JSON.stringify(event.recipient.slackEmail)} from ${JSON.stringify(event.sender.slackEmail)}`);
+
+    console.log(`Sending a bonusly ${teamId}, ${senderEmail} ${recipientEmails.join(',')} ${amount} ${reason ? reason : 'no reason'} ${qraftyConfig.bonuslyConfig.get('apiKey', String, { getters: false })} ${qraftyConfig.bonuslyConfig.url.toString()}`);
     const axios = Axios.create({
       baseURL: qraftyConfig.bonuslyConfig.url.toString(),
       headers: {
