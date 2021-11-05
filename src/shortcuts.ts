@@ -171,8 +171,8 @@ app.view(
         reason: cleanReason,
         teamId: teamId,
         originalMessage: messages.join('\n'),
-        originalMessageTs: postResp.ts as string,
-        originalMessageParentTs: postResp.message?.thread_ts as string,
+        originalMessageTs: postResp.message?.thread_ts as string,
+        originalMessageParentTs: postResp.ts as string,
       };
 
       eventBus.emit(PPEventName, plusPlusEvent);
