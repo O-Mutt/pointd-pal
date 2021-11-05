@@ -235,6 +235,7 @@ function buildBonuslyPayload(plusPlus: PPEvent, bonuslyAmount: number): TerseBon
     recipientIds: plusPlus.recipients.map(recipient => recipient.slackId),
     amount: bonuslyAmount,
     originalMessageTs: plusPlus.originalMessageTs,
+    originalMessageParentTs: plusPlus.originalMessageParentTs,
     reason: plusPlus.reason,
   };
   return bonuslyPayload;

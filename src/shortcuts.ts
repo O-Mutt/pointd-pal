@@ -6,7 +6,7 @@ import {
   SlackViewMiddlewareArgs, ViewSubmitAction
 } from '@slack/bolt';
 import { View } from '@slack/types';
-import { ChatGetPermalinkResponse } from '@slack/web-api';
+import { ChatGetPermalinkResponse, ChatPostEphemeralArguments, ChatPostMessageArguments } from '@slack/web-api';
 
 import { app } from '../app';
 import { Helpers as H } from './lib/helpers';
@@ -81,7 +81,7 @@ function buildMessagePlusPlusModal(privateViewMetadataJson: JSON, permalink: str
 
 app.view(
   actions.shortcuts.message,
-  async ({ ack, context, body, logger, view, respond, client }: SlackViewMiddlewareArgs<ViewSubmitAction> & AllMiddlewareArgs) => {
+  async ({ ack, context, body, logger, view, client }: SlackViewMiddlewareArgs<ViewSubmitAction> & AllMiddlewareArgs) => {
     await ack();
     const teamId = context.teamId as string;
     const from = body.user.id;
@@ -112,7 +112,6 @@ app.view(
       }
     }
 
-
     idArray = idArray.filter((id) => id !== from);
     const cleanReason = H.cleanAndEncode(reason);
     const increment: number = operator === DirectionEnum.PLUS ? 1 : -1;
@@ -127,7 +126,13 @@ app.view(
       try {
         response = await scoreKeeper.incrementScore(teamId, toUserId, from, channel, increment, cleanReason);
       } catch (e: any) {
-        await respond(e.message);
+        const ephemeral: ChatPostEphemeralArguments = {
+          text: e.message,
+          channel,
+          user: from
+        };
+        await client.chat.postEphemeral(ephemeral);
+
         continue;
       }
       sender = response.fromUser;

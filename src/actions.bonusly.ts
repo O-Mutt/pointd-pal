@@ -28,7 +28,7 @@ app.action(actions.bonusly.prompt_confirm,
         bonuslyPayload.amount,
         bonuslyPayload.reason);
     if (!responses || responses.length < 1) {
-      await respond({ text: `${Md.emoji('thumbsdown')} Bonusly sending failed.`, delete_original: true } as RespondArguments);
+      await respond({ text: `${Md.emoji('thumbsdown')} Bonusly sending failed.`, delete_original: true, replace_original: true } as RespondArguments);
       return;
     }
 
@@ -41,11 +41,11 @@ app.action(actions.bonusly.prompt_confirm,
       originalMessageParentTs: bonuslyPayload.originalMessageParentTs,
       channel: bonuslyPayload.channel
     };
-    await respond({ text: `${Md.emoji('ok_hand')} Bonusly sent.`, delete_original: true } as RespondArguments)
+    await respond({ text: `${Md.emoji('ok_hand')} Bonusly sent.`, delete_original: true, replace_original: true } as RespondArguments)
     eventBus.emit(PPBonuslySentEventName, ppBonusly);
   });
 
 app.action(actions.bonusly.prompt_cancel, async (actionArgs: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
   await actionArgs.ack();
-  await actionArgs.respond({ text: `${Md.emoji('ok_hand')} No bonusly sent.`, delete_original: true } as RespondArguments);
+  await actionArgs.respond({ text: `${Md.emoji('ok_hand')} No bonusly sent.`, delete_original: true, replace_original: true } as RespondArguments);
 });
