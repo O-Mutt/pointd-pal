@@ -63,7 +63,7 @@ async function sendBonuslyBonus(plusPlusEvent: PPEvent) {
   const totalQraftyPoints: number = plusPlusEvent.amount * plusPlusEvent.recipients.length;
   const recipientSlackIds = plusPlusEvent.recipients.map((recipient) => Md.user(recipient.slackId)).join(', ');
   const bonuslyPayload = buildBonuslyPayload(plusPlusEvent, bonuslyAmount);
-  console.log('Before the switch, ', plusPlusEvent.sender.bonuslyPrompt);
+  console.log('Before the switch,', plusPlusEvent.sender.bonuslyPrompt);
   switch (plusPlusEvent.sender.bonuslyPrompt) {
     case PromptSettings.ALWAYS: {
       const bonuslyAmount: number = plusPlusEvent.sender.bonuslyScoreOverride || plusPlusEvent.amount;
@@ -120,7 +120,7 @@ async function sendBonuslyBonus(plusPlusEvent: PPEvent) {
           user: plusPlusEvent.sender.slackId,
         };
         if (plusPlusEvent.originalMessageParentTs) {
-          postMessage.thread_ts = plusPlusEvent.originalMessageTs;
+          postMessage.thread_ts = plusPlusEvent.originalMessageParentTs;
         }
         const result = await app.client.chat.postEphemeral(postMessage);
       } catch (e) {
