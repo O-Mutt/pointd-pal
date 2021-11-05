@@ -155,6 +155,7 @@ app.view(
         }
       );
       console.log("the message post response", postResp);
+      postResp.ts
       const plusPlusEvent: PPEvent = {
         notificationMessage: notificationMessage.join('\n'),
         sender: sender as IUser,
@@ -165,8 +166,8 @@ app.view(
         reason: cleanReason,
         teamId: teamId,
         originalMessage: messages.join('\n'),
-        originalMessageTs: postResp.message?.thread_ts as string,
-        isThread: true
+        originalMessageTs: postResp.ts as string,
+        originalMessageParentTs: postResp.message?.thread_ts as string,
       };
 
       eventBus.emit(PPEventName, plusPlusEvent);

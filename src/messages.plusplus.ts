@@ -119,7 +119,7 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
       teamId: teamId,
       originalMessage: theMessage,
       originalMessageTs: H.getMessageTs(sayResponse.message) as string,
-      isThread: H.isMessageInThread(sayResponse.message)
+      originalMessageParentTs: H.getMessageParentTs(sayResponse.message)
     };
 
     eventBus.emit(PPEventName, plusPlusEvent);
@@ -179,8 +179,9 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
       teamId: teamId,
       originalMessage: theMessage,
       originalMessageTs: H.getMessageTs(sayResponse.message),
-      isThread: H.isMessageInThread(sayResponse.message)
+      originalMessageParentTs: H.getMessageParentTs(sayResponse.message)
     };
+
     eventBus.emit(PPEventName, plusPlusEvent);
   }
 }
@@ -266,7 +267,7 @@ async function multipleUsersVote({ message, context, logger, say }) {
       teamId: teamId,
       originalMessage: messages.join('\n'),
       originalMessageTs: H.getMessageTs(sayResponse.message),
-      isThread: H.isMessageInThread(sayResponse.message)
+      originalMessageParentTs: H.getMessageParentTs(sayResponse.message)
     };
 
     eventBus.emit(PPEventName, plusPlusEvent);

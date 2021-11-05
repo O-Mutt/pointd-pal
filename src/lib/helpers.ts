@@ -221,6 +221,13 @@ ${Md.user(to.slackId)} now has ${to.qraftyToken} token${Helpers.getEsOnEndOfWord
     return message.ts;
   }
 
+  static getMessageParentTs(message: any): string | undefined {
+    if (Helpers.isMessageInThread(message)) {
+      return message.ts;
+    }
+    return;
+  }
+
   static isMessageInThread(message): boolean {
     if (message.thread_ts) {
       return true;

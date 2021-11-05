@@ -1,6 +1,6 @@
 import { Blocks, Elements, Md, Message } from 'slack-block-builder';
 
-import { ChatPostEphemeralArguments, ChatUpdateArguments, ConversationsHistoryArguments } from '@slack/web-api';
+import { ChatPostEphemeralArguments, ChatUpdateArguments, ConversationsHistoryArguments, ConversationsRepliesArguments } from '@slack/web-api';
 
 import { app } from '../app';
 import { Installation } from './lib/models/installation';
@@ -11,6 +11,7 @@ import { eventBus } from './lib/services/eventBus';
 import { actions } from './lib/types/Actions';
 import { ConfirmOrCancel, PromptSettings } from './lib/types/Enums';
 import { PPBonuslySentEvent, PPBonuslySentEventName, PPEvent, PPEventName, PPFailureEvent, PPFailureEventName, TerseBonuslySentPayload } from './lib/types/Events';
+import { Message as RepliesMessage } from '@slack/web-api/dist/response/ConversationsRepliesResponse';
 
 eventBus.on(PPEventName, sendBonuslyBonus);
 eventBus.on(PPBonuslySentEventName, handleBonuslySent);
@@ -87,7 +88,7 @@ async function sendBonuslyBonus(plusPlusEvent: PPEvent) {
         teamId: plusPlusEvent.teamId,
         channel: plusPlusEvent.channel,
         originalMessageTs: plusPlusEvent.originalMessageTs,
-        originalMessageIsThread: plusPlusEvent.isThread,
+        originalMessageParentTs: plusPlusEvent.originalMessageParentTs,
         originalMessage: plusPlusEvent.originalMessage,
         recipients: plusPlusEvent.recipients,
         sender: plusPlusEvent.sender
@@ -118,7 +119,7 @@ async function sendBonuslyBonus(plusPlusEvent: PPEvent) {
           token: token,
           user: plusPlusEvent.sender.slackId,
         };
-        if (plusPlusEvent.isThread) {
+        if (plusPlusEvent.originalMessageParentTs) {
           postMessage.thread_ts = plusPlusEvent.originalMessageTs;
         }
         const result = await app.client.chat.postEphemeral(postMessage);
@@ -175,14 +176,29 @@ async function handleBonuslySent(event: PPBonuslySentEvent) {
   if (!originalMessageText) {
     console.log('the original message was missing the text for the event', event);
     try {
-      const historyArgs: ConversationsHistoryArguments = {
-        token,
-        channel: event.channel,
-        latest: event.originalMessageTs,
-        inclusive: true,
-        limit: 1
-      };
-      const { messages } = await app.client.conversations.history(historyArgs);
+      let messages: RepliesMessage[] | undefined = undefined;
+      if (event.originalMessageParentTs) {
+        const repliesArgs: ConversationsRepliesArguments = {
+          token,
+          channel: event.channel,
+          ts: event.originalMessageParentTs,
+          latest: event.originalMessageTs,
+          limit: 1,
+          inclusive: true
+        };
+        const response = await app.client.conversations.replies(repliesArgs);
+        messages = response.messages;
+      } else {
+        const historyArgs: ConversationsHistoryArguments = {
+          token,
+          channel: event.channel,
+          latest: event.originalMessageTs,
+          inclusive: true,
+          limit: 1
+        };
+        const response = await app.client.conversations.history(historyArgs);
+        messages = response.messages;
+      }
 
       console.log("all of the messages found:", messages);
       if (!messages || messages.length < 1) {
@@ -191,8 +207,9 @@ async function handleBonuslySent(event: PPBonuslySentEvent) {
       }
       originalMessageText = messages[0].text
       console.log("the message found", messages[0]);
-    } catch (e) {
-      console.error('error looking up old message', e)
+    } catch (e: any | unknown) {
+      console.error('error looking up message', e)
+
     }
   }
 
@@ -217,7 +234,6 @@ function buildBonuslyPayload(plusPlus: PPEvent, bonuslyAmount: number): TerseBon
     recipientIds: plusPlus.recipients.map(recipient => recipient.slackId),
     amount: bonuslyAmount,
     originalMessageTs: plusPlus.originalMessageTs,
-    originalMessageIsThread: plusPlus.isThread,
     reason: plusPlus.reason,
   };
   return bonuslyPayload;

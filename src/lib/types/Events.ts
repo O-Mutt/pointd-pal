@@ -14,9 +14,9 @@ export interface PPEvent extends EventWithTeamId {
   direction: DirectionEnum;
   originalMessage: string;
   originalMessageTs: string;
+  originalMessageParentTs?: string; // this is the parent message if the plus plus message was sent in a thread
   notificationMessage?: string;
   reason?: string;
-  isThread: boolean;
 }
 
 export const PPFailureEventName = 'plus-plus-fail';
@@ -44,7 +44,7 @@ export interface PPBonuslySentEvent {
   recipients: IUser[];
   originalMessage?: string;
   originalMessageTs: string;
-  originalMessageIsThread: boolean;
+  originalMessageParentTs?: string;
 }
 
 export interface TerseBonuslySentPayload {
@@ -55,6 +55,6 @@ export interface TerseBonuslySentPayload {
   recipientIds: string[];
   amount: number;
   originalMessageTs: string;
-  originalMessageIsThread: boolean;
+  originalMessageParentTs?: string;
   reason?: string;
 }
