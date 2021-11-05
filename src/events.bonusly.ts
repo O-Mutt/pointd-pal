@@ -120,7 +120,7 @@ async function sendBonuslyBonus(plusPlusEvent: PPEvent) {
           user: plusPlusEvent.sender.slackId,
         };
         if (plusPlusEvent.originalMessageParentTs) {
-          postMessage.thread_ts = plusPlusEvent.originalMessageParentTs;
+          postMessage.thread_ts = plusPlusEvent.originalMessageTs;
         }
         const result = await app.client.chat.postEphemeral(postMessage);
       } catch (e) {
