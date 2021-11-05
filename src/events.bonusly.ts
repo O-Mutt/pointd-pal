@@ -201,7 +201,7 @@ async function handleBonuslySent(event: PPBonuslySentEvent) {
         messages = response.messages;
       }
 
-      //console.log("all of the messages found:", messages);
+      console.log("all of the messages found:", messages);
       if (!messages || messages.length < 1) {
         console.error('couldn\'t find the message to update');
         return;

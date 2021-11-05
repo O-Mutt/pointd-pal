@@ -20,7 +20,7 @@ export class BonuslyService {
       return;
     }
 
-    console.log(`Sending a bonusly ${teamId}, ${senderEmail} ${recipientEmails.join(',')} ${amount} ${reason ? reason : 'no reason'} ${qraftyConfig.bonuslyConfig.get('apiKey', String, { getters: false })} ${qraftyConfig.bonuslyConfig.url.toString()}`);
+    //console.log(`Sending a bonusly ${teamId}, ${senderEmail} ${recipientEmails.join(',')} ${amount} ${reason ? reason : 'no reason'} ${qraftyConfig.bonuslyConfig.get('apiKey', String, { getters: false })} ${qraftyConfig.bonuslyConfig.url.toString()}`);
     const axios = Axios.create({
       baseURL: qraftyConfig.bonuslyConfig.url.toString(),
       headers: {
