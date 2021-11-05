@@ -79,7 +79,7 @@ export class ScoreKeeper {
           scoreChange: incrementValue,
         });
       } catch (e) {
-        //Logger.error(`failed saving spam log for user ${toUser.name} from ${from.name} in channel ${channel} because ${reason}`, e);
+        console.error(`failed saving spam log for user ${toUser.name} from ${fromUser.name} in channel ${channel} because ${reason}`, e);
       }
 
       if (toUser && toUser.accountLevel > 1) {
@@ -94,7 +94,7 @@ export class ScoreKeeper {
       await bot?.save();
       return { toUser, fromUser };
     } catch (e) {
-      //Logger.error(`failed to ${incrementValue > 0 ? 'add' : 'subtract'} point to [${to.name || 'no to'}] from [${from ? from.name : 'no from'}] because [${reason}] object [${JSON.stringify(toUser)}]`, e);
+      console.error(`failed to ${incrementValue > 0 ? 'add' : 'subtract'} point to [${toId}] from [${fromId}] because [${reason ? reason : 'no reason'}]`, e);
       throw e;
     }
   }
@@ -138,7 +138,7 @@ export class ScoreKeeper {
           scoreChange: numberOfTokens,
         });
       } catch (e) {
-        //Logger.error(`failed saving spam log for user ${toUser.name} from ${from.name} in channel ${channel} because ${reason}`, e);
+        console.error(`failed saving spam log for user ${toUser.name} from ${fromUser.name} in channel ${channel} because ${reason ? reason : 'no reason'}`, e);
       }
       await toUser.save();
       await fromUser.save()
@@ -147,7 +147,7 @@ export class ScoreKeeper {
         fromUser,
       };
     } catch (e) {
-      //Logger.error(`failed to transfer tokens to [${to.name || 'no to'}] from [${from ? from.name : 'no from'}] because [${reason}] object [${toUser.name}]`, e);
+      console.error(`failed to transfer tokens to [${toId}] from [${fromId}] because [${reason ? reason : 'no reason'}]`, e);
       throw e;
     }
   }

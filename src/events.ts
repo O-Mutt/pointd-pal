@@ -30,7 +30,7 @@ async function sendPlusPlusNotification(ppEvent: PPEvent) {
     return;
   }
 
-  const permalink = await getPermalinkToMessage(botToken, channelId, ppEvent.originalMessageTs);
+  const permalink = await getPermalinkToMessage(botToken, channelId, ppEvent.originalMessageParentTs || ppEvent.originalMessageTs);
   if (permalink) {
     ppEvent.notificationMessage = `${ppEvent.notificationMessage} ${Md.link(permalink, 'view here')}`
   }
@@ -90,7 +90,7 @@ async function logAndNotifySpam({ sender, recipient, notificationMessage, reason
     const result = await app.client.chat.postMessage({
       token: botToken,
       channel: sender.slackId,
-      text: ``,
+      text: spamMessage,
     });
   } catch (e: any | unknown) {
     console.error(e)
@@ -109,6 +109,6 @@ async function getPermalinkToMessage(botToken, channelId, ts): Promise<string | 
     });
     return permalink;
   } catch (e: any | unknown) {
-    console.error('There was an error getting the permalink');
+    console.error('There was an error getting the permalink', e.message);
   }
 }

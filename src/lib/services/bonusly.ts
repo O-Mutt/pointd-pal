@@ -68,15 +68,7 @@ export class BonuslyService {
           data.push(values);
         }
       } catch (e: any | unknown) {
-        const isAxiosError = Axios.isAxiosError(e)
-        if (isAxiosError) {
-          const axErr = e as AxiosError;
-          console.error(axErr.stack);
-        } else {
-          // logger.error('Error sending bonusly bonus', e);
-          console.error('Error sending bonusly bonus', e);
-        }
-        data.push(e.response.data);
+        console.error('[ERROR] Error sending bonusly bonus', e);
       }
     }
 

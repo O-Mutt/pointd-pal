@@ -78,7 +78,7 @@ async function sendBonuslyBonus(plusPlusEvent: PPEvent) {
             channel: plusPlusEvent.channel
           } as ChatPostEphemeralArguments);
         } catch (e) {
-          console.log(e);
+          console.log("error posting ephemeral bonusly send fail", e);
         }
         return;
       }
@@ -169,7 +169,7 @@ async function handleBonuslySent(event: PPBonuslySentEvent) {
         text: dms.join('\n'),
       });
     } catch (e) {
-      // logger.error('error sending dm for bonus', e)
+      console.error('error sending dm for bonusly', e)
     }
   }
 
@@ -201,7 +201,7 @@ async function handleBonuslySent(event: PPBonuslySentEvent) {
         messages = response.messages;
       }
 
-      console.log("all of the messages found:", messages);
+      //console.log("all of the messages found:", messages);
       if (!messages || messages.length < 1) {
         console.error('couldn\'t find the message to update');
         return;

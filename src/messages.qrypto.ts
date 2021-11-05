@@ -80,7 +80,7 @@ async function botWalletCount({ message, context, logger, say }) {
   try {
     gas = await tokenBuddy.getBalance(botWallet.publicWalletAddress);
   } catch (e) {
-    await say(`An error occurred getting Qrafty's gas amount`);
+    await say(`An error occurred getting Qrafty's gas amount`, e);
   }
   logger.debug(
     `Get the bot wallet by user ${message.user.name}, ${_.pick(JSON.stringify(botWallet), [
