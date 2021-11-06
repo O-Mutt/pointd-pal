@@ -15,6 +15,7 @@ app.message(RegExp(/(plusplus version|-v|--version)/, 'i'), directMention(), asy
 });
 app.message(new RegExp('how much .*point.*', 'i'), tellHowMuchPointsAreWorth);
 
+require('dotenv').config();
 const procVars = H.getProcessVariables(process.env);
 
 async function respondWithHelpGuidance({ client, message, say }) {

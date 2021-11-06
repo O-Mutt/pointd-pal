@@ -12,6 +12,7 @@ import { actions } from './lib/types/Actions';
 import { ConfirmOrCancel, PromptSettings } from './lib/types/Enums';
 import { PPBonuslySentEvent, PPBonuslySentEventName, PPEvent, PPEventName, PPFailureEvent, PPFailureEventName, TerseBonuslySentPayload } from './lib/types/Events';
 import { Message as RepliesMessage } from '@slack/web-api/dist/response/ConversationsRepliesResponse';
+import { Message as HistoryMessage } from '@slack/web-api/dist/response/ConversationsHistoryResponse';
 
 eventBus.on(PPEventName, sendBonuslyBonus);
 eventBus.on(PPBonuslySentEventName, handleBonuslySent);
@@ -89,7 +90,6 @@ async function sendBonuslyBonus(plusPlusEvent: PPEvent) {
         channel: plusPlusEvent.channel,
         originalMessageTs: plusPlusEvent.originalMessageTs,
         originalMessageParentTs: plusPlusEvent.originalMessageParentTs,
-        originalMessage: plusPlusEvent.originalMessage,
         recipients: plusPlusEvent.recipients,
         sender: plusPlusEvent.sender
       };
@@ -106,7 +106,7 @@ async function sendBonuslyBonus(plusPlusEvent: PPEvent) {
               }. Would you like to include ${bonuslyAmount} per user, ${totalBonuslyPoints} total, bonusly bonus with these?`
           }),
           Blocks.Actions().elements(
-            Elements.Button({ text: ConfirmOrCancel.CONFIRM, actionId: actions.bonusly.prompt_confirm, value: JSON.stringify(bonuslyPayload) }),
+            Elements.Button({ text: ConfirmOrCancel.CONFIRM, actionId: actions.bonusly.prompt_confirm, value: JSON.stringify(bonuslyPayload) }).primary(),
             Elements.Button({ text: ConfirmOrCancel.CANCEL, actionId: actions.bonusly.prompt_cancel })
           )
         )
@@ -174,53 +174,53 @@ async function handleBonuslySent(event: PPBonuslySentEvent) {
     }
   }
 
-  let originalMessageText = event.originalMessage;
-  if (!originalMessageText) {
-    console.log('the original message was missing the text for the event', event);
-    try {
-      let messages: RepliesMessage[] | undefined = undefined;
-      if (event.originalMessageParentTs) {
-        const repliesArgs: ConversationsRepliesArguments = {
-          token,
-          channel: event.channel,
-          ts: event.originalMessageTs,
-          latest: event.originalMessageParentTs,
-          limit: 10,
-          inclusive: true
-        };
-        const response = await app.client.conversations.replies(repliesArgs);
-        messages = response.messages;
-      } else {
-        const historyArgs: ConversationsHistoryArguments = {
-          token,
-          channel: event.channel,
-          latest: event.originalMessageTs,
-          inclusive: true,
-          limit: 10
-        };
-        const response = await app.client.conversations.history(historyArgs);
-        messages = response.messages;
-      }
-
-      console.log("all of the messages found:", messages);
-      if (!messages || messages.length < 1) {
-        console.error('couldn\'t find the message to update');
-        return;
-      }
-      originalMessageText = messages[0].text
-      console.log("the message found", messages[0]);
-    } catch (e: any | unknown) {
-      console.error('error looking up message', e)
-
+  let originalMessage: RepliesMessage | HistoryMessage | undefined = undefined;
+  try {
+    let messages: RepliesMessage[] | HistoryMessage[] | undefined = undefined;
+    if (event.originalMessageParentTs) {
+      const repliesArgs: ConversationsRepliesArguments = {
+        token,
+        channel: event.channel,
+        ts: event.originalMessageTs,
+        latest: event.originalMessageParentTs,
+        limit: 10,
+        inclusive: true
+      };
+      const response = await app.client.conversations.replies(repliesArgs);
+      messages = response.messages?.filter((message) => message.ts === event.originalMessageParentTs);
+    } else {
+      const historyArgs: ConversationsHistoryArguments = {
+        token,
+        channel: event.channel,
+        latest: event.originalMessageTs,
+        inclusive: true,
+        limit: 10
+      };
+      const response = await app.client.conversations.history(historyArgs);
+      messages = response.messages?.filter((message) => message.ts === event.originalMessageTs);
     }
+
+    console.log("all of the messages found:", messages);
+    if (!messages || messages.length < 1) {
+      console.error('couldn\'t find the message to update');
+      return;
+    }
+    originalMessage = messages[0];
+    console.log("the message found", messages[0]);
+  } catch (e: any | unknown) {
+    console.error('error looking up message', e)
   }
 
+  if (!originalMessage) {
+    console.error('no original message found');
+    return;
+  }
   try {
     const updateArgs: ChatUpdateArguments = {
       token: token,
-      ts: event.originalMessageTs,
+      ts: originalMessage.ts as string,
       channel: event.channel,
-      text: `${originalMessageText}\n*Bonusly:*\n${bonuslyMessages.join('\n')}`,
+      text: `${originalMessage.text || ''}\n*Bonusly:*\n${bonuslyMessages.join('\n')}`,
     };
     await app.client.chat.update(updateArgs);
   } catch (e) {

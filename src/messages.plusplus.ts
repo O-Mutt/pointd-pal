@@ -20,6 +20,7 @@ import { directMention } from '@slack/bolt';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { ChatPostMessageResponse } from '@slack/web-api';
 
+require('dotenv').config();
 const procVars = H.getProcessVariables(process.env);
 const scoreKeeper = new ScoreKeeper();
 const databaseService = new DatabaseService();
@@ -117,7 +118,6 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
       channel,
       reason: cleanReason,
       teamId: teamId,
-      originalMessage: theMessage,
       originalMessageTs: H.getMessageTs(sayResponse.message) as string,
       originalMessageParentTs: H.getMessageParentTs(sayResponse.message)
     };
@@ -177,7 +177,6 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
       channel,
       reason: cleanReason,
       teamId: teamId,
-      originalMessage: theMessage,
       originalMessageTs: H.getMessageTs(sayResponse.message),
       originalMessageParentTs: H.getMessageParentTs(sayResponse.message)
     };
@@ -265,7 +264,6 @@ async function multipleUsersVote({ message, context, logger, say }) {
       channel,
       reason: cleanReason,
       teamId: teamId,
-      originalMessage: messages.join('\n'),
       originalMessageTs: H.getMessageTs(sayResponse.message),
       originalMessageParentTs: H.getMessageParentTs(sayResponse.message)
     };

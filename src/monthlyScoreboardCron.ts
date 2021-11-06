@@ -14,6 +14,7 @@ import { connectionFactory } from './lib/services/connectionsFactory';
 import { DatabaseService } from './lib/services/database';
 import { SlackService } from './lib/services/slack';
 
+require('dotenv').config();
 const procVars = H.getProcessVariables(process.env);
 const databaseService = new DatabaseService();
 

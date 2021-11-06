@@ -10,7 +10,7 @@ import { IUser, User } from './lib/models/user';
 
 
 app.action(actions.bonusly.prompt_confirm,
-  async ({ payload, ack, respond }: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
+  async ({ payload, body, ack, client, respond }: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
     await ack();
     const bonuslyPayload = JSON.parse(payload.value) as TerseBonuslySentPayload;
     const connection = connectionFactory(bonuslyPayload.teamId);
@@ -28,7 +28,7 @@ app.action(actions.bonusly.prompt_confirm,
         bonuslyPayload.amount,
         bonuslyPayload.reason);
     if (!responses || responses.length < 1) {
-      await respond({ text: `${Md.emoji('thumbsdown')} Bonusly sending failed.`, delete_original: true, replace_original: true } as RespondArguments);
+      await respond({ text: '', delete_original: true, replace_original: true } as RespondArguments);
       return;
     }
 
@@ -41,11 +41,12 @@ app.action(actions.bonusly.prompt_confirm,
       originalMessageParentTs: bonuslyPayload.originalMessageParentTs,
       channel: bonuslyPayload.channel
     };
-    await respond({ text: `${Md.emoji('ok_hand')} Bonusly sent.`, delete_original: true, replace_original: true, thread_ts: payload.action_ts } as RespondArguments)
+    console.log(body.container)
+    const response = await respond({ text: '', delete_original: true, replace_original: true } as RespondArguments)
     eventBus.emit(PPBonuslySentEventName, ppBonusly);
   });
 
-app.action(actions.bonusly.prompt_cancel, async (actionArgs: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
-  await actionArgs.ack();
-  await actionArgs.respond({ text: `${Md.emoji('ok_hand')} No bonusly sent.`, delete_original: true, replace_original: true } as RespondArguments);
+app.action(actions.bonusly.prompt_cancel, async ({ ack, respond, client, body }: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
+  await ack();
+  await respond({ text: '', delete_original: true, replace_original: true } as RespondArguments);
 });

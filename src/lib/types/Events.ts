@@ -1,5 +1,6 @@
 import { IUser, UserInterface } from '../models/user';
 import { DirectionEnum } from './Enums';
+import { RespondFn } from '@slack/bolt';
 
 interface EventWithTeamId {
   teamId: string;
@@ -12,7 +13,6 @@ export interface PPEvent extends EventWithTeamId {
   channel: string;
   amount: number;
   direction: DirectionEnum;
-  originalMessage: string;
   originalMessageTs: string;
   originalMessageParentTs?: string; // this is the parent message if the plus plus message was sent in a thread
   notificationMessage?: string;
@@ -42,7 +42,6 @@ export interface PPBonuslySentEvent {
   responses: any[];
   sender: IUser;
   recipients: IUser[];
-  originalMessage?: string;
   originalMessageTs: string;
   originalMessageParentTs?: string;
 }

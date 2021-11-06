@@ -1,8 +1,8 @@
-import { Bits, Blocks, Elements, Md, Modal, Option } from 'slack-block-builder';
+import { Bits, Blocks, Elements, Md, Modal, Option, OptionBuilder } from 'slack-block-builder';
 import { SlackModalDto } from 'slack-block-builder/dist/lib';
 
 import {
-  AllMiddlewareArgs, MessageShortcut, SlackShortcut, SlackShortcutMiddlewareArgs,
+  AllMiddlewareArgs, MessageShortcut, SlackCommandMiddlewareArgs, SlackShortcut, SlackShortcutMiddlewareArgs,
   SlackViewMiddlewareArgs, ViewSubmitAction
 } from '@slack/bolt';
 import { View } from '@slack/types';
@@ -17,37 +17,104 @@ import { actions } from './lib/types/Actions';
 import { blocks } from './lib/types/BlockIds';
 import { DirectionEnum } from './lib/types/Enums';
 import { PPEvent, PPEventName } from './lib/types/Events';
+import { regExpCreator } from './lib/regexpCreator';
 
 const scoreKeeper = new ScoreKeeper();
 
-app.shortcut(actions.shortcuts.message,
-  async ({ shortcut, ack, body, client }: SlackShortcutMiddlewareArgs<MessageShortcut> & AllMiddlewareArgs) => {
-    console.log('shortcut open');
-    try {
-      await ack();
-      const channel = body.channel.id;
-      const messageTs = body.message.ts;
-      const { permalink }: ChatGetPermalinkResponse = await client.chat.getPermalink({ channel, message_ts: messageTs });
+app.command('/plusplus', handleSlashCommand);
+app.shortcut(actions.shortcuts.message, handleShortcut);
 
-
-      const json: any = {
-        channel,
-        messageTs,
-        permalink
+async function handleSlashCommand({ ack, body, command, client }: SlackCommandMiddlewareArgs & AllMiddlewareArgs) {
+  try {
+    await ack();
+    const singleUser = regExpCreator.createUpDownVoteRegExp();
+    const multiUser = regExpCreator.createMultiUserVoteRegExp();
+    let userIds, operator, reason;
+    if (body.text) {
+      const isSingleUser = singleUser.test(body.text);
+      const isMultiUser = multiUser.test(body.text);
+      if (isSingleUser) {
+        const matches = body.text.match(singleUser)?.groups;
+        console.log(matches);
+        if (matches) {
+          userIds = [matches['userId']];
+          operator = matches['operator'];
+          reason = matches['reason'];
+        }
+      } else if (isMultiUser) {
+        const matches = body.text.match(multiUser)?.groups;
+        if (matches) {
+          userIds = matches['allUsers'].trim().split(new RegExp(regExpCreator.multiUserSeparator)).filter(Boolean);
+          userIds = userIds
+            // Remove empty ones: {,,,}++
+            .filter((id) => !!id.length)
+            // remove <@.....>
+            .map((id) => id.replace(new RegExp(regExpCreator.userObject), '$1'))
+            // Remove duplicates: {user1,user1}++
+            .filter((id, pos, self) => self.indexOf(id) === pos);
+          operator = matches['operator'];
+          reason = matches['reason'];
+        }
       }
-
-      const modalView = buildMessagePlusPlusModal(json, permalink);
-      const result = await client.views.open({
-        trigger_id: shortcut.trigger_id,
-        view: modalView
-      })
-    } catch (e: any | unknown) {
-      console.log('shortcut err', e);
     }
-  });
+    console.log(command, body);
+    const channel = body.channel_id;
 
-function buildMessagePlusPlusModal(privateViewMetadataJson: JSON, permalink: string | undefined): SlackModalDto {
+    const json: any = {
+      channel
+    }
 
+    const localOptions = {
+      userIds,
+      operator,
+      reason
+    }
+
+    const modalView = buildMessagePlusPlusModal(json, localOptions);
+    const result = await client.views.open({
+      trigger_id: command.trigger_id,
+      view: modalView
+    })
+  } catch (e: any | unknown) {
+    console.log('slash err', e);
+  }
+
+}
+
+async function handleShortcut({ shortcut, ack, body, client }: SlackShortcutMiddlewareArgs<MessageShortcut> & AllMiddlewareArgs) {
+  try {
+    await ack();
+    console.log(body)
+    const channel = body.channel.id;
+    const messageTs = body.message.ts;
+    const userId = body.message.user;
+    const { permalink }: ChatGetPermalinkResponse = await client.chat.getPermalink({ channel, message_ts: messageTs });
+
+
+    const json: any = {
+      channel,
+      messageTs,
+      permalink,
+    }
+    const localOptions = {
+      userIds: [userId],
+      permalink
+    }
+
+    const modalView = buildMessagePlusPlusModal(json, localOptions);
+    const result = await client.views.open({
+      trigger_id: shortcut.trigger_id,
+      view: modalView
+    })
+  } catch (e: any | unknown) {
+    console.log('shortcut err', e);
+  }
+}
+
+function buildMessagePlusPlusModal(privateViewMetadataJson: any, localOptions: any): SlackModalDto {
+
+  const permlink = localOptions.permalink ? `${Md.link(localOptions.permalink, 'this message')}` : undefined;
+  const initialReason = localOptions.reason || permlink
   return Modal({
     title: `${Md.emoji('rocket')} Send a PlusPlus`,
     submit: 'Send',
@@ -58,7 +125,7 @@ function buildMessagePlusPlusModal(privateViewMetadataJson: JSON, permalink: str
       Elements.UserMultiSelect({
         actionId: blocks.shortcuts.message.recipients,
         placeholder: 'Jill Example',
-      }),
+      }).initialUsers(localOptions.userIds),
     ),
     Blocks.Input({ label: 'Are you giving them a point (++) or taking one away (--)?', blockId: blocks.shortcuts.message.operator }).element(
       Elements.StaticSelect({
@@ -67,13 +134,15 @@ function buildMessagePlusPlusModal(privateViewMetadataJson: JSON, permalink: str
       }).options(
         Bits.Option({ text: DirectionEnum.PLUS, value: DirectionEnum.PLUS }),
         Bits.Option({ text: DirectionEnum.MINUS, value: DirectionEnum.MINUS }),
-      ),
+      ).initialOption(localOptions.operator ?
+        Bits.Option({ text: localOptions.operator, value: localOptions.operator })
+        : undefined),
     ),
     Blocks.Input({ label: 'Why are you sending these points?', blockId: blocks.shortcuts.message.reason }).element(
       Elements.TextInput({
         actionId: blocks.shortcuts.message.reason,
         placeholder: 'Being the best co-worker in the world',
-      }).initialValue(permalink ? `${Md.link(permalink, 'this message')}` : undefined),
+      }).initialValue(initialReason),
     ).optional(),
   ).privateMetaData(JSON.stringify(privateViewMetadataJson))
     .buildToObject();
@@ -152,15 +221,15 @@ app.view(
     messages = messages.filter((message) => !!message); // de-dupe
     if (messages) {
       logger.debug(`These are the messages \n ${messages.join(' ')} `);
-      const postResp = await client.chat.postMessage(
-        {
-          text: messages.join('\n'),
-          channel: channel,
-          thread_ts: messageTs
-        }
-      );
+      const postArgs: ChatPostMessageArguments = {
+        text: messages.join('\n'),
+        channel: channel,
+      };
+      if (messageTs) {
+        postArgs.thread_ts = messageTs
+      }
+      const postResp = await client.chat.postMessage(postArgs);
       console.log("the message post response", postResp);
-      postResp.ts
       const plusPlusEvent: PPEvent = {
         notificationMessage: notificationMessage.join('\n'),
         sender: sender as IUser,
@@ -170,7 +239,6 @@ app.view(
         channel,
         reason: cleanReason,
         teamId: teamId,
-        originalMessage: messages.join('\n'),
         originalMessageTs: postResp.message?.thread_ts as string,
         originalMessageParentTs: postResp.ts as string,
       };

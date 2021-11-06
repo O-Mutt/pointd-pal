@@ -14,6 +14,7 @@ import { DatabaseService } from './lib/services/database';
 import { actions } from './lib/types/Actions';
 import { ConfirmOrCancel } from './lib/types/Enums';
 
+require('dotenv').config();
 const procVars = H.getProcessVariables(process.env);
 const databaseService = new DatabaseService();
 

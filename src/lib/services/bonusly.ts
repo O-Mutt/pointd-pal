@@ -69,6 +69,11 @@ export class BonuslyService {
         }
       } catch (e: any | unknown) {
         console.error('[ERROR] Error sending bonusly bonus', e);
+        const values = {
+          success: false,
+          message: e.response.data.message
+        }
+        data.push(values);
       }
     }
 

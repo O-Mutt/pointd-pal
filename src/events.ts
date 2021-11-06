@@ -7,8 +7,7 @@ import { connectionFactory } from './lib/services/connectionsFactory';
 import { eventBus } from './lib/services/eventBus';
 import { SlackService } from './lib/services/slack';
 import {
-  PPEvent, PPEventName, PPFailureEvent, PPFailureEventName, PPSpamEvent,
-  PPSpamEventName
+  PPEvent, PPEventName, PPFailureEvent, PPFailureEventName, PPSpamEvent, PPSpamEventName
 } from './lib/types/Events';
 
 eventBus.on(PPEventName, sendPlusPlusNotification);
@@ -30,7 +29,7 @@ async function sendPlusPlusNotification(ppEvent: PPEvent) {
     return;
   }
 
-  const permalink = await getPermalinkToMessage(botToken, channelId, ppEvent.originalMessageParentTs || ppEvent.originalMessageTs);
+  const permalink = await getPermalinkToMessage(botToken, ppEvent.channel, ppEvent.originalMessageTs);
   if (permalink) {
     ppEvent.notificationMessage = `${ppEvent.notificationMessage} ${Md.link(permalink, 'view here')}`
   }
@@ -97,7 +96,6 @@ async function logAndNotifySpam({ sender, recipient, notificationMessage, reason
     // logger.error(error);
   }
 }
-
 
 async function getPermalinkToMessage(botToken, channelId, ts): Promise<string | undefined> {
   try {

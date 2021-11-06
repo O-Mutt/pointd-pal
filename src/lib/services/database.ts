@@ -15,6 +15,7 @@ export class DatabaseService {
   spamMessage: string;
 
   constructor() {
+    require('dotenv').config();
     const { spamMessage, spamTimeLimit } = H.getProcessVariables(process.env);
     this.spamMessage = spamMessage;
     this.spamTimeLimit = spamTimeLimit;

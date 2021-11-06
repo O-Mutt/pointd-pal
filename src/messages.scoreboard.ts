@@ -14,6 +14,7 @@ import { ESMap } from 'typescript';
 import { IUser, User } from './lib/models/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
 
+require('dotenv').config();
 const procVars = H.getProcessVariables(process.env);
 const databaseService = new DatabaseService();
 

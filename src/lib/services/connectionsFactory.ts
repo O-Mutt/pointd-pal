@@ -2,6 +2,7 @@ import { Helpers as H } from '../helpers';
 
 import mongoose from 'mongoose';
 
+require('dotenv').config();
 const procVars = H.getProcessVariables(process.env);
 
 const connections: { [key: string]: mongoose.Connection } = {};

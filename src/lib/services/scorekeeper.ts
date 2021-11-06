@@ -19,6 +19,7 @@ export class ScoreKeeper {
   * params.spamMessage
   */
   constructor() {
+    require('dotenv').config();
     const { spamMessage } = H.getProcessVariables(process.env);
     this.spamMessage = spamMessage;
     this.databaseService = new DatabaseService();
