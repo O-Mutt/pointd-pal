@@ -1,25 +1,38 @@
 import { InstallationStore, Installation as OAuthInstallation, InstallationQuery } from '@slack/oauth';
-import { Installation } from '../models/installation'
+import Stripe from 'stripe';
+import { IInstallation, Installation } from '../models/installation'
+import { StripeService } from './stripe';
 
 
 export const QraftyInstallStore: InstallationStore = {
   storeInstallation: async (installation) => {
-
+    const stripe = new StripeService();
     let teamId;
+    let teamName;
     if (installation.isEnterpriseInstall && installation.enterprise !== undefined) {
       console.log(`[INSTALL] org wide ${installation.enterprise.id}`);
       teamId = installation.enterprise.id;
+      teamName = installation.enterprise.name;
     }
     if (installation.team !== undefined) {
       console.log(`[INSTALL] single team ${installation.team.id}`);
       teamId = installation.team.id;
+      teamName = installation.team.name;
     }
 
+    let install: IInstallation | null;
     if (teamId) {
-      await Installation.deleteOne({ teamId });
+      let customer: Stripe.Customer | undefined;
+      install = await Installation.findOne({ teamId });
+      if (install) {
+        await Installation.deleteOne({ teamId });
+      } else {
+        customer = await stripe.createCustomer(teamId, teamName);
+      }
       await Installation.create({
         teamId,
         installation,
+        customerId: install?.customerId || customer?.id
       });
       return;
     }

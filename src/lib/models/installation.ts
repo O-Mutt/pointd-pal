@@ -5,11 +5,13 @@ import { Installation as OAuthInstallation } from "@slack/oauth";
 export interface IInstallation extends Document {
   teamId: string;
   installation: OAuthInstallation;
+  customerId: string;
 }
 
 export const InstallationSchema = new Schema({
   teamId: String,
   installation: Schema.Types.Mixed,
+  customerId: String,
 });
 
 InstallationSchema.statics.findOneOrCreate = async function (

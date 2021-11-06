@@ -7,6 +7,7 @@ import { QraftyInstallStore } from './src/lib/services/qraftyInstallStore';
 
 require('dotenv').config();
 
+import { stripeEndpoint } from './src/lib/webhook.stripe';
 export let app = new App({
   signingSecret: process.env.SLACK_SIGNING_SECRET,
   clientId: process.env.SLACK_CLIENT_ID,
@@ -38,6 +39,9 @@ export let app = new App({
     "users:read",
     "users:read.email",
     "usergroups:read",
+  ],
+  customRoutes: [
+    stripeEndpoint
   ]
 });
 
