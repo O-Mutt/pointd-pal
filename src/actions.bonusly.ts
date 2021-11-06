@@ -41,7 +41,7 @@ app.action(actions.bonusly.prompt_confirm,
       originalMessageParentTs: bonuslyPayload.originalMessageParentTs,
       channel: bonuslyPayload.channel
     };
-    await respond({ text: `${Md.emoji('ok_hand')} Bonusly sent.`, delete_original: true, replace_original: true } as RespondArguments)
+    await respond({ text: `${Md.emoji('ok_hand')} Bonusly sent.`, delete_original: true, replace_original: true, thread_ts: payload.action_ts } as RespondArguments)
     eventBus.emit(PPBonuslySentEventName, ppBonusly);
   });
 

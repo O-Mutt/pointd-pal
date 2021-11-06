@@ -1,6 +1,6 @@
 import { Blocks, Elements, Md, Message } from 'slack-block-builder';
 
-import { ChatPostEphemeralArguments, ChatUpdateArguments, ConversationsHistoryArguments, ConversationsRepliesArguments } from '@slack/web-api';
+import { ChatPostEphemeralArguments, ChatPostEphemeralResponse, ChatUpdateArguments, ConversationsHistoryArguments, ConversationsRepliesArguments } from '@slack/web-api';
 
 import { app } from '../app';
 import { Installation } from './lib/models/installation';
@@ -122,7 +122,8 @@ async function sendBonuslyBonus(plusPlusEvent: PPEvent) {
         if (plusPlusEvent.originalMessageParentTs) {
           postMessage.thread_ts = plusPlusEvent.originalMessageTs;
         }
-        const result = await app.client.chat.postEphemeral(postMessage);
+        const result: ChatPostEphemeralResponse = await app.client.chat.postEphemeral(postMessage);
+
       } catch (e) {
         console.error("post for ephemeral", e, message.printPreviewUrl());
       }
