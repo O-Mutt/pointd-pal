@@ -20,7 +20,7 @@ export class StripeService {
   }
 
   async createCustomer(teamId: string, teamName: string, email: string): Promise<Stripe.Customer> {
-    const customer = await this.stripe.customer.create({
+    const customer = await this.stripe.customers.create({
       name: teamId,
       description: `Slack bot installed by ${teamName} in workspace ${teamId}`,
       email: email
