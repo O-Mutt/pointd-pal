@@ -9,7 +9,7 @@ export const stripeEndpoint: CustomRoute = {
   handler: (req: IncomingMessage, res: ServerResponse) => {
 
     let body;
-    req.on('data', (chunk) => body += chunk);
+    req.on('data', (chunk) => body ? body += chunk : body = chunk);
     req.on('end', async () => {
       await handleStripeEvent(body, req, res)
     })
