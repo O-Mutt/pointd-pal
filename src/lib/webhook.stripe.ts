@@ -7,11 +7,10 @@ export const stripeEndpoint: CustomRoute = {
   path: '/stripe-hook',
   method: ['POST'],
   handler: (req: IncomingMessage, res: ServerResponse) => {
-    let body;
 
+    let body;
     req.on('data', (chunk) => body += chunk);
     req.on('end', async () => {
-      console.log(body)
       await handleStripeEvent(body, req, res)
     })
   }
@@ -68,9 +67,12 @@ async function handleStripeEvent(body: any, req: IncomingMessage, res: ServerRes
 
     // Return a 200 response to acknowledge receipt of the event
     res.writeHead(200);
+    res.end();
+    return;
   } catch (err: any | unknown) {
     res.writeHead(400);
     res.write(`Webhook Error: ${err.message}`);
+    res.end()
     return;
   }
 }
