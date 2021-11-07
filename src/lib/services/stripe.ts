@@ -87,11 +87,11 @@ export class StripeService {
 
   async updateSubscription(subscription: Stripe.Subscription): Promise<void> {
     const lookup: { [key: string]: any } = {};
-    try {
+    if (typeof subscription.customer === 'string') {
+      lookup.customerId = subscription.customer;
+    } else {
       lookup.teamId = (<Stripe.Customer>subscription.customer).name;
       lookup.customerId = (<Stripe.Customer>subscription.customer).id;
-    } catch (e) {
-      lookup.customerId = subscription.customer;
     }
     const install = await Installation.findOneAndUpdate(lookup, { $set: { subscriptionId: subscription.id, subscriptionStatus: subscription.status } });
     console.log(`Updating installation for customer ${subscription.customer} new subscription ${subscription.id} status ${subscription.status}`);
