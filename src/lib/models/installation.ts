@@ -12,15 +12,26 @@ export interface IInstallation extends Document {
 }
 
 export const InstallationSchema = new Schema({
-  teamId: String,
+  teamId: {
+    type: String,
+    index: true
+  },
   installation: Schema.Types.Mixed,
-  customerId: String,
-  subscriptionId: String,
+  customerId: {
+    type: String,
+    index: true
+  },
+  subscriptionId: {
+    type: String,
+    index: true
+  },
   subscriptionStatus: {
     type: String,
     enum: SubscriptionStatus
   }
 });
+
+InstallationSchema.index({ teamId: 1, customerId: 1 });
 
 export interface InstallationInterface extends IInstallation {
   // instance methods
