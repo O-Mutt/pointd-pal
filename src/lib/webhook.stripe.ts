@@ -41,11 +41,12 @@ async function handleStripeEvent(body: any, req: IncomingMessage, res: ServerRes
       /* case 'customer.updated':
         customer = value as Stripe.Customer;
         // Then define and call a function to handle the event customer.updated
-        break;
+        break; */
       case 'customer.subscription.created':
         subscription = value as Stripe.Subscription;
+        await stripe.updateSubscription(subscription);
         // Then define and call a function to handle the event customer.subscription.created
-        break; */
+        break;
       case 'customer.subscription.deleted':
         subscription = value as Stripe.Subscription;
         await stripe.deleteCustomerSubscription(undefined, subscription);
