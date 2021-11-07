@@ -6,10 +6,10 @@ import { Md } from 'slack-block-builder';
 import { connectionFactory } from './connectionsFactory';
 import { BotToken } from '../models/botToken';
 import { QraftyConfig } from '../models/qraftyConfig';
-import { ChatPostMessageArguments } from '@slack/web-api';
+import { ChatPostMessageArguments, ChatPostMessageResponse } from '@slack/web-api';
 import { app } from '../../../app';
 import { Installation } from '../models/installation';
-import { ScoreLog } from '../models/scoreLog';
+import { IScoreLog, ScoreLog } from '../models/scoreLog';
 import { Helpers as H } from '../helpers';
 
 export class ScoreKeeper {
@@ -71,14 +71,15 @@ export class ScoreKeeper {
       }
 
       try {
-        await ScoreLog(connection).create({
+        const scoreLog: IScoreLog = {
           from: fromUser.slackId,
           to: toUser.slackId,
           date: new Date(),
           channel,
           reason,
           scoreChange: incrementValue,
-        });
+        };
+        await ScoreLog(connection).create(scoreLog);
       } catch (e) {
         console.error(`failed saving spam log for user ${toUser.name} from ${fromUser.name} in channel ${channel} because ${reason}`, e);
       }

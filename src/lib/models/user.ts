@@ -131,4 +131,4 @@ export interface UserModelInterface extends Model<UserInterface> {
   findOneBySlackIdOrCreate(teamId: string, slackId: string): Promise<IUser>;
 }
 
-export const User = (conn: Connection) => conn.model<UserInterface, UserModelInterface>('score', UserSchema);
+export const User = (conn: Connection) => conn.model<UserInterface, UserModelInterface>('user', UserSchema);

@@ -2,7 +2,6 @@ import { InstallationStore, Installation as OAuthInstallation, InstallationQuery
 import Stripe from 'stripe';
 import { app } from '../../../app';
 import { IInstallation, Installation } from '../models/installation'
-import { SubscriptionStatus } from '../types/Enums';
 import { StripeService } from './stripe';
 
 

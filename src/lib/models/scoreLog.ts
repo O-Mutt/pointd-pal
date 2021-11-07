@@ -5,8 +5,8 @@ export interface IScoreLog extends Document {
   to: string;
   date: Date;
   channel: string;
-  reason: string;
   scoreChange: number;
+  reason?: string;
 }
 
 export const ScoreLogSchema = new Schema({

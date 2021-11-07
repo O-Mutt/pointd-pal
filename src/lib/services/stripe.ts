@@ -29,7 +29,7 @@ export class StripeService {
   }
 
   async createTrialAndSubscription(customer: Stripe.Customer): Promise<void> {
-    await this.stripe.subscriptions.create({
+    const subscription = await this.stripe.subscriptions.create({
       customer: customer.id,
       items: [
         {
@@ -38,6 +38,7 @@ export class StripeService {
       ],
       trial_period_days: this.trialPeriodDays
     });
+    const install = await Installation.findOneAndUpdate({ customerId: customer.id }, { $set: { subscriptionId: subscription.id, subscriptionStatus: subscription.status } });
   }
 
   async mapCustomerToInstallation(customer: Stripe.Customer): Promise<void> {
