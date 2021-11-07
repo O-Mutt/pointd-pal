@@ -67,7 +67,7 @@ export class StripeService {
     const install = await Installation.findOne(lookupQuery).exec();
 
     if (!install) {
-      console.error(`delete customer subscription failed ${lookupQuery}`);
+      console.error(`delete customer subscription failed ${JSON.stringify(lookupQuery)}`);
       return;
     }
 
@@ -81,7 +81,7 @@ export class StripeService {
     try {
       await Installation.findOneAndUpdate(lookupQuery, { $unset: { subscriptionId: 1, subscriptionStatus: 1 } }).exec();
     } catch (e: any | unknown) {
-      console.error(`There was an deleting the customerSubscription ${lookupQuery}`)
+      console.error(`There was an deleting the customerSubscription ${JSON.stringify(lookupQuery)}`)
     }
 
   }

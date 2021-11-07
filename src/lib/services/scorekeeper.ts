@@ -71,14 +71,14 @@ export class ScoreKeeper {
       }
 
       try {
-        const scoreLog: IScoreLog = {
+        const scoreLog = {
           from: fromUser.slackId,
           to: toUser.slackId,
           date: new Date(),
           channel,
           reason,
           scoreChange: incrementValue,
-        };
+        } as IScoreLog;
         await ScoreLog(connection).create(scoreLog);
       } catch (e) {
         console.error(`failed saving spam log for user ${toUser.name} from ${fromUser.name} in channel ${channel} because ${reason}`, e);
