@@ -1,6 +1,8 @@
 import { InstallationStore, Installation as OAuthInstallation, InstallationQuery } from '@slack/oauth';
 import Stripe from 'stripe';
+import { app } from '../../../app';
 import { IInstallation, Installation } from '../models/installation'
+import { SubscriptionStatus } from '../types/Enums';
 import { StripeService } from './stripe';
 
 
@@ -9,6 +11,7 @@ export const QraftyInstallStore: InstallationStore = {
     const stripe = new StripeService();
     let teamId;
     let teamName;
+    let email;
     if (installation.isEnterpriseInstall && installation.enterprise !== undefined) {
       console.log(`[INSTALL] org wide ${installation.enterprise.id}`);
       teamId = installation.enterprise.id;
@@ -20,6 +23,14 @@ export const QraftyInstallStore: InstallationStore = {
       teamName = installation.team.name;
     }
 
+    if (installation.bot?.token) {
+      const { user } = await app.client.users.info({
+        token: installation.bot?.token,
+        user: installation.user.id
+      });
+      email = user?.profile?.email;
+    }
+
     let install: IInstallation | null;
     if (teamId) {
       let customer: Stripe.Customer | undefined;
@@ -27,13 +38,20 @@ export const QraftyInstallStore: InstallationStore = {
       if (install) {
         await Installation.deleteOne({ teamId });
       } else {
-        customer = await stripe.createCustomer(teamId, teamName);
+        customer = await stripe.createCustomer(teamId, teamName, email);
       }
+
       await Installation.create({
         teamId,
         installation,
         customerId: install?.customerId || customer?.id
       });
+
+      // We created a new install, now we should create a stripe customer and subscription (and trial)
+      if (!install && customer) {
+        stripe.createTrialAndSubscription(customer);
+      }
+
       return;
     }
     throw new Error('Failed saving installation data to installationStore');

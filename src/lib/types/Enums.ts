@@ -25,3 +25,13 @@ export enum DirectionEnum {
   PLUS = '++',
   MINUS = '--',
 }
+
+export enum SubscriptionStatus {
+  ACTIVE = 'active',
+  TRIAL = 'trialing',
+  CANCELED = 'canceled',
+  INCOMPLETE = 'incomplete',
+  INCOMPLETE_EXPIRED = 'expired',
+  PAST_DUE = 'past_due',
+  UNPAID = 'unpaid'
+}
