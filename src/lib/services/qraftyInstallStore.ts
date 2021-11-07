@@ -49,7 +49,7 @@ export const QraftyInstallStore: InstallationStore = {
 
       // We created a new install, now we should create a stripe customer and subscription (and trial)
       if (!install && customer) {
-        stripe.createTrialAndSubscription(customer);
+        await stripe.createTrialAndSubscription(customer);
       }
 
       return;

@@ -16,7 +16,10 @@ export const InstallationSchema = new Schema({
   installation: Schema.Types.Mixed,
   customerId: String,
   subscriptionId: String,
-  subscriptionStatus: SubscriptionStatus
+  subscriptionStatus: {
+    type: String,
+    enum: SubscriptionStatus
+  }
 });
 
 export interface InstallationInterface extends IInstallation {
