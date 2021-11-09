@@ -9,6 +9,7 @@ export interface IInstallation extends Document {
   customerId: string;
   subscriptionId: string;
   subscriptionStatus: SubscriptionStatus;
+  enabled: boolean;
 }
 
 export const InstallationSchema = new Schema({
@@ -28,6 +29,10 @@ export const InstallationSchema = new Schema({
   subscriptionStatus: {
     type: String,
     enum: SubscriptionStatus
+  },
+  enabled: {
+    type: Boolean,
+    default: true
   }
 });
 

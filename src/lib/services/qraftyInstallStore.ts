@@ -71,7 +71,10 @@ export const QraftyInstallStore: InstallationStore = {
       if (!result) {
         throw new Error('Failed fetching installation');
       }
-      console.log(`[LOOKUP]  ${teamId}.`)
+      console.log(`[LOOKUP]  ${teamId}.`);
+      if (result.enabled) {
+        throw new Error(`This instance of qrafty is not enabled Team [${result.teamId}], Customer [${result.customerId}], Subscription [${result.subscriptionId}], Status [${result.subscriptionStatus}]`);
+      }
       return result.installation as OAuthInstallation<'v1' | 'v2', boolean>;
     }
 
