@@ -1,7 +1,7 @@
 import { CustomRoute } from "@slack/bolt/dist/receivers/custom-routes";
 import { IncomingMessage, ServerResponse } from "http";
 import { Stripe } from "stripe";
-import { StripeService } from "./services/stripe";
+import { StripeService } from "../services/stripe";
 
 export const stripeEndpoint: CustomRoute = {
   path: '/stripe-hook',

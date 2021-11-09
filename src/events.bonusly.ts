@@ -9,7 +9,7 @@ import { BonuslyService } from './lib/services/bonusly';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { eventBus } from './lib/services/eventBus';
 import { actions } from './lib/types/Actions';
-import { ConfirmOrCancel, PromptSettings } from './lib/types/Enums';
+import { ConfirmOrCancel, DirectionEnum, PromptSettings } from './lib/types/Enums';
 import { PPBonuslySentEvent, PPBonuslySentEventName, PPEvent, PPEventName, PPFailureEvent, PPFailureEventName, TerseBonuslySentPayload } from './lib/types/Events';
 import { Message as RepliesMessage } from '@slack/web-api/dist/response/ConversationsRepliesResponse';
 import { Message as HistoryMessage } from '@slack/web-api/dist/response/ConversationsHistoryResponse';
@@ -18,26 +18,17 @@ eventBus.on(PPEventName, sendBonuslyBonus);
 eventBus.on(PPBonuslySentEventName, handleBonuslySent);
 
 async function sendBonuslyBonus(plusPlusEvent: PPEvent) {
-  console.log('Caught plus plus event and will handle sending a bonusly')
-  const connection = connectionFactory(plusPlusEvent.teamId);
-  const config = await QraftyConfig(connection).findOneOrCreate(plusPlusEvent.teamId);
-  const teamInstallConfig = await Installation.findOne({ teamId: plusPlusEvent.teamId }).exec();
-  if (!config.bonuslyConfig?.enabled || !config.bonuslyConfig?.apiKey || !config.bonuslyConfig?.url) {
-    console.warn(`one of the configs is disabled Enabled [${config.bonuslyConfig?.enabled}] apiKey[${config.bonuslyConfig?.apiKey}] url[${config.bonuslyConfig?.url}]`);
+  console.log('Caught plus plus event and will handle sending a bonusly');
+  if (plusPlusEvent.direction === DirectionEnum.MINUS) {
+    console.log('We don\'t send bonuslys for \'--\'');
     return;
   }
-
-  const token = teamInstallConfig?.installation.bot?.token;
-  if (!token) {
-    console.warn(`This install is missing the bot token, apparently...`);
-    return;
-  }
-
   if (plusPlusEvent.sender.isBot === true) {
     // bots can't send ++ let alone bonusly bonuses
     console.error('How is a bot trying to send points?', plusPlusEvent.sender);
     return;
   }
+
   if (plusPlusEvent.sender.slackId && !plusPlusEvent.sender.email) {
     console.log('sender email missing but has slackId', plusPlusEvent.sender);
     const failureEvent: PPFailureEvent = {
@@ -59,16 +50,28 @@ async function sendBonuslyBonus(plusPlusEvent: PPEvent) {
     return;
   }
 
+  const connection = connectionFactory(plusPlusEvent.teamId);
+  const config = await QraftyConfig(connection).findOneOrCreate(plusPlusEvent.teamId);
+  const teamInstallConfig = await Installation.findOne({ teamId: plusPlusEvent.teamId }).exec();
+  if (!config.bonuslyConfig?.enabled || !config.bonuslyConfig?.apiKey || !config.bonuslyConfig?.url) {
+    console.warn(`one of the configs is disabled Enabled [${config.bonuslyConfig?.enabled}] apiKey[${config.bonuslyConfig?.apiKey}] url[${config.bonuslyConfig?.url}]`);
+    return;
+  }
+
+  const token = teamInstallConfig?.installation.bot?.token;
+  if (!token) {
+    console.warn(`This install is missing the bot token, apparently...`);
+    return;
+  }
+
   const bonuslyAmount: number = plusPlusEvent.sender.bonuslyScoreOverride || plusPlusEvent.amount;
   const totalBonuslyPoints: number = bonuslyAmount * plusPlusEvent.recipients.length;
   const totalQraftyPoints: number = plusPlusEvent.amount * plusPlusEvent.recipients.length;
   const recipientSlackIds = plusPlusEvent.recipients.map((recipient) => Md.user(recipient.slackId)).join(', ');
   const bonuslyPayload = buildBonuslyPayload(plusPlusEvent, bonuslyAmount);
-  console.log('Before the switch,', plusPlusEvent.sender.bonuslyPrompt);
   switch (plusPlusEvent.sender.bonuslyPrompt) {
     case PromptSettings.ALWAYS: {
       const bonuslyAmount: number = plusPlusEvent.sender.bonuslyScoreOverride || plusPlusEvent.amount;
-      console.log('Prompt settings, always send');
       const responses: any[] | undefined = await BonuslyService.sendBonus(plusPlusEvent.teamId, plusPlusEvent.sender.email as string, plusPlusEvent.recipients.map(rec => rec.email as string), bonuslyAmount, plusPlusEvent.reason);
       if (!responses || responses.length < 1) {
         try {
@@ -97,7 +100,6 @@ async function sendBonuslyBonus(plusPlusEvent: PPEvent) {
       break;
     }
     case PromptSettings.PROMPT: {
-      console.log('Prompt settings, prompt');
       const message = Message({ text: `Should we include ${bonuslyAmount} bonusly points with your Qrafty points?`, channel: plusPlusEvent.channel })
         .blocks(
           Blocks.Header({ text: `Should we include ${bonuslyAmount} Bonusly points (per recipient), ${totalBonuslyPoints} total, with your Qrafty points?` }),
@@ -130,7 +132,6 @@ async function sendBonuslyBonus(plusPlusEvent: PPEvent) {
       break;
     }
     case PromptSettings.NEVER:
-      console.log('Prompt settings, never');
     default:
       console.log('Prompt settings, default fall through');
       break;
@@ -200,13 +201,11 @@ async function handleBonuslySent(event: PPBonuslySentEvent) {
       messages = response.messages?.filter((message) => message.ts === event.originalMessageTs);
     }
 
-    console.log("all of the messages found:", messages);
     if (!messages || messages.length < 1) {
       console.error('couldn\'t find the message to update');
       return;
     }
     originalMessage = messages[0];
-    console.log("the message found", messages[0]);
   } catch (e: any | unknown) {
     console.error('error looking up message', e)
   }

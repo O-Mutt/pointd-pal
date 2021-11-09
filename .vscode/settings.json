@@ -5,9 +5,10 @@
   "editor.formatOnSave": true,
   "typescript.tsdk": "node_modules/typescript/lib",
   "cSpell.words": [
-    "qrypto",
-    "Subdocument",
+    "bonusly",
+    "qrafty",
     "Qrafty",
-    "qrafty"
+    "qrypto",
+    "Subdocument"
   ]
 }

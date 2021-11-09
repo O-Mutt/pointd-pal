@@ -6,8 +6,11 @@ import { LogLevel } from '@slack/logger';
 import { QraftyInstallStore } from './src/lib/services/qraftyInstallStore';
 
 require('dotenv').config();
+require('newrelic');
 
-import { stripeEndpoint } from './src/lib/webhook.stripe';
+import { stripeEndpoint } from './src/lib/routes/webhook.stripe';
+import { healthEndpoint } from './src/lib/routes/health';
+
 export let app = new App({
   signingSecret: process.env.SLACK_SIGNING_SECRET,
   clientId: process.env.SLACK_CLIENT_ID,
@@ -41,7 +44,8 @@ export let app = new App({
     "usergroups:read",
   ],
   customRoutes: [
-    stripeEndpoint
+    stripeEndpoint,
+    healthEndpoint
   ]
 });
 
