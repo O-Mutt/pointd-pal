@@ -1,6 +1,6 @@
 import { Md } from 'slack-block-builder';
 
-import { directMention } from '@slack/bolt';
+import { AllMiddlewareArgs, directMention, SlackEventMiddlewareArgs } from '@slack/bolt';
 import { Member } from '@slack/web-api/dist/response/UsersListResponse';
 
 import { app } from '../app';
@@ -8,6 +8,7 @@ import { Helpers as H } from './lib/helpers';
 import { IUser, User } from './lib/models/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { DatabaseService } from './lib/services/database';
+import { ConversationsListResponse } from '@slack/web-api';
 
 new DatabaseService();
 
@@ -18,13 +19,14 @@ app.message('try to map @.* to db users', directMention(), mapSingleUserToDb);
 app.message('unmap all users', directMention(), unmapUsersToDb);
 app.message('map all slackIds to slackEmail', directMention(), mapSlackIdToEmail);
 app.message('hubot to bolt', directMention(), migrateFromHubotToBolt);
+app.message('join all old qrafty channels', directMention(), joinAllQraftyChannels);
 
 async function mapUsersToDb({ message, context, client, logger, say }) {
   const teamId = context.teamId as string;
   const userId: string = message.user;
 
   const { isAdmin } = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, userId);
-  if (isAdmin) {
+  if (!isAdmin) {
     logger.error("sorry, can't do that", message, context);
     await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
     return;
@@ -51,7 +53,7 @@ async function mapMoreUserFieldsBySlackId({ message, context, client, logger, sa
   const userId: string = message.user;
 
   const { isAdmin } = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, userId);
-  if (isAdmin) {
+  if (!isAdmin) {
     logger.error("sorry, can't do that", message, context);
     await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
     return;
@@ -81,7 +83,7 @@ async function mapSingleUserToDb({ message, context, client, logger, say }) {
   const userId: string = message.user;
 
   const { isAdmin } = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, userId);
-  if (isAdmin) {
+  if (!isAdmin) {
     logger.error("sorry, can't do that", message, context);
     await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
     return;
@@ -117,7 +119,7 @@ async function unmapUsersToDb({ message, context, logger, say }) {
   const userId: string = message.user;
 
   const { isAdmin } = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, userId);
-  if (isAdmin) {
+  if (!isAdmin) {
     logger.error("sorry, can't do that", message, context);
     await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
     return;
@@ -138,7 +140,7 @@ async function mapSlackIdToEmail({ message, context, logger, say, client }) {
   const userId: string = message.user;
 
   const { isAdmin } = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, userId);
-  if (isAdmin) {
+  if (!isAdmin) {
     logger.error("sorry, can't do that", message, context);
     await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
     return;
@@ -212,6 +214,42 @@ async function migrateFromHubotToBolt({ message, context, logger, say, client })
   }
 }
 
+async function joinAllQraftyChannels({ say, logger, message, client, context }) {
+  let result: ConversationsListResponse | undefined = undefined;
+  const teamId = context.teamId as string;
+  const oldQrafty = 'U03HDRG36';
+
+  const userId: string = message.user;
+  const connection = connectionFactory(teamId)
+  const { isAdmin } = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
+  if (!isAdmin) {
+    logger.error("sorry, can't do that", message, context);
+    await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
+    return;
+  }
+
+  try {
+    result = await client.conversations.list({ team_id: teamId });
+  } catch (e: any | unknown) {
+    // logger.error(e)
+    console.error('Error getting list of conversations', e.message);
+  }
+  if (!result || !result.channels) {
+    console.log("could not find conversation list in migration");
+    return;
+  }
+
+  for (const channel of result.channels) {
+    try {
+      const { members } = await client.conversations.members({ channel: channel.id as string });
+      if (members && members.includes(oldQrafty)) {
+        client.conversations.join({ channel: channel.id as string });
+      }
+    } catch (e) {
+      console.error(`There was an error looking up members and joining the channel ${channel.id}`);
+    }
+  }
+}
 
 function decode(str: string): string {
   const buff = Buffer.from(str, 'base64');
