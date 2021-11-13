@@ -20,6 +20,7 @@ export let app = new App({
   installationStore: QraftyInstallStore,
   tokenVerificationEnabled: true,
   installerOptions: {
+    directInstall: true
   },
   scopes: [
     "app_mentions:read",
@@ -46,7 +47,7 @@ export let app = new App({
   customRoutes: [
     stripeEndpoint,
     healthEndpoint
-  ]
+  ],
 });
 
 // messages
