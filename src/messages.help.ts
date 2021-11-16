@@ -11,7 +11,7 @@ import { regExpCreator } from './lib/regexpCreator';
 
 app.message(regExpCreator.getHelp(), directMention(), respondWithHelpGuidance);
 app.message(RegExp(/(plusplus version|-v|--version)/, 'i'), directMention(), async ({ message, context, say }) => {
-  await say(`Qrafty Version: _${pjson.version}_`);
+  await say(`PointdPal Version: _${pjson.version}_`);
 });
 app.message(new RegExp('how much .*point.*', 'i'), tellHowMuchPointsAreWorth);
 
@@ -25,15 +25,15 @@ async function respondWithHelpGuidance({ client, message, say }) {
     .concat('`{ name1, name2, name3 } ++[<reason>]` - Increment score for all names (for a reason)\n')
     .concat('`{ name1, name2, name3 } --[<reason>]` - Decrement score for all names (for a reason) \n')
     .concat('`{ name1, name2, name3 } --[<reason>]` - Decrement score for all names (for a reason) \n')
-    .concat(`\`@Qrafty score <name>\` - Display the score for a name and some of the reasons\n`)
-    .concat(`\`@Qrafty top <amount>\` - Display the top scoring <amount>\n`)
-    .concat(`\`@Qrafty erase <name> [<reason>]\` - Remove the score for a name (for a reason) \n`)
-    .concat(`\`@Qrafty level me up\` - Level up your account for some additional Qraftyiness \n`)
+    .concat(`\`@PointdPal score <name>\` - Display the score for a name and some of the reasons\n`)
+    .concat(`\`@PointdPal top <amount>\` - Display the top scoring <amount>\n`)
+    .concat(`\`@PointdPal erase <name> [<reason>]\` - Remove the score for a name (for a reason) \n`)
+    .concat(`\`@PointdPal level me up\` - Level up your account for some additional PointdPaliness \n`)
     .concat('`how much are <point_type> points worth` - Shows how much <point_type> points are worth\n');
 
-  const theMessage = Message({ channel: message.channel, text: 'Help menu for Qrafty' })
+  const theMessage = Message({ channel: message.channel, text: 'Help menu for PointdPal' })
     .blocks(
-      Blocks.Header({ text: `Need help with Qrafty?` }),
+      Blocks.Header({ text: `Need help with PointdPal?` }),
       Blocks.Section({ text: `_Commands_:` }),
       Blocks.Section({ text: helpMessage }),
       procVars.furtherHelpUrl
@@ -65,12 +65,12 @@ async function tellHowMuchPointsAreWorth({ payload, logger, message, context, sa
     const ethInUsd = eth.data.rates.USD;
     const btcInUsd = btc.data.rates.USD;
     return say(
-      `A Bitcoin is worth $${btcInUsd} USD right now, Ethereum is $${ethInUsd} USD, and ${Md.bold('Qrafty points are worth nothing')}!`,
+      `A Bitcoin is worth $${btcInUsd} USD right now, Ethereum is $${ethInUsd} USD, and ${Md.bold('PointdPal points are worth nothing')}!`,
     );
   } catch (e: any) {
     console.error("Error with how much points worth -_-", e);
     return await say(
-      "Seems like we are having trouble getting some data... Don't worry, though, your Qrafty points are still worth nothing!",
+      "Seems like we are having trouble getting some data... Don't worry, though, your PointdPal points are still worth nothing!",
     );
   }
 }

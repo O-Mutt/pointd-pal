@@ -19,7 +19,7 @@ export const BonuslyConfigSchema = new Schema({
   },
   defaultReason: {
     type: String,
-    default: 'point sent through Qrafty'
+    default: 'point sent through PointdPal'
   },
   defaultHashtag: {
     type: String,

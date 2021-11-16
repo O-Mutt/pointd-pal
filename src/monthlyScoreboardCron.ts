@@ -9,7 +9,7 @@ import { Appendable, BlockBuilder, Blocks, Md, Message } from 'slack-block-build
 import { app } from '../app';
 import { Helpers as H } from './lib/helpers';
 import { Installation } from './lib/models/installation';
-import { QraftyConfig } from './lib/models/qraftyConfig';
+import { PointdPalConfig } from './lib/models/pointdPalConfig';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { DatabaseService } from './lib/services/database';
 import { SlackService } from './lib/services/slack';
@@ -32,11 +32,11 @@ const databaseService = new DatabaseService();
           return;
         }
         const connection = connectionFactory(teamId);
-        const qraftyConfig = await QraftyConfig(connection).findOne().exec();
-        if (!qraftyConfig) {
+        const pointdPalConfig = await PointdPalConfig(connection).findOne().exec();
+        if (!pointdPalConfig) {
           return;
         }
-        const scoreboardRoom = qraftyConfig.scoreboardRoom;
+        const scoreboardRoom = pointdPalConfig.scoreboardRoom;
         const channelId = await SlackService.findOrCreateConversation(botToken, teamId, scoreboardRoom);
         if (!channelId) {
           return;
@@ -55,7 +55,7 @@ const databaseService = new DatabaseService();
             messages.push(`${rank}. ${Md.user(sender._id)} (${sender.scoreChange} ${pointStr})`);
             rank++;
           }
-          const topSenderBlocks = buildBlocks(`Top 10 Qrafty Point Senders`, topSenders, messages);
+          const topSenderBlocks = buildBlocks(`Top 10 PointdPal Point Senders`, topSenders, messages);
 
           // Recipients
           const topRecipients = await databaseService.getTopReceiverInDuration(connection, 10, 30);
@@ -67,7 +67,7 @@ const databaseService = new DatabaseService();
             messages.push(`${rank}. ${Md.user(recipient._id)} (${recipient.scoreChange} ${pointStr})`);
             rank++;
           }
-          const topRecipientBlocks = buildBlocks(`Top 10 Qrafty Point Recipients`, topRecipients, messages);
+          const topRecipientBlocks = buildBlocks(`Top 10 PointdPal Point Recipients`, topRecipients, messages);
 
           // Channel
           let topRooms = await databaseService.getTopRoomInDuration(connection, 3, 30);
@@ -85,10 +85,10 @@ const databaseService = new DatabaseService();
             rank++;
           }
 
-          const topRoomBlocks = buildBlocks(`Top 3 Qrafty Point Channels`, topRooms, messages);
-          const theMessage = Message({ channel: channelId, text: 'Monthly Qrafty Scoreboard' })
+          const topRoomBlocks = buildBlocks(`Top 3 PointdPal Point Channels`, topRooms, messages);
+          const theMessage = Message({ channel: channelId, text: 'Monthly PointdPal Scoreboard' })
             .blocks(
-              Blocks.Header({ text: 'Monthly Qrafty Scoreboard' }),
+              Blocks.Header({ text: 'Monthly PointdPal Scoreboard' }),
               Blocks.Divider(),
               ...topSenderBlocks,
               Blocks.Divider(),

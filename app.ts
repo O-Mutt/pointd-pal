@@ -3,7 +3,7 @@ import { Md } from 'slack-block-builder';
 import { App } from '@slack/bolt';
 import { LogLevel } from '@slack/logger';
 
-import { QraftyInstallStore } from './src/lib/services/qraftyInstallStore';
+import { PointdPalInstallStore } from './src/lib/services/pointdPalInstallStore';
 
 require('dotenv').config();
 require('newrelic');
@@ -17,7 +17,7 @@ export let app = new App({
   clientSecret: process.env.SLACK_CLIENT_SECRET,
   stateSecret: process.env.SLACK_STATE_SECRET,
   logLevel: process.env.LOG_LEVEL as LogLevel,
-  installationStore: QraftyInstallStore,
+  installationStore: PointdPalInstallStore,
   tokenVerificationEnabled: true,
   installerOptions: {
     directInstall: true

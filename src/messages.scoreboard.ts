@@ -31,7 +31,7 @@ async function respondWithScore({ message, context, logger, say }) {
 
   let tokenString = '.';
   if (user.accountLevel > 1) {
-    tokenString = ` (*${user.qraftyToken} Qrafty Token${H.getEsOnEndOfWord(user.qraftyToken)}*).`;
+    tokenString = ` (*${user.pointdPalToken} PointdPal Token${H.getEsOnEndOfWord(user.pointdPalToken)}*).`;
   }
 
   let baseString = `${Md.user(user.slackId)} has ${Md.bold(user.score.toString())} ${Md.bold('point' + H.getEsOnEndOfWord(user.score))}${tokenString}`;
@@ -39,7 +39,7 @@ async function respondWithScore({ message, context, logger, say }) {
   baseString += `\n${Md.italic('Total Points Given')}: ${user.totalPointsGiven}`;
   if (user.robotDay) {
     const dateObj = new Date(user.robotDay);
-    baseString += `\n:birthday: ${Md.bold('Qraftyday')} is ${Md.bold(moment(dateObj).format('MM-DD-yyyy'))}`;
+    baseString += `\n:birthday: ${Md.bold('PointdPalday')} is ${Md.bold(moment(dateObj).format('MM-DD-yyyy'))}`;
   }
 
   let reasonsStr: string = '';
@@ -83,10 +83,10 @@ async function respondWithLeaderLoserBoard({ client, message, context, logger, s
   if (tops.length > 0) {
     for (let i = 0, end = tops.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
       if (tops[i].accountLevel && tops[i].accountLevel > 1) {
-        const tokenStr = tops[i].qraftyToken > 1 ? 'Tokens' : 'Token';
+        const tokenStr = tops[i].pointdPalToken > 1 ? 'Tokens' : 'Token';
         messages.push(
-          `${i + 1}. ${Md.user(tops[i].slackId)}: ${tops[i].score} (*${tops[i].qraftyToken} ${H.capitalizeFirstLetter(
-            'qrafty',
+          `${i + 1}. ${Md.user(tops[i].slackId)}: ${tops[i].score} (*${tops[i].pointdPalToken} ${H.capitalizeFirstLetter(
+            'pointdPal',
           )} ${tokenStr}*)`,
         );
       } else {
@@ -97,7 +97,7 @@ async function respondWithLeaderLoserBoard({ client, message, context, logger, s
     messages.push('No scores to keep track of yet!');
   }
 
-  const chartText = `Qrafty ${topOrBottomString} ${digits} Score(s)`;
+  const chartText = `PointdPal ${topOrBottomString} ${digits} Score(s)`;
   const graphSize = Math.min(tops.length, Math.min(digits, 20));
   const chartUrl = new ImageCharts()
     .cht('bvg')
@@ -133,10 +133,10 @@ async function respondWithLeaderLoserTokenBoard({ message, context, client }) {
   const messages: string[] = [];
   if (tops.length > 0) {
     for (let i = 0, end = tops.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
-      const tokenStr = tops[i].qraftyToken > 1 ? 'Tokens' : 'Token';
+      const tokenStr = tops[i].pointdPalToken > 1 ? 'Tokens' : 'Token';
       const pointStr = tops[i].score > 1 ? 'points' : 'point';
       messages.push(
-        `${i + 1}. ${Md.user(tops[i].slackId)}: *${tops[i].qraftyToken} Qrafty ${tokenStr}* (${tops[i].score
+        `${i + 1}. ${Md.user(tops[i].slackId)}: *${tops[i].pointdPalToken} PointdPal ${tokenStr}* (${tops[i].score
         } ${pointStr})`,
       );
     }
@@ -144,7 +144,7 @@ async function respondWithLeaderLoserTokenBoard({ message, context, client }) {
     messages.push('No scores to keep track of yet!');
   }
 
-  const chartText = `Qrafty ${topOrBottomString} ${digits} Token(s)`;
+  const chartText = `PointdPal ${topOrBottomString} ${digits} Token(s)`;
   const graphSize = Math.min(tops.length, Math.min(digits, 20));
   const chartUrl = new ImageCharts()
     .cht('bvg')
@@ -152,7 +152,7 @@ async function respondWithLeaderLoserTokenBoard({ message, context, client }) {
     .chtt(chartText)
     .chxt('x,y')
     .chxl(`0:|${_.take(_.map(tops, 'name'), graphSize).join('|')}`)
-    .chd(`a:${_.take(_.map(tops, 'qraftyToken'), graphSize).join(',')}`)
+    .chd(`a:${_.take(_.map(tops, 'pointdPalToken'), graphSize).join(',')}`)
     .toURL();
 
   const theMessage = Message({ channel: message.channel, text: chartText })
@@ -187,7 +187,7 @@ async function getTopPointSenders({ message, context, client }) {
     messages.push('No scores to keep track of yet!');
   }
 
-  const chartText = `${topOrBottomString} ${digits} Qrafty Point Senders(s)`;
+  const chartText = `${topOrBottomString} ${digits} PointdPal Point Senders(s)`;
   const graphSize = Math.min(tops.length, Math.min(digits, 20));
   const chartUrl = new ImageCharts()
     .cht('bvg')

@@ -5,7 +5,7 @@ import { View } from '@slack/types';
 
 import { app } from '../app';
 import { BonuslyConfig, IBonuslyConfig } from './lib/models/bonuslyConfig';
-import { IQraftyConfig, QraftyConfig } from './lib/models/qraftyConfig';
+import { IPointdPalConfig, PointdPalConfig } from './lib/models/pointdPalConfig';
 import { IUser, User } from './lib/models/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { actions } from './lib/types/Actions';
@@ -20,12 +20,12 @@ async function updateHomeTab({ event, context, client, logger }: SlackEventMiddl
 
     const connection = connectionFactory(teamId);
     const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
-    const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId as string);
+    const pointdPalConfig = await PointdPalConfig(connection).findOneOrCreate(teamId as string);
 
     const hometab = HomeTab({ callbackId: 'hometab' }).blocks(
-      Blocks.Image({ altText: 'Qrafty!', imageUrl: 'https://okeefe.dev/cdn_images/qrafty_header.png' }),
+      Blocks.Image({ altText: 'PointdPal!', imageUrl: 'https://okeefe.dev/cdn_images/pointdPal_header.png' }),
       Blocks.Section({
-        text: `${Md.emoji('wave')} Hey ${Md.user(userId)}, I'm Qrafty.`,
+        text: `${Md.emoji('wave')} Hey ${Md.user(userId)}, I'm PointdPal.`,
       }),
       Blocks.Section({
         text: `I make it ${Md.italic('super')} easy to send a quick ${Md.codeInline('++') + ' or ' + Md.codeInline('--')
@@ -33,9 +33,9 @@ async function updateHomeTab({ event, context, client, logger }: SlackEventMiddl
       }),
       Blocks.Divider(),
       ...getAdminConfigSection(user),
-      ...getUserConfigSection(user, qraftyConfig),
+      ...getUserConfigSection(user, pointdPalConfig),
 
-      //...getBonuslyAdminConfigSection(user, bonusly, qraftyConfig),
+      //...getBonuslyAdminConfigSection(user, bonusly, pointdPalConfig),
     );
     await client.views.publish({ token: context.botToken, view: hometab.buildToObject() as View, user_id: userId });
   } catch (e) {
@@ -50,11 +50,11 @@ function getAdminConfigSection(user: IUser): Appendable<ViewBlockBuilder> {
   }
 
   blocks.push(
-    Blocks.Header({ text: 'Qrafty Admin' }),
+    Blocks.Header({ text: 'PointdPal Admin' }),
     Blocks.Section({
-      text: ':warning: This is where you can enable various integrations and setup how Qrafty notifies the world. Tread lightly.',
+      text: ':warning: This is where you can enable various integrations and setup how PointdPal notifies the world. Tread lightly.',
     }).accessory(
-      Elements.Button({ text: 'Qrafty App Admin Settings', actionId: actions.hometab.admin_settings }).primary(),
+      Elements.Button({ text: 'PointdPal App Admin Settings', actionId: actions.hometab.admin_settings }).primary(),
     ),
     Blocks.Section({
       text: `${Md.emoji('recycle')} Sync Admins`,
@@ -66,13 +66,13 @@ function getAdminConfigSection(user: IUser): Appendable<ViewBlockBuilder> {
   return blocks;
 }
 
-function getUserConfigSection(user: IUser, qraftyConfig: IQraftyConfig | null): Appendable<ViewBlockBuilder> {
+function getUserConfigSection(user: IUser, pointdPalConfig: IPointdPalConfig | null): Appendable<ViewBlockBuilder> {
   const blocks: Appendable<ViewBlockBuilder> = [];
 
   blocks.push(
-    Blocks.Header({ text: 'Qrafty Configuration' }),
-    Blocks.Section({ text: 'You can configure Qrafty in a few different ways, check it out.' }).accessory(
-      Elements.Button({ text: 'Qrafty Settings', actionId: actions.hometab.user_settings }).primary(),
+    Blocks.Header({ text: 'PointdPal Configuration' }),
+    Blocks.Section({ text: 'You can configure PointdPal in a few different ways, check it out.' }).accessory(
+      Elements.Button({ text: 'PointdPal Settings', actionId: actions.hometab.user_settings }).primary(),
     ),
   );
   return blocks;

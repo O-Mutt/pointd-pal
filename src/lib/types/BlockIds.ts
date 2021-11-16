@@ -2,7 +2,7 @@ export const blocks = {
   hometab: {
     admin: {
       basic: {
-        admins: 'hometab-a-qrafty-admins',
+        admins: 'hometab-a-pointdPal-admins',
         companyName: 'hometab-a-company-name',
         notificationChannel: 'hometab-a-notif-channel',
         falsePositiveNotificationChannel: 'hometab-a-false-notif-channel',

@@ -109,7 +109,7 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
 
     const plusPlusEvent: PPEvent = {
       notificationMessage: `${Md.user(fromUser.slackId)} ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
-        } a Qrafty point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'
+        } a PointdPal point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'
         } ${Md.user(toUser.slackId)} in ${Md.channel(channel)}`,
       sender: fromUser,
       recipients: [toUser],
@@ -169,7 +169,7 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
     const sayArgs = H.getSayMessageArgs(message, theMessage);
     const sayResponse = await say(sayArgs);
     const plusPlusEvent: PPEvent = {
-      notificationMessage: `${Md.user(response.fromUser.slackId)} sent ${amount} Qrafty point${parseInt(amount, 10) > 1 ? 's' : ''} to ${Md.user(response.toUser.slackId)} in ${Md.channel(channel)}`,
+      notificationMessage: `${Md.user(response.fromUser.slackId)} sent ${amount} PointdPal point${parseInt(amount, 10) > 1 ? 's' : ''} to ${Md.user(response.toUser.slackId)} in ${Md.channel(channel)}`,
       recipients: [response.toUser],
       sender: response.fromUser,
       direction: DirectionEnum.PLUS,
@@ -244,7 +244,7 @@ async function multipleUsersVote({ message, context, logger, say }) {
       recipients.push(response.toUser);
       notificationMessage.push(
         `${Md.user(response.fromUser.slackId)} ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
-        } a Qrafty point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'
+        } a PointdPal point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'
         } ${Md.user(response.toUser.slackId)} in ${Md.channel(channel)} `,
       );
     }

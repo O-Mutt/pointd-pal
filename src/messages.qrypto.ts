@@ -27,7 +27,7 @@ app.action('confirm_levelup', levelUpToLevelThree);
 
 async function levelUpAccount({ message, context, logger, say }) {
   if (!H.isPrivateMessage(message.channel)) {
-    return await say(`You should only execute a level up from within the context of a DM with Qrafty`);
+    return await say(`You should only execute a level up from within the context of a DM with PointdPal`);
   }
   const teamId = context.teamId as string;
 
@@ -39,7 +39,7 @@ async function levelUpAccount({ message, context, logger, say }) {
         Blocks.Section({
           text: `You are already Level 2, ${Md.user(user.slackId)
             }. It looks as if you are ready for Level 3 where you can deposit/withdraw ${H.capitalizeFirstLetter(
-              'qrafty',
+              'pointdPal',
             )} Tokens!`,
         }),
         Blocks.Actions({}).elements(
@@ -59,7 +59,7 @@ async function levelUpAccount({ message, context, logger, say }) {
   await say(
     `${Md.user(user.slackId)
     }, we are going to level up your account to Level 2! This means you will start getting ${H.capitalizeFirstLetter(
-      'qrafty',
+      'pointdPal',
     )} Tokens as well as points!`,
   );
 }
@@ -81,7 +81,7 @@ async function botWalletCount({ message, context, logger, say }) {
   try {
     gas = await tokenBuddy.getBalance(botWallet.publicWalletAddress);
   } catch (e) {
-    await say(`An error occurred getting Qrafty's gas amount`, e);
+    await say(`An error occurred getting PointdPal's gas amount`, e);
   }
   logger.debug(
     `Get the bot wallet by user ${message.user.name}, ${_.pick(JSON.stringify(botWallet), [
@@ -91,9 +91,9 @@ async function botWalletCount({ message, context, logger, say }) {
     ])}`,
   );
 
-  const theBlocks = Message({ channel: context.channel, text: `Qrafty Wallet:` })
+  const theBlocks = Message({ channel: context.channel, text: `PointdPal Wallet:` })
     .blocks(
-      Blocks.Section({ text: `Qrafty Token Wallet Info:` }),
+      Blocks.Section({ text: `PointdPal Token Wallet Info:` }),
       Blocks.Divider(),
       Blocks.Section({ text: `Public Wallet Address: ${botWallet.publicWalletAddress}` }),
       Blocks.Section({ text: `Tokens In Wallet: ${botWallet.token.toLocaleString()}` }),

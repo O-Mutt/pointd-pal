@@ -2,7 +2,7 @@ import { Md } from 'slack-block-builder';
 
 import { app } from '../app';
 import { Installation } from './lib/models/installation';
-import { QraftyConfig } from './lib/models/qraftyConfig';
+import { PointdPalConfig } from './lib/models/pointdPalConfig';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { eventBus } from './lib/services/eventBus';
 import { SlackService } from './lib/services/slack';
@@ -15,7 +15,7 @@ eventBus.on(PPFailureEventName, sendPlusPlusFalsePositiveNotification);
 eventBus.on(PPSpamEventName, logAndNotifySpam);
 
 async function sendPlusPlusNotification(ppEvent: PPEvent) {
-  const config = await QraftyConfig(connectionFactory(ppEvent.teamId)).findOneOrCreate(ppEvent.teamId);
+  const config = await PointdPalConfig(connectionFactory(ppEvent.teamId)).findOneOrCreate(ppEvent.teamId);
   if (!config?.notificationRoom) {
     return;
   }
@@ -48,7 +48,7 @@ async function sendPlusPlusNotification(ppEvent: PPEvent) {
 }
 
 async function sendPlusPlusFalsePositiveNotification(ppEvent: PPFailureEvent) {
-  const config = await QraftyConfig(connectionFactory(ppEvent.teamId)).findOneOrCreate(ppEvent.teamId);
+  const config = await PointdPalConfig(connectionFactory(ppEvent.teamId)).findOneOrCreate(ppEvent.teamId);
   if (!config?.falsePositiveRoom) {
     return;
   }

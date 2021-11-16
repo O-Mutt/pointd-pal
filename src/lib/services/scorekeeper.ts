@@ -5,7 +5,7 @@ import { eventBus } from './eventBus';
 import { Md } from 'slack-block-builder';
 import { connectionFactory } from './connectionsFactory';
 import { BotToken } from '../models/botToken';
-import { QraftyConfig } from '../models/qraftyConfig';
+import { PointdPalConfig } from '../models/pointdPalConfig';
 import { ChatPostMessageArguments, ChatPostMessageResponse } from '@slack/web-api';
 import { app } from '../../../app';
 import { Installation } from '../models/installation';
@@ -40,7 +40,7 @@ export class ScoreKeeper {
       const toUser = await User(connection).findOneBySlackIdOrCreate(teamId, toId);
       const fromUser = await User(connection).findOneBySlackIdOrCreate(teamId, fromId);
       const bot = await BotToken.findOne({}).exec();
-      const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId);
+      const pointdPalConfig = await PointdPalConfig(connection).findOneOrCreate(teamId);
       const install = await Installation.findOne({ teamId: teamId });
 
       if (fromUser.isBot === true) {
@@ -60,13 +60,13 @@ export class ScoreKeeper {
       const newScore: number = (fromUser.pointsGiven.get(toUser.slackId) || 0) + Math.abs(incrementValue);
       fromUser.pointsGiven.set(toUser.slackId, newScore);
       fromUser.totalPointsGiven = fromUser.totalPointsGiven + incrementValue;
-      if (qraftyConfig.formalFeedbackUrl &&
-        newScore % qraftyConfig.formalFeedbackModulo === 0 &&
+      if (pointdPalConfig.formalFeedbackUrl &&
+        newScore % pointdPalConfig.formalFeedbackModulo === 0 &&
         install?.installation.bot?.token) {
         await app.client.chat.postMessage({
           token: install.installation.bot.token,
           channel: fromUser.slackId,
-          text: `Looks like you've given ${Md.user(toUser.slackId)} quite a few points, maybe should submit a formal praise ${Md.link(qraftyConfig.formalFeedbackUrl)}`,
+          text: `Looks like you've given ${Md.user(toUser.slackId)} quite a few points, maybe should submit a formal praise ${Md.link(pointdPalConfig.formalFeedbackUrl)}`,
         } as ChatPostMessageArguments);
       }
 
@@ -88,7 +88,7 @@ export class ScoreKeeper {
         if (bot) {
           bot.token = bot.token - incrementValue;
         }
-        toUser.qraftyToken = toUser.qraftyToken + incrementValue
+        toUser.pointdPalToken = toUser.pointdPalToken + incrementValue
         //saveResponse = await this.databaseService.transferScoreFromBotToUser(toUser, incrementValue, fromUser);
       }
       await toUser.save();
@@ -111,7 +111,7 @@ export class ScoreKeeper {
         throw new Error(`In order to send tokens to ${Md.user(toUser.slackId)} you both must be, at least, level 2.`);
       }
 
-      if (fromUser.qraftyToken && fromUser.qraftyToken < numberOfTokens) {
+      if (fromUser.pointdPalToken && fromUser.pointdPalToken < numberOfTokens) {
         // from has too few tokens to send that many
         throw new Error(`You don't have enough tokens to send ${numberOfTokens} to ${Md.user(toUser.slackId)}`);
       }
@@ -120,8 +120,8 @@ export class ScoreKeeper {
         throw new Error(`I'm sorry ${Md.user(fromUser.slackId)}, I'm afraid I can't do that.`);
       }
 
-      fromUser.qraftyToken = fromUser.qraftyToken || 0 - numberOfTokens;
-      toUser.qraftyToken = toUser.qraftyToken || 0 + numberOfTokens;
+      fromUser.pointdPalToken = fromUser.pointdPalToken || 0 - numberOfTokens;
+      toUser.pointdPalToken = toUser.pointdPalToken || 0 + numberOfTokens;
       if (reason) {
         const newReasonScore = (toUser.reasons.get(reason) || 0) + numberOfTokens;
         toUser.reasons.set(reason, newReasonScore);

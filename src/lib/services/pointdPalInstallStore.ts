@@ -5,7 +5,7 @@ import { IInstallation, Installation } from '../models/installation'
 import { StripeService } from './stripe';
 
 
-export const QraftyInstallStore: InstallationStore = {
+export const PointdPalInstallStore: InstallationStore = {
   storeInstallation: async (installation) => {
     const stripe = new StripeService();
     let teamId;
@@ -73,7 +73,7 @@ export const QraftyInstallStore: InstallationStore = {
       }
       console.log(`[LOOKUP]  ${teamId}.`);
       if (!result.enabled) {
-        throw new Error(`This instance of qrafty is not enabled Team [${result.teamId}], Customer [${result.customerId}], Subscription [${result.subscriptionId}], Status [${result.subscriptionStatus}]`);
+        throw new Error(`This instance of pointdPal is not enabled Team [${result.teamId}], Customer [${result.customerId}], Subscription [${result.subscriptionId}], Status [${result.subscriptionStatus}]`);
       }
       return result.installation as OAuthInstallation<'v1' | 'v2', boolean>;
     }

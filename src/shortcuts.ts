@@ -213,7 +213,7 @@ app.view(
         recipients.push(response.toUser);
         notificationMessage.push(
           `${Md.user(response.fromUser.slackId)} ${increment === 1 ? 'sent' : 'removed'
-          } a Qrafty point ${increment === 1 ? 'to' : 'from'
+          } a PointdPal point ${increment === 1 ? 'to' : 'from'
           } ${Md.user(response.toUser.slackId)} in ${Md.channel(channel)} `,
         );
       }

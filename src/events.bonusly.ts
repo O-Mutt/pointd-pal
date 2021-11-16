@@ -4,7 +4,7 @@ import { ChatPostEphemeralArguments, ChatPostEphemeralResponse, ChatUpdateArgume
 
 import { app } from '../app';
 import { Installation } from './lib/models/installation';
-import { QraftyConfig } from './lib/models/qraftyConfig';
+import { PointdPalConfig } from './lib/models/pointdPalConfig';
 import { BonuslyService } from './lib/services/bonusly';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { eventBus } from './lib/services/eventBus';
@@ -51,7 +51,7 @@ async function sendBonuslyBonus(plusPlusEvent: PPEvent) {
   }
 
   const connection = connectionFactory(plusPlusEvent.teamId);
-  const config = await QraftyConfig(connection).findOneOrCreate(plusPlusEvent.teamId);
+  const config = await PointdPalConfig(connection).findOneOrCreate(plusPlusEvent.teamId);
   const teamInstallConfig = await Installation.findOne({ teamId: plusPlusEvent.teamId }).exec();
   if (!config.bonuslyConfig?.enabled || !config.bonuslyConfig?.apiKey || !config.bonuslyConfig?.url) {
     console.warn(`one of the configs is disabled Enabled [${config.bonuslyConfig?.enabled}] apiKey[${config.bonuslyConfig?.apiKey}] url[${config.bonuslyConfig?.url}]`);
@@ -66,7 +66,7 @@ async function sendBonuslyBonus(plusPlusEvent: PPEvent) {
 
   const bonuslyAmount: number = plusPlusEvent.sender.bonuslyScoreOverride || plusPlusEvent.amount;
   const totalBonuslyPoints: number = bonuslyAmount * plusPlusEvent.recipients.length;
-  const totalQraftyPoints: number = plusPlusEvent.amount * plusPlusEvent.recipients.length;
+  const totalPointdPalPoints: number = plusPlusEvent.amount * plusPlusEvent.recipients.length;
   const recipientSlackIds = plusPlusEvent.recipients.map((recipient) => Md.user(recipient.slackId)).join(', ');
   const bonuslyPayload = buildBonuslyPayload(plusPlusEvent, bonuslyAmount);
   switch (plusPlusEvent.sender.bonuslyPrompt) {
@@ -100,11 +100,11 @@ async function sendBonuslyBonus(plusPlusEvent: PPEvent) {
       break;
     }
     case PromptSettings.PROMPT: {
-      const message = Message({ text: `Should we include ${bonuslyAmount} bonusly points with your Qrafty points?`, channel: plusPlusEvent.channel })
+      const message = Message({ text: `Should we include ${bonuslyAmount} bonusly points with your PointdPal points?`, channel: plusPlusEvent.channel })
         .blocks(
-          Blocks.Header({ text: `Should we include ${bonuslyAmount} Bonusly points (per recipient), ${totalBonuslyPoints} total, with your Qrafty points?` }),
+          Blocks.Header({ text: `Should we include ${bonuslyAmount} Bonusly points (per recipient), ${totalBonuslyPoints} total, with your PointdPal points?` }),
           Blocks.Section({
-            text: `You are sending ${plusPlusEvent.amount} Qrafty Points (per recipient), ${totalQraftyPoints} total, to ${recipientSlackIds
+            text: `You are sending ${plusPlusEvent.amount} PointdPal Points (per recipient), ${totalPointdPalPoints} total, to ${recipientSlackIds
               }. Would you like to include ${bonuslyAmount} per user, ${totalBonuslyPoints} total, bonusly bonus with these?`
           }),
           Blocks.Actions().elements(

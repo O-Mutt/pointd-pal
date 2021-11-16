@@ -16,7 +16,7 @@ export interface IUser extends Document, AuditTags {
   totalPointsGiven: number;
   isAdmin: boolean;
   isBot: boolean;
-  qraftyToken: number;
+  pointdPalToken: number;
   email?: string;
   name?: string;
   bonuslyScoreOverride: number;
@@ -66,7 +66,7 @@ export const UserSchema = new Schema({
   },
   email: String,
   name: String,
-  qraftyToken: {
+  pointdPalToken: {
     type: Number,
     default: 0,
   },

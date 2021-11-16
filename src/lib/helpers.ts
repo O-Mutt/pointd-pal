@@ -71,7 +71,7 @@ export class Helpers {
     }
 
     if (user.accountLevel && user.accountLevel > 1) {
-      let tokenStr = `(*${user.qraftyToken} Qrafty Token${Helpers.getEsOnEndOfWord(user.qraftyToken)}*)`;
+      let tokenStr = `(*${user.pointdPalToken} PointdPal Token${Helpers.getEsOnEndOfWord(user.pointdPalToken)}*)`;
       scoreStr = scoreStr.concat(` ${tokenStr}`);
     }
 
@@ -92,7 +92,7 @@ export class Helpers {
 
     if (Helpers.isCakeDay(user.robotDay)) {
       const yearsAsString = Helpers.getYearsAsString(user.robotDay);
-      cakeDayStr = `\n:birthday: Today is ${Md.user(user.slackId)}'s ${yearsAsString}Qraftyday! :birthday:`;
+      cakeDayStr = `\n:birthday: Today is ${Md.user(user.slackId)}'s ${yearsAsString}PointdPalday! :birthday:`;
     }
     return `${scoreStr}${reasonStr}${cakeDayStr}`;
   }
@@ -102,8 +102,8 @@ export class Helpers {
       return '';
     }
 
-    const scoreStr = `${Md.user(from.slackId)} transferred *${number}* Qrafty Token${Helpers.getEsOnEndOfWord(number)} to ${Md.user(to.slackId)}.\n
-${Md.user(to.slackId)} now has ${to.qraftyToken} token${Helpers.getEsOnEndOfWord(to.qraftyToken || 0)}`;
+    const scoreStr = `${Md.user(from.slackId)} transferred *${number}* PointdPal Token${Helpers.getEsOnEndOfWord(number)} to ${Md.user(to.slackId)}.\n
+${Md.user(to.slackId)} now has ${to.pointdPalToken} token${Helpers.getEsOnEndOfWord(to.pointdPalToken || 0)}`;
     let reasonStr = '.';
     let cakeDayStr = '';
 
@@ -124,10 +124,10 @@ ${Md.user(to.slackId)} now has ${to.qraftyToken} token${Helpers.getEsOnEndOfWord
 
     if (Helpers.isCakeDay(to.robotDay)) {
       const yearsAsString = Helpers.getYearsAsString(to.robotDay);
-      cakeDayStr = `\n:birthday: Today is ${Md.user(to.slackId)}'s ${yearsAsString}Qraftyday! :birthday:`;
+      cakeDayStr = `\n:birthday: Today is ${Md.user(to.slackId)}'s ${yearsAsString}PointdPalday! :birthday:`;
     }
-    return `${scoreStr}${reasonStr}${cakeDayStr}\n_${Md.user(from.slackId)} has ${from.qraftyToken} token${Helpers.getEsOnEndOfWord(
-      from.qraftyToken || 0,
+    return `${scoreStr}${reasonStr}${cakeDayStr}\n_${Md.user(from.slackId)} has ${from.pointdPalToken} token${Helpers.getEsOnEndOfWord(
+      from.pointdPalToken || 0,
     )}_`;
   }
 

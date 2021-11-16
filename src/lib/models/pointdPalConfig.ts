@@ -4,7 +4,7 @@ import { AuditTags } from './auditTags';
 import { BonuslyConfigSchema, IBonuslyConfig } from './bonuslyConfig';
 import { IInstallation, Installation } from './installation';
 
-export interface IQraftyConfig extends Document, AuditTags {
+export interface IPointdPalConfig extends Document, AuditTags {
   notificationRoom?: string;
   falsePositiveRoom?: string;
   scoreboardRoom?: string;
@@ -13,11 +13,11 @@ export interface IQraftyConfig extends Document, AuditTags {
   reasonsKeyword?: string;
   companyName?: string;
   qryptoEnabled?: boolean;
-  qraftyAdmins?: string[];
+  pointdPalAdmins?: string[];
   bonuslyConfig?: IBonuslyConfig;
 }
 
-export const QraftyConfigSchema = new Schema({
+export const PointdPalConfigSchema = new Schema({
   notificationRoom: String,
   falsePositiveRoom: String,
   scoreboardRoom: String,
@@ -31,15 +31,15 @@ export const QraftyConfigSchema = new Schema({
     type: Boolean,
     default: false
   },
-  qraftyAdmins: [String],
+  pointdPalAdmins: [String],
   bonuslyConfig: BonuslyConfigSchema,
 });
 
-QraftyConfigSchema.statics.findOneOrCreate = async function (this: Model<QraftyConfigInterface, QraftyConfigModelInterface>, teamId: string): Promise<IQraftyConfig> {
+PointdPalConfigSchema.statics.findOneOrCreate = async function (this: Model<PointdPalConfigInterface, PointdPalConfigModelInterface>, teamId: string): Promise<IPointdPalConfig> {
   const self = this;
-  let qraftyConfig = await self.findOne().exec();
-  if (qraftyConfig) {
-    return qraftyConfig;
+  let pointdPalConfig = await self.findOne().exec();
+  if (pointdPalConfig) {
+    return pointdPalConfig;
   }
 
   const teamInstall = await Installation.findOne({ teamId: teamId }).exec();
@@ -48,20 +48,20 @@ QraftyConfigSchema.statics.findOneOrCreate = async function (this: Model<QraftyC
   }
   const { members } = await app.client.users.list({ token: teamInstall.installation.bot.token, team_id: teamId });
   const admins = members?.filter((user) => user.is_admin === true).map((admin) => admin.id);
-  qraftyConfig = new self({
-    qraftyAdmins: admins
+  pointdPalConfig = new self({
+    pointdPalAdmins: admins
   });
-  return await self.create(qraftyConfig);
+  return await self.create(pointdPalConfig);
 };
 
-export interface QraftyConfigInterface extends IQraftyConfig {
+export interface PointdPalConfigInterface extends IPointdPalConfig {
   // instance methods
 }
 
-export interface QraftyConfigModelInterface extends Model<QraftyConfigInterface> {
+export interface PointdPalConfigModelInterface extends Model<PointdPalConfigInterface> {
   // static methods
-  findOneOrCreate(teamId: string): Promise<IQraftyConfig>;
+  findOneOrCreate(teamId: string): Promise<IPointdPalConfig>;
 }
 
-export const QraftyConfig = (conn: Connection) =>
-  conn.model<QraftyConfigInterface, QraftyConfigModelInterface>('qraftyConfig', QraftyConfigSchema);
+export const PointdPalConfig = (conn: Connection) =>
+  conn.model<PointdPalConfigInterface, PointdPalConfigModelInterface>('pointdPalConfig', PointdPalConfigSchema);

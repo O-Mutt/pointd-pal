@@ -12,7 +12,7 @@ import { IUser, User } from './lib/models/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { actions } from './lib/types/Actions';
 import { EnabledSettings, PromptSettings } from './lib/types/Enums';
-import { IQraftyConfig, QraftyConfig } from './lib/models/qraftyConfig';
+import { IPointdPalConfig, PointdPalConfig } from './lib/models/pointdPalConfig';
 import { blocks } from './lib/types/BlockIds';
 import { ViewsUpdateArguments } from '@slack/web-api';
 
@@ -24,12 +24,12 @@ app.action(
     const userId = body.user.id;
     const connection = connectionFactory(teamId);
     const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
-    const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId);
+    const pointdPalConfig = await PointdPalConfig(connection).findOneOrCreate(teamId);
 
-    if (!user.isAdmin || !qraftyConfig) {
+    if (!user.isAdmin || !pointdPalConfig) {
       return; //empty section because the user isn't an admin
     }
-    const adminSettingsModal = buildAdminModal(qraftyConfig).buildToObject();
+    const adminSettingsModal = buildAdminModal(pointdPalConfig).buildToObject();
 
     const result = await client.views.open({
       trigger_id: body.trigger_id,
@@ -44,21 +44,21 @@ app.action(actions.hometab.user_settings,
     const teamId = context.teamId as string;
     const userId = body.user.id;
     const connection = connectionFactory(teamId);
-    const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId);
+    const pointdPalConfig = await PointdPalConfig(connection).findOneOrCreate(teamId);
     const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
 
-    if (!user || !qraftyConfig || !qraftyConfig.bonuslyConfig) {
+    if (!user || !pointdPalConfig || !pointdPalConfig.bonuslyConfig) {
       return;
     }
 
     console.log('user for user settings', user)
     const userSettingsModal = Modal({
-      title: `${Md.emoji('gear')} Qrafty Settings`,
+      title: `${Md.emoji('gear')} PointdPal Settings`,
       submit: 'Update Settings',
       callbackId: actions.hometab.user_settings_submit,
     }).blocks(
-      ...buildBonuslyUserBlocks(qraftyConfig.bonuslyConfig, user),
-      ...buildQryptoUserBlocks(qraftyConfig, user)
+      ...buildBonuslyUserBlocks(pointdPalConfig.bonuslyConfig, user),
+      ...buildQryptoUserBlocks(pointdPalConfig, user)
     );
 
     const result = await client.views.open({
@@ -75,7 +75,7 @@ app.action(actions.hometab.sync_admins,
     const userId = body.user.id;
     const connection = connectionFactory(teamId);
     const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
-    const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId as string);
+    const pointdPalConfig = await PointdPalConfig(connection).findOneOrCreate(teamId as string);
 
     if (!user.isAdmin) {
       return;
@@ -86,8 +86,8 @@ app.action(actions.hometab.sync_admins,
     const users = await User(connection).find({ isAdmin: true }).exec();
     const adminUsers = users.map((admin) => admin.slackId);
     adminUsers.concat(admins);
-    qraftyConfig.qraftyAdmins = adminUsers;
-    await qraftyConfig.save();
+    pointdPalConfig.pointdPalAdmins = adminUsers;
+    await pointdPalConfig.save();
     return;
   }
 )
@@ -98,9 +98,9 @@ app.action(blocks.hometab.admin.bonusly.enabled,
     console.log('in the bonusly enabled action');
     const teamId = context.teamId as string;
     const connection = connectionFactory(teamId);
-    const qraftyConfig = await QraftyConfig(connection).findOneOrCreate(teamId);
+    const pointdPalConfig = await PointdPalConfig(connection).findOneOrCreate(teamId);
 
-    const updatedView = buildAdminModal(qraftyConfig, action.selected_option.value === EnabledSettings.ENABLED).buildToObject();
+    const updatedView = buildAdminModal(pointdPalConfig, action.selected_option.value === EnabledSettings.ENABLED).buildToObject();
     await client.views.update({
       view_id: body.view?.id,
       hash: body.view?.hash,
@@ -133,7 +133,7 @@ function buildBonuslyAdminBlocks(bonuslyConfig: IBonuslyConfig | undefined, enab
           actionId: blocks.hometab.admin.bonusly.defaultReason,
           minLength: 5,
           initialValue: bonuslyConfig?.defaultReason || '',
-          placeholder: 'point sent through Qrafty'
+          placeholder: 'point sent through PointdPal'
         }),
       ),
       Blocks.Input({ label: `${Md.emoji('hash')} Default hashtag`, blockId: blocks.hometab.admin.bonusly.defaultHashtag }).element(
@@ -148,49 +148,49 @@ function buildBonuslyAdminBlocks(bonuslyConfig: IBonuslyConfig | undefined, enab
   return blockBuilder;
 }
 
-function buildAdminModal(qraftyConfig: IQraftyConfig, enabledOverride: boolean = false): ModalBuilder {
+function buildAdminModal(pointdPalConfig: IPointdPalConfig, enabledOverride: boolean = false): ModalBuilder {
   return Modal({
-    title: `${Md.emoji('gear')} Qrafty Settings`,
+    title: `${Md.emoji('gear')} PointdPal Settings`,
     submit: 'Update Settings',
     callbackId: actions.hometab.admin_settings_submit,
   }).blocks(
     Blocks.Header({ text: 'Basic Settings' }),
-    Blocks.Input({ label: 'Qrafty Admins', blockId: blocks.hometab.admin.basic.admins }).element(
+    Blocks.Input({ label: 'PointdPal Admins', blockId: blocks.hometab.admin.basic.admins }).element(
       Elements.UserMultiSelect({
         actionId: blocks.hometab.admin.basic.admins,
         placeholder: 'Additional bot admins',
-      }).initialUsers(qraftyConfig.qraftyAdmins || []),
+      }).initialUsers(pointdPalConfig.pointdPalAdmins || []),
     ).optional(),
     Blocks.Input({ label: 'Company Name', blockId: blocks.hometab.admin.basic.companyName }).element(
       Elements.TextInput({
         actionId: blocks.hometab.admin.basic.companyName,
         placeholder: 'Company Name',
         minLength: 2,
-        initialValue: qraftyConfig.companyName || '',
+        initialValue: pointdPalConfig.companyName || '',
       }),
     ).optional(),
     Blocks.Input({ label: 'Notifications Channel', blockId: blocks.hometab.admin.basic.notificationChannel }).element(
       Elements.TextInput({
         actionId: blocks.hometab.admin.basic.notificationChannel,
-        placeholder: 'qrafty-plusplus',
+        placeholder: 'pointdPal-plusplus',
         minLength: 2,
-        initialValue: qraftyConfig.notificationRoom || '',
+        initialValue: pointdPalConfig.notificationRoom || '',
       }),
     ).optional(),
     Blocks.Input({ label: 'False Positive Notifications Channel', blockId: blocks.hometab.admin.basic.falsePositiveNotificationChannel }).element(
       Elements.TextInput({
         actionId: blocks.hometab.admin.basic.falsePositiveNotificationChannel,
-        placeholder: 'qrafty-plusplus-fail',
+        placeholder: 'pointdPal-plusplus-fail',
         minLength: 2,
-        initialValue: qraftyConfig.falsePositiveRoom || '',
+        initialValue: pointdPalConfig.falsePositiveRoom || '',
       }),
     ).optional(),
     Blocks.Input({ label: 'Scoreboard Notification Channel', blockId: blocks.hometab.admin.basic.scoreboardChannel }).element(
       Elements.TextInput({
         actionId: blocks.hometab.admin.basic.scoreboardChannel,
-        placeholder: 'qrafty-monthly-scoreboard',
+        placeholder: 'pointdPal-monthly-scoreboard',
         minLength: 2,
-        initialValue: qraftyConfig.scoreboardRoom || '',
+        initialValue: pointdPalConfig.scoreboardRoom || '',
       }),
     ).optional(),
     Blocks.Input({
@@ -201,7 +201,7 @@ function buildAdminModal(qraftyConfig: IQraftyConfig, enabledOverride: boolean =
         actionId: blocks.hometab.admin.basic.formalPraiseUrl,
         placeholder: 'https://formal.praise.company.com',
         minLength: 2,
-        initialValue: qraftyConfig.formalFeedbackUrl || '',
+        initialValue: pointdPalConfig.formalFeedbackUrl || '',
       }),
     ).optional(),
     Blocks.Input({
@@ -212,7 +212,7 @@ function buildAdminModal(qraftyConfig: IQraftyConfig, enabledOverride: boolean =
         actionId: blocks.hometab.admin.basic.formalPraiseMod,
         placeholder: '10',
         minLength: 2,
-        initialValue: qraftyConfig.formalFeedbackModulo.toString() || '10',
+        initialValue: pointdPalConfig.formalFeedbackModulo.toString() || '10',
       }),
     ).optional(),
     Blocks.Divider(),
@@ -222,8 +222,8 @@ function buildAdminModal(qraftyConfig: IQraftyConfig, enabledOverride: boolean =
         Elements.StaticSelect({ actionId: blocks.hometab.admin.bonusly.enabled })
           .initialOption(
             Bits.Option({
-              text: qraftyConfig.bonuslyConfig?.enabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
-              value: qraftyConfig.bonuslyConfig?.enabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
+              text: pointdPalConfig.bonuslyConfig?.enabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
+              value: pointdPalConfig.bonuslyConfig?.enabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
             }),
           )
           .options(
@@ -231,15 +231,15 @@ function buildAdminModal(qraftyConfig: IQraftyConfig, enabledOverride: boolean =
             Bits.Option({ text: EnabledSettings.DISABLED, value: EnabledSettings.DISABLED }),
           ),
       ),
-    ...buildBonuslyAdminBlocks(qraftyConfig.bonuslyConfig, enabledOverride),
+    ...buildBonuslyAdminBlocks(pointdPalConfig.bonuslyConfig, enabledOverride),
     Blocks.Divider(),
     Blocks.Header({ text: 'Qrypto' }),
     Blocks.Input({ label: 'Qrypto (Crypto) Enabled', blockId: blocks.hometab.admin.qrypto.enabled }).element(
       Elements.StaticSelect({ actionId: blocks.hometab.admin.qrypto.enabled })
         .initialOption(
           Bits.Option({
-            text: qraftyConfig.qryptoEnabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
-            value: qraftyConfig.qryptoEnabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
+            text: pointdPalConfig.qryptoEnabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
+            value: pointdPalConfig.qryptoEnabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
           }),
         )
         .options(
@@ -250,11 +250,11 @@ function buildAdminModal(qraftyConfig: IQraftyConfig, enabledOverride: boolean =
   );
 }
 
-function buildQryptoUserBlocks(qraftyConfig: IQraftyConfig, user: IUser) {
+function buildQryptoUserBlocks(pointdPalConfig: IPointdPalConfig, user: IUser) {
   let qryptoBlocks: Appendable<ViewBlockBuilder> = [];
-  if (qraftyConfig.qryptoEnabled) {
+  if (pointdPalConfig.qryptoEnabled) {
     qryptoBlocks.push(
-      Blocks.Header({ text: 'Qrafty Token (Crypto)' }),
+      Blocks.Header({ text: 'PointdPal Token (Crypto)' }),
       Blocks.Divider(),
       Blocks.Input({
         label: `When you level up your account we will need your wallet public address \
@@ -307,7 +307,7 @@ function buildBonuslyUserBlocks(bonuslyConfig: IBonuslyConfig, user: IUser) {
         }),
       ),
       Blocks.Input({
-        label: `When you send a Bonusly would you like Qrafty to DM you to tell you about your remaining balance?`,
+        label: `When you send a Bonusly would you like PointdPal to DM you to tell you about your remaining balance?`,
         blockId: blocks.hometab.user.bonusly.pointsDm
       }).element(
         Elements.StaticSelect({ actionId: blocks.hometab.user.bonusly.pointsDm })

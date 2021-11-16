@@ -19,7 +19,7 @@ app.message('try to map @.* to db users', directMention(), mapSingleUserToDb);
 app.message('unmap all users', directMention(), unmapUsersToDb);
 app.message('map all slackIds to slackEmail', directMention(), mapSlackIdToEmail);
 app.message('hubot to bolt', directMention(), migrateFromHubotToBolt);
-app.message('join all old qrafty channels', directMention(), joinAllQraftyChannels);
+app.message('join all old pointdPal channels', directMention(), joinAllPointdPalChannels);
 
 async function mapUsersToDb({ message, context, client, logger, say }) {
   const teamId = context.teamId as string;
@@ -192,7 +192,7 @@ async function migrateFromHubotToBolt({ message, context, logger, say, client })
 
     for (const hubotishUser of hubotishUsers) {
       logger.debug('Map this member', hubotishUser.slackId, hubotishUser.name);
-      hubotishUser.qraftyToken = hubotishUser.token || hubotishUser.qraftyToken;
+      hubotishUser.pointdPalToken = hubotishUser.token || hubotishUser.pointdPalToken;
       delete hubotishUser.token;
       hubotishUser.email = hubotishUser.slackEmail || hubotishUser.email;
       delete hubotishUser.slackEmail;
@@ -214,10 +214,10 @@ async function migrateFromHubotToBolt({ message, context, logger, say, client })
   }
 }
 
-async function joinAllQraftyChannels({ say, logger, message, client, context }) {
+async function joinAllPointdPalChannels({ say, logger, message, client, context }) {
   let result: ConversationsListResponse | undefined = undefined;
   const teamId = context.teamId as string;
-  const oldQrafty = 'U03HDRG36';
+  const oldPointdPal = 'U03HDRG36';
 
   const userId: string = message.user;
   const connection = connectionFactory(teamId)
@@ -242,7 +242,7 @@ async function joinAllQraftyChannels({ say, logger, message, client, context }) 
   for (const channel of result.channels) {
     try {
       const { members } = await client.conversations.members({ channel: channel.id as string });
-      if (members && members.includes(oldQrafty)) {
+      if (members && members.includes(oldPointdPal)) {
         client.conversations.join({ channel: channel.id as string });
       }
     } catch (e) {

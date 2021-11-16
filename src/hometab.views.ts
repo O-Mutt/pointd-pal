@@ -3,7 +3,7 @@ import { ESMap } from 'typescript';
 
 import { app } from '../app';
 import { BonuslyConfig } from './lib/models/bonuslyConfig';
-import { QraftyConfig } from './lib/models/qraftyConfig';
+import { PointdPalConfig } from './lib/models/pointdPalConfig';
 import { User } from './lib/models/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { actions } from './lib/types/Actions';
@@ -19,7 +19,7 @@ app.view(
 
     const connection = connectionFactory(teamId);
     const bonusly = await BonuslyConfig(connection).findOneOrCreate();
-    const qrafty = await QraftyConfig(connection).findOneOrCreate(teamId as string);
+    const pointdPal = await PointdPalConfig(connection).findOneOrCreate(teamId as string);
 
     const errors: { [blockId: string]: string; } = {};
     for (const option in view.state.values) {
@@ -29,7 +29,7 @@ app.view(
         switch (key) {
           case blocks.hometab.admin.basic.admins: {
             const selectedUsers = state.selected_users as string[];
-            qrafty.qraftyAdmins = selectedUsers;
+            pointdPal.pointdPalAdmins = selectedUsers;
             for (const newAdminId of selectedUsers) {
               console.log(newAdminId);
               const user = await User(connection).findOneBySlackIdOrCreate(teamId, newAdminId);
@@ -39,7 +39,7 @@ app.view(
             break;
           }
           case blocks.hometab.admin.basic.companyName: {
-            qrafty.companyName = textInputValue;
+            pointdPal.companyName = textInputValue;
             break;
           }
           case blocks.hometab.admin.basic.notificationChannel: {
@@ -49,7 +49,7 @@ app.view(
                 lowerCaseRoomName.substring(1, lowerCaseRoomName.length);
               }
             }
-            qrafty.notificationRoom = textInputValue;
+            pointdPal.notificationRoom = textInputValue;
             break;
           }
           case blocks.hometab.admin.basic.falsePositiveNotificationChannel: {
@@ -59,7 +59,7 @@ app.view(
                 lowerCaseRoomName.substring(1, lowerCaseRoomName.length);
               }
             }
-            qrafty.falsePositiveRoom = textInputValue;
+            pointdPal.falsePositiveRoom = textInputValue;
             break;
           }
           case blocks.hometab.admin.basic.scoreboardChannel: {
@@ -69,11 +69,11 @@ app.view(
                 lowerCaseRoomName.substring(1, lowerCaseRoomName.length);
               }
             }
-            qrafty.scoreboardRoom = textInputValue;
+            pointdPal.scoreboardRoom = textInputValue;
             break;
           }
           case blocks.hometab.admin.basic.formalPraiseUrl: {
-            qrafty.formalFeedbackUrl = textInputValue;
+            pointdPal.formalFeedbackUrl = textInputValue;
             break;
           }
           case blocks.hometab.admin.basic.formalPraiseMod: {
@@ -81,7 +81,7 @@ app.view(
             if (isNaN(modulo)) {
               errors[blocks.hometab.admin.basic.formalPraiseMod] = 'Formal praise increment must be a number';
             } else {
-              qrafty.formalFeedbackModulo = modulo;
+              pointdPal.formalFeedbackModulo = modulo;
             }
             break;
           }
@@ -122,7 +122,7 @@ app.view(
           }
           case blocks.hometab.admin.qrypto.enabled: {
             const selectedOption = state.selected_option?.value as string;
-            qrafty.qryptoEnabled = selectedOption === EnabledSettings.ENABLED;
+            pointdPal.qryptoEnabled = selectedOption === EnabledSettings.ENABLED;
             break;
           }
           default: {
@@ -143,12 +143,12 @@ app.view(
       await ack();
     }
 
-    qrafty.updatedBy = userId;
-    qrafty.updatedAt = new Date();
-    qrafty.bonuslyConfig = bonusly;
+    pointdPal.updatedBy = userId;
+    pointdPal.updatedAt = new Date();
+    pointdPal.bonuslyConfig = bonusly;
     logger.debug(`Updating admin configs for ${teamId} by ${userId}`);
     await bonusly.save();
-    await qrafty.save();
+    await pointdPal.save();
   },
 );
 

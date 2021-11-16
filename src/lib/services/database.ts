@@ -122,11 +122,11 @@ export class DatabaseService {
   }
 
   async updateAccountLevelToTwo(user: IUser): Promise<void> {
-    user.qraftyToken = user.score;
+    user.pointdPalToken = user.score;
     user.accountLevel = 2;
     await user.save();
     await BotToken
-      .findOneAndUpdate({}, { $inc: { qraftyToken: -user.qraftyToken } })
+      .findOneAndUpdate({}, { $inc: { pointdPalToken: -user.pointdPalToken } })
       .exec();
     eventBus.emit('plusplus-tokens');
     return;
@@ -230,14 +230,14 @@ export class DatabaseService {
    * @returns {object} the user who received the points updated value
    */
   async transferTokens(teamId: string, user: IUser, from: IUser, scoreChange: number): Promise<void> {
-    user.qraftyToken = user.qraftyToken || 0 + scoreChange;
-    from.qraftyToken = from.qraftyToken || 0 - scoreChange;
+    user.pointdPalToken = user.pointdPalToken || 0 + scoreChange;
+    from.pointdPalToken = from.pointdPalToken || 0 - scoreChange;
     await user.save();
     await from.save();
   }
 
   async getMagicSecretStringNumberValue() {
-    const updateBotWallet = await BotToken.findOne({ name: 'qrafty' });
+    const updateBotWallet = await BotToken.findOne({ name: 'pointdPal' });
     if (updateBotWallet) {
       return updateBotWallet.magicString;
     }
