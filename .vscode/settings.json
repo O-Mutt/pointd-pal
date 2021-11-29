@@ -4,5 +4,10 @@
   "files.trimTrailingWhitespace": true,
   "editor.formatOnSave": true,
   "typescript.tsdk": "node_modules/typescript/lib",
-  "cSpell.words": ["bonusly", "pointdPal", "PointdPal", "qrypto", "Subdocument"]
+  "cSpell.words": [
+    "Pointd",
+    "pointdPal",
+    "PointdPal",
+    "Subdocument"
+  ]
 }

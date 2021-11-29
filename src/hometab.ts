@@ -4,7 +4,6 @@ import { AllMiddlewareArgs, SlackEventMiddlewareArgs } from '@slack/bolt';
 import { View } from '@slack/types';
 
 import { app } from '../app';
-import { BonuslyConfig, IBonuslyConfig } from './lib/models/bonuslyConfig';
 import { IPointdPalConfig, PointdPalConfig } from './lib/models/pointdPalConfig';
 import { IUser, User } from './lib/models/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
@@ -34,8 +33,6 @@ async function updateHomeTab({ event, context, client, logger }: SlackEventMiddl
       Blocks.Divider(),
       ...getAdminConfigSection(user),
       ...getUserConfigSection(user, pointdPalConfig),
-
-      //...getBonuslyAdminConfigSection(user, bonusly, pointdPalConfig),
     );
     await client.views.publish({ token: context.botToken, view: hometab.buildToObject() as View, user_id: userId });
   } catch (e) {

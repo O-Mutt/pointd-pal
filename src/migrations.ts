@@ -7,12 +7,8 @@ import { app } from '../app';
 import { Helpers as H } from './lib/helpers';
 import { IUser, User } from './lib/models/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
-import { DatabaseService } from './lib/services/database';
 import { ConversationsListResponse } from '@slack/web-api';
 
-new DatabaseService();
-
-// we should use `directMention() once the code "works"
 app.message('try to map all slack users to db users', directMention(), mapUsersToDb);
 app.message('try to map more data to all slack users to db users', directMention(), mapMoreUserFieldsBySlackId);
 app.message('try to map @.* to db users', directMention(), mapSingleUserToDb);

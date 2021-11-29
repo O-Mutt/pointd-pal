@@ -4,6 +4,7 @@ import tokenBuddy from 'token-buddy';
 
 import { app } from '../app';
 import { Helpers as H } from './lib/helpers';
+import { MessageBuilder as Builder } from './lib/messageBuilder';
 import { IUser, User } from './lib/models/user';
 import { regExpCreator } from './lib/regexpCreator';
 import { DatabaseService } from './lib/services/database';
@@ -67,6 +68,7 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
   const cleanReason = H.cleanAndEncode(reason);
 
 
+
   if (userId.charAt(0).toLowerCase() === 's') {
     const { users } = await args.client.usergroups.users.list({ team_id: teamId, usergroup: userId });
     args.context.matches.groups.userId = users.join(',');
@@ -101,7 +103,7 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
     return;
   }
 
-  const theMessage = H.getMessageForNewScore(toUser, cleanReason);
+  const theMessage = Builder.getMessageForNewScore(toUser, cleanReason);
 
   if (theMessage) {
     const sayArgs = H.getSayMessageArgs(args.message, theMessage);
@@ -240,7 +242,7 @@ async function multipleUsersVote({ message, context, logger, say }) {
       logger.debug(
         `clean names map[${toUserId}]: ${response.toUser.score}, the reason ${cleanReason ? response.toUser.reasons.get(cleanReason) : 'n/a'} `,
       );
-      messages.push(H.getMessageForNewScore(response.toUser, cleanReason));
+      messages.push(Builder.getMessageForNewScore(response.toUser, cleanReason));
       recipients.push(response.toUser);
       notificationMessage.push(
         `${Md.user(response.fromUser.slackId)} ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'

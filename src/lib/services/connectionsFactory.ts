@@ -14,6 +14,5 @@ export function connectionFactory(teamId?: string): mongoose.Connection {
 
   const connectionUri = procVars.mongoUri.replace('#TEAM_ID', teamId || procVars.defaultDb || '');
   connections[databaseName] = mongoose.createConnection(`${connectionUri}`);
-  connections[databaseName];
   return connections[databaseName];
 }

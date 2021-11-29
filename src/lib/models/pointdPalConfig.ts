@@ -1,8 +1,7 @@
 import { Schema, Document, Model, Connection } from 'mongoose';
 import { app } from '../../../app';
 import { AuditTags } from './auditTags';
-import { BonuslyConfigSchema, IBonuslyConfig } from './bonuslyConfig';
-import { IInstallation, Installation } from './installation';
+import { Installation } from './installation';
 
 export interface IPointdPalConfig extends Document, AuditTags {
   notificationRoom?: string;
@@ -12,9 +11,8 @@ export interface IPointdPalConfig extends Document, AuditTags {
   formalFeedbackModulo: number;
   reasonsKeyword?: string;
   companyName?: string;
-  qryptoEnabled?: boolean;
   pointdPalAdmins?: string[];
-  bonuslyConfig?: IBonuslyConfig;
+  tokenLedgerBalance: number;
 }
 
 export const PointdPalConfigSchema = new Schema({
@@ -27,12 +25,8 @@ export const PointdPalConfigSchema = new Schema({
     default: 10
   },
   companyName: String,
-  qryptoEnabled: {
-    type: Boolean,
-    default: false
-  },
   pointdPalAdmins: [String],
-  bonuslyConfig: BonuslyConfigSchema,
+  tokenLedgerBalance: Number,
 });
 
 PointdPalConfigSchema.statics.findOneOrCreate = async function (this: Model<PointdPalConfigInterface, PointdPalConfigModelInterface>, teamId: string): Promise<IPointdPalConfig> {

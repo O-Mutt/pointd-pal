@@ -10,6 +10,7 @@ import { ChatGetPermalinkResponse, ChatPostEphemeralArguments, ChatPostMessageAr
 
 import { app } from '../app';
 import { Helpers as H } from './lib/helpers';
+import { MessageBuilder as Builder } from './lib/messageBuilder';
 import { IUser } from './lib/models/user';
 import { eventBus } from './lib/services/eventBus';
 import { ScoreKeeper } from './lib/services/scorekeeper';
@@ -209,7 +210,7 @@ app.view(
         logger.debug(
           `clean names map[${toUserId}]: ${response.toUser.score}, the reason ${cleanReason ? response.toUser.reasons.get(cleanReason) : 'n/a'} `,
         );
-        messages.push(H.getMessageForNewScore(response.toUser, cleanReason));
+        messages.push(Builder.getMessageForNewScore(response.toUser, cleanReason));
         recipients.push(response.toUser);
         notificationMessage.push(
           `${Md.user(response.fromUser.slackId)} ${increment === 1 ? 'sent' : 'removed'

@@ -39,7 +39,7 @@ async function respondWithScore({ message, context, logger, say }) {
   baseString += `\n${Md.italic('Total Points Given')}: ${user.totalPointsGiven}`;
   if (user.robotDay) {
     const dateObj = new Date(user.robotDay);
-    baseString += `\n:birthday: ${Md.bold('PointdPalday')} is ${Md.bold(moment(dateObj).format('MM-DD-yyyy'))}`;
+    baseString += `\n:birthday: ${Md.bold('Pointd Pal day')} is ${Md.bold(moment(dateObj).format('MM-DD-yyyy'))}`;
   }
 
   let reasonsStr: string = '';

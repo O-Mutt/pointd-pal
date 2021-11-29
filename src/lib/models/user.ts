@@ -11,7 +11,7 @@ export interface IUser extends Document, AuditTags {
   score: number;
   reasons: ESMap<string, number>;
   pointsGiven: ESMap<string, number>;
-  robotDay: Date;
+  pointdPalDay: Date;
   accountLevel: number;
   totalPointsGiven: number;
   isAdmin: boolean;
@@ -19,10 +19,7 @@ export interface IUser extends Document, AuditTags {
   pointdPalToken: number;
   email?: string;
   name?: string;
-  bonuslyScoreOverride: number;
-  bonuslyPrompt: string;
   walletAddress?: string;
-  bonuslyPointsDM: boolean
 }
 
 export const UserSchema = new Schema({
@@ -44,7 +41,7 @@ export const UserSchema = new Schema({
     of: Number,
     default: {},
   },
-  robotDay: {
+  pointdPalDay: {
     type: Date,
     default: new Date(),
   },
@@ -69,20 +66,6 @@ export const UserSchema = new Schema({
   pointdPalToken: {
     type: Number,
     default: 0,
-  },
-  bonuslyScoreOverride: {
-    type: Number,
-    default: 1,
-  },
-  bonuslyPrompt: {
-    type: String,
-    enum: PromptSettings,
-    default: PromptSettings.PROMPT,
-  },
-  walletAddress: String,
-  bonuslyPointsDM: {
-    type: Boolean,
-    default: true,
   },
 });
 

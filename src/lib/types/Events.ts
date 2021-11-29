@@ -34,26 +34,3 @@ export interface PPSpamEvent extends EventWithTeamId {
   notificationMessage: string;
   reason?: string;
 }
-
-export const PPBonuslySentEventName = 'plus-plus-bonusly-sent';
-export interface PPBonuslySentEvent {
-  teamId: string;
-  channel: string;
-  responses: any[];
-  sender: IUser;
-  recipients: IUser[];
-  originalMessageTs: string;
-  originalMessageParentTs?: string;
-}
-
-export interface TerseBonuslySentPayload {
-  responses?: any[];
-  teamId: string;
-  channel: string;
-  senderId: string;
-  recipientIds: string[];
-  amount: number;
-  originalMessageTs: string;
-  originalMessageParentTs?: string;
-  reason?: string;
-}

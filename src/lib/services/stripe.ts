@@ -1,5 +1,6 @@
 import { Stripe } from "stripe";
 import { Installation } from "../models/installation";
+import { SubscriptionStatus } from "../types/Enums";
 
 require('dotenv').config();
 
@@ -79,7 +80,7 @@ export class StripeService {
 
     }
     try {
-      await Installation.findOneAndUpdate(lookupQuery, { $unset: { subscriptionId: 1, subscriptionStatus: 1 } }).exec();
+      await Installation.findOneAndUpdate(lookupQuery, { $set: { subscriptionStatus: SubscriptionStatus.CANCELED } }).exec();
     } catch (e: any | unknown) {
       console.error(`There was an deleting the customerSubscription ${JSON.stringify(lookupQuery)}`)
     }

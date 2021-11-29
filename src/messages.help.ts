@@ -25,15 +25,15 @@ async function respondWithHelpGuidance({ client, message, say }) {
     .concat('`{ name1, name2, name3 } ++[<reason>]` - Increment score for all names (for a reason)\n')
     .concat('`{ name1, name2, name3 } --[<reason>]` - Decrement score for all names (for a reason) \n')
     .concat('`{ name1, name2, name3 } --[<reason>]` - Decrement score for all names (for a reason) \n')
-    .concat(`\`@PointdPal score <name>\` - Display the score for a name and some of the reasons\n`)
-    .concat(`\`@PointdPal top <amount>\` - Display the top scoring <amount>\n`)
-    .concat(`\`@PointdPal erase <name> [<reason>]\` - Remove the score for a name (for a reason) \n`)
-    .concat(`\`@PointdPal level me up\` - Level up your account for some additional PointdPaliness \n`)
+    .concat(`\`@Pointd Pal score <name>\` - Display the score for a name and some of the reasons\n`)
+    .concat(`\`@Pointd Pal top <amount>\` - Display the top scoring <amount>\n`)
+    .concat(`\`@Pointd Pal erase <name> [<reason>]\` - Remove the score for a name (for a reason) \n`)
+    .concat(`\`@Pointd Pal level me up\` - Level up your account for some additional PointdPaliness \n`)
     .concat('`how much are <point_type> points worth` - Shows how much <point_type> points are worth\n');
 
-  const theMessage = Message({ channel: message.channel, text: 'Help menu for PointdPal' })
+  const theMessage = Message({ channel: message.channel, text: 'Help menu for Pointd Pal' })
     .blocks(
-      Blocks.Header({ text: `Need help with PointdPal?` }),
+      Blocks.Header({ text: `Need help with Pointd Pal?` }),
       Blocks.Section({ text: `_Commands_:` }),
       Blocks.Section({ text: helpMessage }),
       procVars.furtherHelpUrl
@@ -70,7 +70,7 @@ async function tellHowMuchPointsAreWorth({ payload, logger, message, context, sa
   } catch (e: any) {
     console.error("Error with how much points worth -_-", e);
     return await say(
-      "Seems like we are having trouble getting some data... Don't worry, though, your PointdPal points are still worth nothing!",
+      "Seems like we are having trouble getting some data... Don't worry, though, your Pointd Pal points are still worth nothing!",
     );
   }
 }

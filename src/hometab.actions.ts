@@ -6,7 +6,6 @@ import { AllMiddlewareArgs, BlockButtonAction, BlockStaticSelectAction, SlackAct
 import { View } from '@slack/types';
 
 import { app } from '../app';
-import { BonuslyConfig, IBonuslyConfig } from './lib/models/bonuslyConfig';
 import { BotToken } from './lib/models/botToken';
 import { IUser, User } from './lib/models/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
@@ -47,7 +46,7 @@ app.action(actions.hometab.user_settings,
     const pointdPalConfig = await PointdPalConfig(connection).findOneOrCreate(teamId);
     const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
 
-    if (!user || !pointdPalConfig || !pointdPalConfig.bonuslyConfig) {
+    if (!user || !pointdPalConfig) {
       return;
     }
 
@@ -57,8 +56,7 @@ app.action(actions.hometab.user_settings,
       submit: 'Update Settings',
       callbackId: actions.hometab.user_settings_submit,
     }).blocks(
-      ...buildBonuslyUserBlocks(pointdPalConfig.bonuslyConfig, user),
-      ...buildQryptoUserBlocks(pointdPalConfig, user)
+      ...buildCryptoUserBlocks(pointdPalConfig, user)
     );
 
     const result = await client.views.open({
@@ -91,62 +89,6 @@ app.action(actions.hometab.sync_admins,
     return;
   }
 )
-
-app.action(blocks.hometab.admin.bonusly.enabled,
-  async ({ ack, client, body, context, action }: SlackActionMiddlewareArgs<BlockStaticSelectAction> & AllMiddlewareArgs) => {
-    await ack();
-    console.log('in the bonusly enabled action');
-    const teamId = context.teamId as string;
-    const connection = connectionFactory(teamId);
-    const pointdPalConfig = await PointdPalConfig(connection).findOneOrCreate(teamId);
-
-    const updatedView = buildAdminModal(pointdPalConfig, action.selected_option.value === EnabledSettings.ENABLED).buildToObject();
-    await client.views.update({
-      view_id: body.view?.id,
-      hash: body.view?.hash,
-      view: updatedView
-    } as ViewsUpdateArguments)
-  }
-);
-
-function buildBonuslyAdminBlocks(bonuslyConfig: IBonuslyConfig | undefined, enabledOverride: boolean = false) {
-  let blockBuilder: Appendable<BlockBuilder> = [];
-  if (enabledOverride === true || bonuslyConfig?.enabled === true) {
-    blockBuilder.push(
-      Blocks.Input({ label: `${Md.emoji('page_facing_up')} Bonusly API Uri`, blockId: blocks.hometab.admin.bonusly.apiUrl }).element(
-        Elements.TextInput({
-          actionId: blocks.hometab.admin.bonusly.apiUrl,
-          placeholder: 'https://bonus.ly/api/v1',
-          minLength: 8,
-          initialValue: bonuslyConfig?.url?.toString() || '',
-        }),
-      ).optional(),
-      Blocks.Input({ label: `${Md.emoji('key')} Bonusly API Key`, blockId: blocks.hometab.admin.bonusly.apiKey }).element(
-        Elements.TextInput({
-          actionId: blocks.hometab.admin.bonusly.apiKey,
-          minLength: 5,
-          initialValue: bonuslyConfig?.apiKey || '',
-        }),
-      ),
-      Blocks.Input({ label: `${Md.emoji('gift')} Default reason`, blockId: blocks.hometab.admin.bonusly.defaultReason }).element(
-        Elements.TextInput({
-          actionId: blocks.hometab.admin.bonusly.defaultReason,
-          minLength: 5,
-          initialValue: bonuslyConfig?.defaultReason || '',
-          placeholder: 'point sent through PointdPal'
-        }),
-      ),
-      Blocks.Input({ label: `${Md.emoji('hash')} Default hashtag`, blockId: blocks.hometab.admin.bonusly.defaultHashtag }).element(
-        Elements.TextInput({
-          actionId: blocks.hometab.admin.bonusly.defaultHashtag,
-          minLength: 3,
-          initialValue: bonuslyConfig?.defaultHashtag || '',
-          placeholder: '#excellence'
-        }),
-      ));
-  }
-  return blockBuilder;
-}
 
 function buildAdminModal(pointdPalConfig: IPointdPalConfig, enabledOverride: boolean = false): ModalBuilder {
   return Modal({
@@ -216,113 +158,26 @@ function buildAdminModal(pointdPalConfig: IPointdPalConfig, enabledOverride: boo
       }),
     ).optional(),
     Blocks.Divider(),
-    Blocks.Header({ text: `${Md.emoji('rocket')} Bonusly Integration` }),
-    Blocks.Input({ label: 'Bonusly Enabled', blockId: blocks.hometab.admin.bonusly.enabled }).dispatchAction(true)
-      .element(
-        Elements.StaticSelect({ actionId: blocks.hometab.admin.bonusly.enabled })
-          .initialOption(
-            Bits.Option({
-              text: pointdPalConfig.bonuslyConfig?.enabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
-              value: pointdPalConfig.bonuslyConfig?.enabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
-            }),
-          )
-          .options(
-            Bits.Option({ text: EnabledSettings.ENABLED, value: EnabledSettings.ENABLED }),
-            Bits.Option({ text: EnabledSettings.DISABLED, value: EnabledSettings.DISABLED }),
-          ),
-      ),
-    ...buildBonuslyAdminBlocks(pointdPalConfig.bonuslyConfig, enabledOverride),
-    Blocks.Divider(),
-    Blocks.Header({ text: 'Qrypto' }),
-    Blocks.Input({ label: 'Qrypto (Crypto) Enabled', blockId: blocks.hometab.admin.qrypto.enabled }).element(
-      Elements.StaticSelect({ actionId: blocks.hometab.admin.qrypto.enabled })
-        .initialOption(
-          Bits.Option({
-            text: pointdPalConfig.qryptoEnabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
-            value: pointdPalConfig.qryptoEnabled ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
-          }),
-        )
-        .options(
-          Bits.Option({ text: EnabledSettings.ENABLED, value: EnabledSettings.ENABLED }),
-          Bits.Option({ text: EnabledSettings.DISABLED, value: EnabledSettings.DISABLED }),
-        ),
-    ),
+    /* Blocks.Divider(),
+    Blocks.Header({ text: 'Crypto' }), */
   );
 }
 
-function buildQryptoUserBlocks(pointdPalConfig: IPointdPalConfig, user: IUser) {
-  let qryptoBlocks: Appendable<ViewBlockBuilder> = [];
-  if (pointdPalConfig.qryptoEnabled) {
-    qryptoBlocks.push(
-      Blocks.Header({ text: 'PointdPal Token (Crypto)' }),
-      Blocks.Divider(),
-      Blocks.Input({
-        label: `When you level up your account we will need your wallet public address \
+function buildCryptoUserBlocks(pointdPalConfig: IPointdPalConfig, user: IUser) {
+  let cryptoBlocks: Appendable<ViewBlockBuilder> = [];
+  cryptoBlocks.push(
+    Blocks.Header({ text: 'Pointd Pal Token (Crypto)' }),
+    Blocks.Divider(),
+    Blocks.Input({
+      label: `When you level up your account we will need your wallet public address \
 for you to be able to withdraw your crypto. What is your public BEP20 wallet address?`,
-        blockId: blocks.hometab.user.qrypto.walletAddress
-      }).element(
-        Elements.TextInput({
-          actionId: blocks.hometab.user.qrypto.walletAddress,
-          initialValue: user.walletAddress || '',
-        }),
-      ).optional()
-    );
-  }
-  return qryptoBlocks
-}
-
-function buildBonuslyUserBlocks(bonuslyConfig: IBonuslyConfig, user: IUser) {
-  let bonuslyBlocks: Appendable<ViewBlockBuilder> = [];
-  if (bonuslyConfig.enabled) {
-    bonuslyBlocks.push(
-      Blocks.Header({ text: 'Bonusly Integration Settings' }),
-      Blocks.Divider(),
-      Blocks.Section({ text: 'Bonusly Config' }),
-      Blocks.Input({
-        label: `When sending a ${Md.codeInline('++')} we can also send a bonusly bonus. We can always send one, prompt you every time, or never send a bonus.`,
-        blockId: blocks.hometab.user.bonusly.prompt
-      }).element(
-        Elements.StaticSelect({ actionId: blocks.hometab.user.bonusly.prompt })
-          .initialOption(
-            user.bonuslyPrompt
-              ? Bits.Option({
-                text: user.bonuslyPrompt,
-                value: user.bonuslyPrompt,
-              })
-              : undefined,
-          )
-          .options(
-            Bits.Option({ text: PromptSettings.ALWAYS, value: PromptSettings.ALWAYS }),
-            Bits.Option({ text: PromptSettings.PROMPT, value: PromptSettings.PROMPT }),
-            Bits.Option({ text: PromptSettings.NEVER, value: PromptSettings.NEVER }),
-          ),
-      ),
-      Blocks.Input({
-        label: `When we send a ${Md.codeInline('++')} and a bonusly is included what is the default amount that you would like to send?`,
-        blockId: blocks.hometab.user.bonusly.scoreOverride
-      }).element(
-        Elements.TextInput({
-          actionId: blocks.hometab.user.bonusly.scoreOverride,
-          initialValue: user.bonuslyScoreOverride?.toString() || '1',
-        }),
-      ),
-      Blocks.Input({
-        label: `When you send a Bonusly would you like PointdPal to DM you to tell you about your remaining balance?`,
-        blockId: blocks.hometab.user.bonusly.pointsDm
-      }).element(
-        Elements.StaticSelect({ actionId: blocks.hometab.user.bonusly.pointsDm })
-          .initialOption(
-            Bits.Option({
-              text: user.bonuslyPointsDM ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
-              value: user.bonuslyPointsDM ? EnabledSettings.ENABLED : EnabledSettings.DISABLED,
-            })
-          )
-          .options(
-            Bits.Option({ text: EnabledSettings.ENABLED, value: EnabledSettings.ENABLED }),
-            Bits.Option({ text: EnabledSettings.DISABLED, value: EnabledSettings.DISABLED })
-          ),
-      ),
-    );
-  }
-  return bonuslyBlocks;
+      blockId: blocks.hometab.user.crypto.walletAddress
+    }).element(
+      Elements.TextInput({
+        actionId: blocks.hometab.user.crypto.walletAddress,
+        initialValue: user.walletAddress || '',
+      }),
+    ).optional()
+  );
+  return cryptoBlocks
 }

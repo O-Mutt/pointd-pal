@@ -2,7 +2,6 @@ import { AllMiddlewareArgs, SlackViewMiddlewareArgs, ViewSubmitAction } from '@s
 import { ESMap } from 'typescript';
 
 import { app } from '../app';
-import { BonuslyConfig } from './lib/models/bonuslyConfig';
 import { PointdPalConfig } from './lib/models/pointdPalConfig';
 import { User } from './lib/models/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
@@ -18,7 +17,6 @@ app.view(
 
 
     const connection = connectionFactory(teamId);
-    const bonusly = await BonuslyConfig(connection).findOneOrCreate();
     const pointdPal = await PointdPalConfig(connection).findOneOrCreate(teamId as string);
 
     const errors: { [blockId: string]: string; } = {};
@@ -85,46 +83,6 @@ app.view(
             }
             break;
           }
-          case blocks.hometab.admin.bonusly.enabled: {
-            const selectedOption = state.selected_option?.value as string;
-            bonusly.enabled = selectedOption === EnabledSettings.ENABLED;
-            break;
-          }
-          case blocks.hometab.admin.bonusly.apiUrl: {
-            if (!textInputValue || textInputValue.length === 0) {
-              bonusly.url = undefined;
-            } else {
-              try {
-                if (textInputValue.charAt(textInputValue.length - 1) === '/') {
-                  textInputValue = textInputValue.substring(0, textInputValue.length - 1);
-                }
-                bonusly.url = new URL(textInputValue);
-              } catch (e) {
-                errors[blocks.hometab.admin.bonusly.apiUrl] = 'The Bonusly API Url is invalid.';
-                logger.warn('There was an error thrown when trying to set the bonusly url');
-              }
-            }
-            break;
-          }
-          case blocks.hometab.admin.bonusly.apiKey: {
-            if (textInputValue.indexOf('*') === -1) {
-              bonusly.apiKey = textInputValue;
-            }
-            break;
-          }
-          case blocks.hometab.admin.bonusly.defaultReason: {
-            bonusly.defaultReason = textInputValue;
-            break;
-          }
-          case blocks.hometab.admin.bonusly.defaultHashtag: {
-            bonusly.defaultHashtag = textInputValue;
-            break;
-          }
-          case blocks.hometab.admin.qrypto.enabled: {
-            const selectedOption = state.selected_option?.value as string;
-            pointdPal.qryptoEnabled = selectedOption === EnabledSettings.ENABLED;
-            break;
-          }
           default: {
             logger.debug(`key not recognized: ${key}`);
             break;
@@ -145,9 +103,7 @@ app.view(
 
     pointdPal.updatedBy = userId;
     pointdPal.updatedAt = new Date();
-    pointdPal.bonuslyConfig = bonusly;
     logger.debug(`Updating admin configs for ${teamId} by ${userId}`);
-    await bonusly.save();
     await pointdPal.save();
   },
 );
@@ -167,26 +123,9 @@ app.view(
         const value: string = (view.state.values[option][key].value ||
           view.state.values[option][key].selected_option?.value) as string;
         switch (key) {
-          case blocks.hometab.user.bonusly.prompt: {
-            user.bonuslyPrompt = value;
-            break;
-          }
-          case blocks.hometab.user.bonusly.scoreOverride: {
-            const parsedOverride = parseInt(value, 10);
-            if (isNaN(parsedOverride)) {
-              errors[blocks.hometab.user.bonusly.scoreOverride] = 'The score override must be a number.';
-            } else {
-              user.bonuslyScoreOverride = parsedOverride;
-            }
-            break;
-          }
-          case blocks.hometab.user.bonusly.pointsDm: {
-            user.bonuslyPointsDM = value === EnabledSettings.ENABLED;
-            break;
-          }
-          case blocks.hometab.user.qrypto.walletAddress: {
+          case blocks.hometab.user.crypto.walletAddress: {
             if (value && !/^0x[a-fA-F0-9]{40}$/.test(value)) {
-              errors[blocks.hometab.user.qrypto.walletAddress] = 'Your wallet address is invalid.';
+              errors[blocks.hometab.user.crypto.walletAddress] = 'Your wallet address is invalid.';
             }
             user.walletAddress = value;
             break;

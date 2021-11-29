@@ -52,57 +52,12 @@ export class Helpers {
     return `${years}th `;
   }
 
-  static getMessageForNewScore(user: IUser, reason: string | undefined): string {
-    if (!user) {
-      return '';
-    }
-    let scoreStr = `${Md.user(user.slackId)} has ${user.score} point${Helpers.getEsOnEndOfWord(user.score)}`;
-    let reasonStr = '.';
-    let cakeDayStr = '';
-
-    if (user.score % 100 === 0) {
-      let scoreFlareStr = user.score.toString();
-      if (user.score === 0) {
-        scoreFlareStr = 'zero';
-      }
-      const extraFlare = `:${scoreFlareStr}:`;
-      scoreStr = `${extraFlare} ${scoreStr} ${extraFlare}`;
-      reasonStr = '';
-    }
-
-    if (user.accountLevel && user.accountLevel > 1) {
-      let tokenStr = `(*${user.pointdPalToken} PointdPal Token${Helpers.getEsOnEndOfWord(user.pointdPalToken)}*)`;
-      scoreStr = scoreStr.concat(` ${tokenStr}`);
-    }
-
-    if (reason) {
-      const decodedReason = Helpers.decode(reason);
-      if (user.reasons.get(reason) === 1 || user.reasons.get(reason) === -1) {
-        if (user.score === 1 || user.score === -1) {
-          reasonStr = ` for ${decodedReason}.`;
-        } else {
-          reasonStr = `, ${user.reasons.get(reason)} of which is for ${decodedReason}.`;
-        }
-      } else if (user.reasons.get(reason) === 0) {
-        reasonStr = `, none of which are for ${decodedReason}.`;
-      } else {
-        reasonStr = `, ${user.reasons.get(reason)} of which are for ${decodedReason}.`;
-      }
-    }
-
-    if (Helpers.isCakeDay(user.robotDay)) {
-      const yearsAsString = Helpers.getYearsAsString(user.robotDay);
-      cakeDayStr = `\n:birthday: Today is ${Md.user(user.slackId)}'s ${yearsAsString}PointdPalday! :birthday:`;
-    }
-    return `${scoreStr}${reasonStr}${cakeDayStr}`;
-  }
-
   static getMessageForTokenTransfer(to: IUser, from: IUser, number: number, reason: string | undefined) {
     if (!to) {
       return '';
     }
 
-    const scoreStr = `${Md.user(from.slackId)} transferred *${number}* PointdPal Token${Helpers.getEsOnEndOfWord(number)} to ${Md.user(to.slackId)}.\n
+    const scoreStr = `${Md.user(from.slackId)} transferred *${number}* Pointd Pal Token${Helpers.getEsOnEndOfWord(number)} to ${Md.user(to.slackId)}.\n
 ${Md.user(to.slackId)} now has ${to.pointdPalToken} token${Helpers.getEsOnEndOfWord(to.pointdPalToken || 0)}`;
     let reasonStr = '.';
     let cakeDayStr = '';
@@ -124,7 +79,7 @@ ${Md.user(to.slackId)} now has ${to.pointdPalToken} token${Helpers.getEsOnEndOfW
 
     if (Helpers.isCakeDay(to.robotDay)) {
       const yearsAsString = Helpers.getYearsAsString(to.robotDay);
-      cakeDayStr = `\n:birthday: Today is ${Md.user(to.slackId)}'s ${yearsAsString}PointdPalday! :birthday:`;
+      cakeDayStr = `\n:birthday: Today is ${Md.user(to.slackId)}'s ${yearsAsString} Pointd Pal day! :birthday:`;
     }
     return `${scoreStr}${reasonStr}${cakeDayStr}\n_${Md.user(from.slackId)} has ${from.pointdPalToken} token${Helpers.getEsOnEndOfWord(
       from.pointdPalToken || 0,
@@ -175,7 +130,7 @@ ${Md.user(to.slackId)} now has ${to.pointdPalToken} token${Helpers.getEsOnEndOfW
     return base64data;
   }
 
-  static decode(str: string): string | undefined {
+  static decode(str?: string): string | undefined {
     if (!str) {
       return undefined;
     }
@@ -233,6 +188,10 @@ ${Md.user(to.slackId)} now has ${to.pointdPalToken} token${Helpers.getEsOnEndOfW
       return true;
     }
     return false;
+  }
+
+  static endsWithPunctuation(str: string): boolean {
+    return !!str.match(/[.,:!?]$/);
   }
 }
 

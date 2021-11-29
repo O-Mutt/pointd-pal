@@ -51,14 +51,10 @@ export let app = new App({
 });
 
 // messages
-import './src/messages.qrypto';
+import './src/messages.crypto';
 import './src/messages.scoreboard';
 import './src/messages.help';
 import './src/messages.plusplus';
-
-// bonusly
-import './src/actions.bonusly';
-import './src/events.bonusly';
 
 // etc
 import './src/events';
