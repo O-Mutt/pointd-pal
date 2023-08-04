@@ -17,7 +17,7 @@ export const ScoreLogSchema = new Schema({
   date: {
     type: Date,
     default: new Date(),
-    index: -1
+    index: -1,
   },
   scoreChange: Number,
 });

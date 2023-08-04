@@ -8,7 +8,6 @@ import { PointdPalInstallStore } from './src/lib/services/pointdPalInstallStore'
 require('dotenv').config();
 require('newrelic');
 
-import { stripeEndpoint } from './src/lib/routes/webhook.stripe';
 import { healthEndpoint } from './src/lib/routes/health';
 
 export let app = new App({
@@ -20,34 +19,31 @@ export let app = new App({
   installationStore: PointdPalInstallStore,
   tokenVerificationEnabled: true,
   installerOptions: {
-    directInstall: true
+    directInstall: true,
   },
   scopes: [
-    "app_mentions:read",
-    "channels:history",
-    "channels:manage",
-    "channels:read",
-    "channels:join",
-    "chat:write",
-    "commands",
-    "groups:history",
-    "groups:read",
-    "groups:write",
-    "im:history",
-    "im:read",
-    "im:write",
-    "mpim:history",
-    "mpim:read",
-    "mpim:write",
-    "users.profile:read",
-    "users:read",
-    "users:read.email",
-    "usergroups:read",
+    'app_mentions:read',
+    'channels:history',
+    'channels:manage',
+    'channels:read',
+    'channels:join',
+    'chat:write',
+    'commands',
+    'groups:history',
+    'groups:read',
+    'groups:write',
+    'im:history',
+    'im:read',
+    'im:write',
+    'mpim:history',
+    'mpim:read',
+    'mpim:write',
+    'users.profile:read',
+    'users:read',
+    'users:read.email',
+    'usergroups:read',
   ],
-  customRoutes: [
-    stripeEndpoint,
-    healthEndpoint
-  ],
+  customRoutes: [healthEndpoint],
 });
 
 // messages

@@ -4,14 +4,19 @@ import { AllMiddlewareArgs, SlackEventMiddlewareArgs } from '@slack/bolt';
 import { View } from '@slack/types';
 
 import { app } from '../app';
-import { IPointdPalConfig, PointdPalConfig } from './lib/models/pointdPalConfig';
-import { IUser, User } from './lib/models/user';
+import { IPointdPalConfig, PointdPalConfig } from './entities/pointdPalConfig';
+import { IUser, User } from './entities/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { actions } from './lib/types/Actions';
 
 app.event('app_home_opened', updateHomeTab);
 
-async function updateHomeTab({ event, context, client, logger }: SlackEventMiddlewareArgs<'app_home_opened'> & AllMiddlewareArgs) {
+async function updateHomeTab({
+  event,
+  context,
+  client,
+  logger,
+}: SlackEventMiddlewareArgs<'app_home_opened'> & AllMiddlewareArgs) {
   logger.debug('app home was opened!');
   try {
     const userId = event.user;
@@ -27,8 +32,9 @@ async function updateHomeTab({ event, context, client, logger }: SlackEventMiddl
         text: `${Md.emoji('wave')} Hey ${Md.user(userId)}, I'm PointdPal.`,
       }),
       Blocks.Section({
-        text: `I make it ${Md.italic('super')} easy to send a quick ${Md.codeInline('++') + ' or ' + Md.codeInline('--')
-          } to your friends/coworkers via slack to show them that you appreciate all the work they do.`,
+        text: `I make it ${Md.italic('super')} easy to send a quick ${
+          Md.codeInline('++') + ' or ' + Md.codeInline('--')
+        } to your friends/coworkers via slack to show them that you appreciate all the work they do.`,
       }),
       Blocks.Divider(),
       ...getAdminConfigSection(user),
@@ -55,9 +61,7 @@ function getAdminConfigSection(user: IUser): Appendable<ViewBlockBuilder> {
     ),
     Blocks.Section({
       text: `${Md.emoji('recycle')} Sync Admins`,
-    }).accessory(
-      Elements.Button({ text: 'Sync', actionId: actions.hometab.sync_admins }).primary(),
-    ),
+    }).accessory(Elements.Button({ text: 'Sync', actionId: actions.hometab.sync_admins }).primary()),
     Blocks.Divider(),
   );
   return blocks;

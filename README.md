@@ -8,7 +8,7 @@ This is a micropraise bot that is intended to help friends/coworkers `++` one an
 
 ### 1. Setup your local project
 
-```zsh
+```bash
 # Clone this project onto your machine
 git clone git@github.com:O-Mutt/pointd-pal.git
 
@@ -21,7 +21,7 @@ npm install
 
 ### 2. Setup environment variables
 
-```zsh
+```bash
 cp .env.example .env
 ```
 
@@ -29,7 +29,7 @@ Replace variables with ones from your "local" setup
 
 ### 3. Start servers
 
-```zsh
+```bash
 npm run start:dev
 ```
 

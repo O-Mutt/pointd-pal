@@ -1,6 +1,6 @@
-import { Md } from "slack-block-builder";
-import { Helpers as H } from "./helpers";
-import { IUser } from "./models/user";
+import { Md } from 'slack-block-builder';
+import { Helpers as H } from './helpers';
+import { IUser } from './models/user';
 
 export class MessageBuilder {
   static getMessageForNewScore(user: IUser, reason: string | undefined): string {
@@ -14,10 +14,9 @@ export class MessageBuilder {
 
     message += MessageBuilder.getCryptoScore(user);
 
+    message += MessageBuilder.getReasonModifier(user, reason);
 
-    message += MessageBuilder.getReasonModifier(user, reason)
-
-    message += MessageBuilder.getCakeDay(user)
+    message += MessageBuilder.getCakeDay(user);
     return message;
   }
 

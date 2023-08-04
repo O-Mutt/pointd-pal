@@ -6,8 +6,8 @@ import { directMention, Logger } from '@slack/bolt';
 
 import { app } from '../app';
 import { Helpers as H } from './lib/helpers';
-import { BotToken, IBotToken } from './lib/models/botToken';
-import { User } from './lib/models/user';
+import { BotToken, IBotToken } from './entities/botToken';
+import { User } from './entities/user';
 import { regExpCreator } from './lib/regexpCreator';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { DatabaseService } from './lib/services/database';
@@ -37,14 +37,23 @@ async function levelUpAccount({ message, context, logger, say }) {
     const theBlocks = Message({ channel: context.channel, text: "Let's level you up!" })
       .blocks(
         Blocks.Section({
-          text: `You are already Level 2, ${Md.user(user.slackId)
-            }. It looks as if you are ready for Level 3 where you can deposit/withdraw ${H.capitalizeFirstLetter(
-              'pointdPal',
-            )} Tokens!`,
+          text: `You are already Level 2, ${Md.user(
+            user.slackId,
+          )}. It looks as if you are ready for Level 3 where you can deposit/withdraw ${H.capitalizeFirstLetter(
+            'pointdPal',
+          )} Tokens!`,
         }),
         Blocks.Actions({}).elements(
-          Elements.Button({ text: 'Confirm', actionId: actions.wallet.level_up_confirm, value: ConfirmOrCancel.CONFIRM }).primary(),
-          Elements.Button({ text: 'Cancel', actionId: actions.wallet.level_up_cancel, value: ConfirmOrCancel.CANCEL }).danger(),
+          Elements.Button({
+            text: 'Confirm',
+            actionId: actions.wallet.level_up_confirm,
+            value: ConfirmOrCancel.CONFIRM,
+          }).primary(),
+          Elements.Button({
+            text: 'Cancel',
+            actionId: actions.wallet.level_up_cancel,
+            value: ConfirmOrCancel.CANCEL,
+          }).danger(),
         ),
       )
       .asUser();
@@ -57,8 +66,9 @@ async function levelUpAccount({ message, context, logger, say }) {
   logger.debug('DB results', leveledUpUser);
 
   await say(
-    `${Md.user(user.slackId)
-    }, we are going to level up your account to Level 2! This means you will start getting ${H.capitalizeFirstLetter(
+    `${Md.user(
+      user.slackId,
+    )}, we are going to level up your account to Level 2! This means you will start getting ${H.capitalizeFirstLetter(
       'pointdPal',
     )} Tokens as well as points!`,
   );

@@ -2,8 +2,13 @@ import { Bits, Blocks, Elements, Md, Modal, Option, OptionBuilder } from 'slack-
 import { SlackModalDto } from 'slack-block-builder/dist/lib';
 
 import {
-  AllMiddlewareArgs, MessageShortcut, SlackCommandMiddlewareArgs, SlackShortcut, SlackShortcutMiddlewareArgs,
-  SlackViewMiddlewareArgs, ViewSubmitAction
+  AllMiddlewareArgs,
+  MessageShortcut,
+  SlackCommandMiddlewareArgs,
+  SlackShortcut,
+  SlackShortcutMiddlewareArgs,
+  SlackViewMiddlewareArgs,
+  ViewSubmitAction,
 } from '@slack/bolt';
 import { View } from '@slack/types';
 import { ChatGetPermalinkResponse, ChatPostEphemeralArguments, ChatPostMessageArguments } from '@slack/web-api';
@@ -11,7 +16,7 @@ import { ChatGetPermalinkResponse, ChatPostEphemeralArguments, ChatPostMessageAr
 import { app } from '../app';
 import { Helpers as H } from './lib/helpers';
 import { MessageBuilder as Builder } from './lib/messageBuilder';
-import { IUser } from './lib/models/user';
+import { IUser } from './entities/user';
 import { eventBus } from './lib/services/eventBus';
 import { ScoreKeeper } from './lib/services/scorekeeper';
 import { actions } from './lib/types/Actions';
@@ -62,96 +67,116 @@ async function handleSlashCommand({ ack, body, command, client }: SlackCommandMi
     const channel = body.channel_id;
 
     const json: any = {
-      channel
-    }
+      channel,
+    };
 
     const localOptions = {
       userIds,
       operator,
-      reason
-    }
+      reason,
+    };
 
     const modalView = buildMessagePlusPlusModal(json, localOptions);
     const result = await client.views.open({
       trigger_id: command.trigger_id,
-      view: modalView
-    })
+      view: modalView,
+    });
   } catch (e: any | unknown) {
     console.log('slash err', e);
   }
-
 }
 
-async function handleShortcut({ shortcut, ack, body, client }: SlackShortcutMiddlewareArgs<MessageShortcut> & AllMiddlewareArgs) {
+async function handleShortcut({
+  shortcut,
+  ack,
+  body,
+  client,
+}: SlackShortcutMiddlewareArgs<MessageShortcut> & AllMiddlewareArgs) {
   try {
     await ack();
-    console.log(body)
+    console.log(body);
     const channel = body.channel.id;
     const messageTs = body.message.ts;
     const userId = body.message.user;
     const { permalink }: ChatGetPermalinkResponse = await client.chat.getPermalink({ channel, message_ts: messageTs });
 
-
     const json: any = {
       channel,
       messageTs,
       permalink,
-    }
+    };
     const localOptions = {
       userIds: [userId],
-      permalink
-    }
+      permalink,
+    };
 
     const modalView = buildMessagePlusPlusModal(json, localOptions);
     const result = await client.views.open({
       trigger_id: shortcut.trigger_id,
-      view: modalView
-    })
+      view: modalView,
+    });
   } catch (e: any | unknown) {
     console.log('shortcut err', e);
   }
 }
 
 function buildMessagePlusPlusModal(privateViewMetadataJson: any, localOptions: any): SlackModalDto {
-
   const permlink = localOptions.permalink ? `${Md.link(localOptions.permalink, 'this message')}` : undefined;
-  const initialReason = localOptions.reason || permlink
+  const initialReason = localOptions.reason || permlink;
   return Modal({
     title: `${Md.emoji('rocket')} Send a PlusPlus`,
     submit: 'Send',
     callbackId: actions.shortcuts.message,
-  }).blocks(
-    Blocks.Header({ text: 'Basic Settings' }),
-    Blocks.Input({ label: 'Who are you sending ++/-- to?', blockId: blocks.shortcuts.message.recipients }).element(
-      Elements.UserMultiSelect({
-        actionId: blocks.shortcuts.message.recipients,
-        placeholder: 'Jill Example',
-      }).initialUsers(localOptions.userIds),
-    ),
-    Blocks.Input({ label: 'Are you giving them a point (++) or taking one away (--)?', blockId: blocks.shortcuts.message.operator }).element(
-      Elements.StaticSelect({
-        actionId: blocks.shortcuts.message.operator,
-        placeholder: '++',
-      }).options(
-        Bits.Option({ text: DirectionEnum.PLUS, value: DirectionEnum.PLUS }),
-        Bits.Option({ text: DirectionEnum.MINUS, value: DirectionEnum.MINUS }),
-      ).initialOption(localOptions.operator ?
-        Bits.Option({ text: localOptions.operator, value: localOptions.operator })
-        : undefined),
-    ),
-    Blocks.Input({ label: 'Why are you sending these points?', blockId: blocks.shortcuts.message.reason }).element(
-      Elements.TextInput({
-        actionId: blocks.shortcuts.message.reason,
-        placeholder: 'Being the best co-worker in the world',
-      }).initialValue(initialReason),
-    ).optional(),
-  ).privateMetaData(JSON.stringify(privateViewMetadataJson))
+  })
+    .blocks(
+      Blocks.Header({ text: 'Basic Settings' }),
+      Blocks.Input({ label: 'Who are you sending ++/-- to?', blockId: blocks.shortcuts.message.recipients }).element(
+        Elements.UserMultiSelect({
+          actionId: blocks.shortcuts.message.recipients,
+          placeholder: 'Jill Example',
+        }).initialUsers(localOptions.userIds),
+      ),
+      Blocks.Input({
+        label: 'Are you giving them a point (++) or taking one away (--)?',
+        blockId: blocks.shortcuts.message.operator,
+      }).element(
+        Elements.StaticSelect({
+          actionId: blocks.shortcuts.message.operator,
+          placeholder: '++',
+        })
+          .options(
+            Bits.Option({ text: DirectionEnum.PLUS, value: DirectionEnum.PLUS }),
+            Bits.Option({ text: DirectionEnum.MINUS, value: DirectionEnum.MINUS }),
+          )
+          .initialOption(
+            localOptions.operator
+              ? Bits.Option({ text: localOptions.operator, value: localOptions.operator })
+              : undefined,
+          ),
+      ),
+      Blocks.Input({ label: 'Why are you sending these points?', blockId: blocks.shortcuts.message.reason })
+        .element(
+          Elements.TextInput({
+            actionId: blocks.shortcuts.message.reason,
+            placeholder: 'Being the best co-worker in the world',
+          }).initialValue(initialReason),
+        )
+        .optional(),
+    )
+    .privateMetaData(JSON.stringify(privateViewMetadataJson))
     .buildToObject();
 }
 
 app.view(
   actions.shortcuts.message,
-  async ({ ack, context, body, logger, view, client }: SlackViewMiddlewareArgs<ViewSubmitAction> & AllMiddlewareArgs) => {
+  async ({
+    ack,
+    context,
+    body,
+    logger,
+    view,
+    client,
+  }: SlackViewMiddlewareArgs<ViewSubmitAction> & AllMiddlewareArgs) => {
     await ack();
     const teamId = context.teamId as string;
     const from = body.user.id;
@@ -160,11 +185,11 @@ app.view(
     let idArray: string[] = [];
     let operator: DirectionEnum = DirectionEnum.PLUS;
     let reason: string | null | undefined;
-    const errors: { [blockId: string]: string; } = {};
+    const errors: { [blockId: string]: string } = {};
     for (const option in view.state.values) {
       for (const key in view.state.values[option]) {
         const state = view.state.values[option][key];
-        console.log("each key state:", state);
+        console.log('each key state:', state);
         switch (key) {
           case blocks.shortcuts.message.recipients: {
             idArray = state.selected_users as string[];
@@ -199,7 +224,7 @@ app.view(
         const ephemeral: ChatPostEphemeralArguments = {
           text: e.message,
           channel,
-          user: from
+          user: from,
         };
         await client.chat.postEphemeral(ephemeral);
 
@@ -208,13 +233,15 @@ app.view(
       sender = response.fromUser;
       if (response.toUser) {
         logger.debug(
-          `clean names map[${toUserId}]: ${response.toUser.score}, the reason ${cleanReason ? response.toUser.reasons.get(cleanReason) : 'n/a'} `,
+          `clean names map[${toUserId}]: ${response.toUser.score}, the reason ${
+            cleanReason ? response.toUser.reasons.get(cleanReason) : 'n/a'
+          } `,
         );
         messages.push(Builder.getMessageForNewScore(response.toUser, cleanReason));
         recipients.push(response.toUser);
         notificationMessage.push(
-          `${Md.user(response.fromUser.slackId)} ${increment === 1 ? 'sent' : 'removed'
-          } a PointdPal point ${increment === 1 ? 'to' : 'from'
+          `${Md.user(response.fromUser.slackId)} ${increment === 1 ? 'sent' : 'removed'} a PointdPal point ${
+            increment === 1 ? 'to' : 'from'
           } ${Md.user(response.toUser.slackId)} in ${Md.channel(channel)} `,
         );
       }
@@ -227,10 +254,10 @@ app.view(
         channel: channel,
       };
       if (messageTs) {
-        postArgs.thread_ts = messageTs
+        postArgs.thread_ts = messageTs;
       }
       const postResp = await client.chat.postMessage(postArgs);
-      console.log("the message post response", postResp);
+      console.log('the message post response', postResp);
       const plusPlusEvent: PPEvent = {
         notificationMessage: notificationMessage.join('\n'),
         sender: sender as IUser,
@@ -246,5 +273,5 @@ app.view(
 
       eventBus.emit(PPEventName, plusPlusEvent);
     }
-  }
+  },
 );

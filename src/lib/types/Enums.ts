@@ -33,5 +33,5 @@ export enum SubscriptionStatus {
   INCOMPLETE = 'incomplete',
   INCOMPLETE_EXPIRED = 'expired',
   PAST_DUE = 'past_due',
-  UNPAID = 'unpaid'
+  UNPAID = 'unpaid',
 }

@@ -12,6 +12,6 @@ export const actions = {
   },
   shortcuts: {
     message: 'message_plusplus',
-    global: 'global_plusplus'
-  }
+    global: 'global_plusplus',
+  },
 };

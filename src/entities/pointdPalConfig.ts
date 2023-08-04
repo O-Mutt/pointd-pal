@@ -22,14 +22,17 @@ export const PointdPalConfigSchema = new Schema({
   formalFeedbackUrl: String,
   formalFeedbackModulo: {
     type: Number,
-    default: 10
+    default: 10,
   },
   companyName: String,
   pointdPalAdmins: [String],
   tokenLedgerBalance: Number,
 });
 
-PointdPalConfigSchema.statics.findOneOrCreate = async function (this: Model<PointdPalConfigInterface, PointdPalConfigModelInterface>, teamId: string): Promise<IPointdPalConfig> {
+PointdPalConfigSchema.statics.findOneOrCreate = async function (
+  this: Model<PointdPalConfigInterface, PointdPalConfigModelInterface>,
+  teamId: string,
+): Promise<IPointdPalConfig> {
   const self = this;
   let pointdPalConfig = await self.findOne().exec();
   if (pointdPalConfig) {
@@ -43,7 +46,7 @@ PointdPalConfigSchema.statics.findOneOrCreate = async function (this: Model<Poin
   const { members } = await app.client.users.list({ token: teamInstall.installation.bot.token, team_id: teamId });
   const admins = members?.filter((user) => user.is_admin === true).map((admin) => admin.id);
   pointdPalConfig = new self({
-    pointdPalAdmins: admins
+    pointdPalAdmins: admins,
   });
   return await self.create(pointdPalConfig);
 };

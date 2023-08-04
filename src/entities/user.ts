@@ -25,7 +25,7 @@ export interface IUser extends Document, AuditTags {
 export const UserSchema = new Schema({
   slackId: {
     type: String,
-    index: true
+    index: true,
   },
   score: {
     type: Number,
@@ -68,7 +68,6 @@ export const UserSchema = new Schema({
     default: 0,
   },
 });
-
 
 UserSchema.statics.findOneBySlackIdOrCreate = async function (
   this: Model<UserInterface, UserModelInterface>,

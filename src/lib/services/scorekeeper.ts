@@ -1,23 +1,23 @@
 import { DatabaseService } from './database';
-import { IUser, User } from '../models/user';
+import { IUser, User } from '../../entities/user';
 import { PPSpamEvent, PPSpamEventName } from '../types/Events';
 import { eventBus } from './eventBus';
 import { Md } from 'slack-block-builder';
 import { connectionFactory } from './connectionsFactory';
-import { BotToken } from '../models/botToken';
-import { PointdPalConfig } from '../models/pointdPalConfig';
+import { BotToken } from '../../entities/botToken';
+import { PointdPalConfig } from '../../entities/pointdPalConfig';
 import { ChatPostMessageArguments, ChatPostMessageResponse } from '@slack/web-api';
 import { app } from '../../../app';
-import { Installation } from '../models/installation';
-import { IScoreLog, ScoreLog } from '../models/scoreLog';
+import { Installation } from '../../entities/installation';
+import { IScoreLog, ScoreLog } from '../../entities/scoreLog';
 import { Helpers as H } from '../helpers';
 
 export class ScoreKeeper {
   databaseService: DatabaseService;
   spamMessage: string;
   /*
-  * params.spamMessage
-  */
+   * params.spamMessage
+   */
   constructor() {
     require('dotenv').config();
     const { spamMessage } = H.getProcessVariables(process.env);
@@ -26,15 +26,22 @@ export class ScoreKeeper {
   }
 
   /*
-  * Method to allow up or down vote of a user
-  *
-  * userName - the user who is receiving the score change
-  * from - the user object that is sending the score change
-  * reason - the reason for score change
-  * incrementValue - [number] the value to change the score by
-  * return scoreObject - the new document for the user who received the score
-  */
-  async incrementScore(teamId: string, toId: string, fromId: string, channel: string, incrementValue: number, reason?: string): Promise<{ toUser: IUser; fromUser: IUser; }> {
+   * Method to allow up or down vote of a user
+   *
+   * userName - the user who is receiving the score change
+   * from - the user object that is sending the score change
+   * reason - the reason for score change
+   * incrementValue - [number] the value to change the score by
+   * return scoreObject - the new document for the user who received the score
+   */
+  async incrementScore(
+    teamId: string,
+    toId: string,
+    fromId: string,
+    channel: string,
+    incrementValue: number,
+    reason?: string,
+  ): Promise<{ toUser: IUser; fromUser: IUser }> {
     try {
       const connection = connectionFactory(teamId);
       const toUser = await User(connection).findOneBySlackIdOrCreate(teamId, toId);
@@ -44,7 +51,7 @@ export class ScoreKeeper {
       const install = await Installation.findOne({ teamId: teamId });
 
       if (fromUser.isBot === true) {
-        throw new Error('Bots can\'t send points, silly.');
+        throw new Error("Bots can't send points, silly.");
       }
 
       if ((await this.isSpam(teamId, toUser, fromUser)) || this.isSendingToSelf(teamId, toUser, fromUser)) {
@@ -60,13 +67,17 @@ export class ScoreKeeper {
       const newScore: number = (fromUser.pointsGiven.get(toUser.slackId) || 0) + Math.abs(incrementValue);
       fromUser.pointsGiven.set(toUser.slackId, newScore);
       fromUser.totalPointsGiven = fromUser.totalPointsGiven + incrementValue;
-      if (pointdPalConfig.formalFeedbackUrl &&
+      if (
+        pointdPalConfig.formalFeedbackUrl &&
         newScore % pointdPalConfig.formalFeedbackModulo === 0 &&
-        install?.installation.bot?.token) {
+        install?.installation.bot?.token
+      ) {
         await app.client.chat.postMessage({
           token: install.installation.bot.token,
           channel: fromUser.slackId,
-          text: `Looks like you've given ${Md.user(toUser.slackId)} quite a few points, maybe should submit a formal praise ${Md.link(pointdPalConfig.formalFeedbackUrl)}`,
+          text: `Looks like you've given ${Md.user(
+            toUser.slackId,
+          )} quite a few points, maybe should submit a formal praise ${Md.link(pointdPalConfig.formalFeedbackUrl)}`,
         } as ChatPostMessageArguments);
       }
 
@@ -81,14 +92,17 @@ export class ScoreKeeper {
         } as IScoreLog;
         await ScoreLog(connection).create(scoreLog);
       } catch (e) {
-        console.error(`failed saving spam log for user ${toUser.name} from ${fromUser.name} in channel ${channel} because ${reason}`, e);
+        console.error(
+          `failed saving spam log for user ${toUser.name} from ${fromUser.name} in channel ${channel} because ${reason}`,
+          e,
+        );
       }
 
       if (toUser && toUser.accountLevel > 1) {
         if (bot) {
           bot.token = bot.token - incrementValue;
         }
-        toUser.pointdPalToken = toUser.pointdPalToken + incrementValue
+        toUser.pointdPalToken = toUser.pointdPalToken + incrementValue;
         //saveResponse = await this.databaseService.transferScoreFromBotToUser(toUser, incrementValue, fromUser);
       }
       await toUser.save();
@@ -96,12 +110,24 @@ export class ScoreKeeper {
       await bot?.save();
       return { toUser, fromUser };
     } catch (e) {
-      console.error(`failed to ${incrementValue > 0 ? 'add' : 'subtract'} point to [${toId}] from [${fromId}] because [${reason ? reason : 'no reason'}]`, e);
+      console.error(
+        `failed to ${incrementValue > 0 ? 'add' : 'subtract'} point to [${toId}] from [${fromId}] because [${
+          reason ? reason : 'no reason'
+        }]`,
+        e,
+      );
       throw e;
     }
   }
 
-  async transferTokens(teamId: string, toId: string, fromId: string, channel: string, numberOfTokens: number, reason?: string): Promise<{ toUser: IUser; fromUser: IUser; }> {
+  async transferTokens(
+    teamId: string,
+    toId: string,
+    fromId: string,
+    channel: string,
+    numberOfTokens: number,
+    reason?: string,
+  ): Promise<{ toUser: IUser; fromUser: IUser }> {
     try {
       const connection = connectionFactory(teamId);
       const toUser = await User(connection).findOneBySlackIdOrCreate(teamId, toId);
@@ -140,16 +166,24 @@ export class ScoreKeeper {
           scoreChange: numberOfTokens,
         });
       } catch (e) {
-        console.error(`failed saving spam log for user ${toUser.name} from ${fromUser.name} in channel ${channel} because ${reason ? reason : 'no reason'}`, e);
+        console.error(
+          `failed saving spam log for user ${toUser.name} from ${fromUser.name} in channel ${channel} because ${
+            reason ? reason : 'no reason'
+          }`,
+          e,
+        );
       }
       await toUser.save();
-      await fromUser.save()
+      await fromUser.save();
       return {
         toUser,
         fromUser,
       };
     } catch (e) {
-      console.error(`failed to transfer tokens to [${toId}] from [${fromId}] because [${reason ? reason : 'no reason'}]`, e);
+      console.error(
+        `failed to transfer tokens to [${toId}] from [${fromId}] because [${reason ? reason : 'no reason'}]`,
+        e,
+      );
       throw e;
     }
   }
@@ -186,7 +220,7 @@ export class ScoreKeeper {
         sender,
         notificationMessage: this.spamMessage,
         reason: 'Looks like you may be trying to send a point to yourself.',
-        teamId
+        teamId,
       };
       eventBus.emit(PPSpamEventName, spamEvent);
     }

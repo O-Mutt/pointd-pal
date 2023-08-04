@@ -11,7 +11,7 @@ import { DatabaseService } from './lib/services/database';
 import { Blocks, Md, Message } from 'slack-block-builder';
 import { ChatPostMessageArguments } from '@slack/web-api';
 import { ESMap } from 'typescript';
-import { IUser, User } from './lib/models/user';
+import { IUser, User } from './entities/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
 
 require('dotenv').config();
@@ -34,7 +34,9 @@ async function respondWithScore({ message, context, logger, say }) {
     tokenString = ` (*${user.pointdPalToken} PointdPal Token${H.getEsOnEndOfWord(user.pointdPalToken)}*).`;
   }
 
-  let baseString = `${Md.user(user.slackId)} has ${Md.bold(user.score.toString())} ${Md.bold('point' + H.getEsOnEndOfWord(user.score))}${tokenString}`;
+  let baseString = `${Md.user(user.slackId)} has ${Md.bold(user.score.toString())} ${Md.bold(
+    'point' + H.getEsOnEndOfWord(user.score),
+  )}${tokenString}`;
   baseString += `\n${Md.italic('Account Level')}: ${user.accountLevel}`;
   baseString += `\n${Md.italic('Total Points Given')}: ${user.totalPointsGiven}`;
   if (user.robotDay) {
@@ -47,7 +49,7 @@ async function respondWithScore({ message, context, logger, say }) {
   user.reasons.forEach((points, key) => {
     keys.push(key);
   });
-  logger.debug("all the keys!", user.reasons.keys(), keys);
+  logger.debug('all the keys!', user.reasons.keys(), keys);
   if (keys.length > 0) {
     let sampleReasons: ESMap<string, number> = new Map();
     const maxReasons = keys.length >= 5 ? 5 : keys.length;
@@ -85,9 +87,9 @@ async function respondWithLeaderLoserBoard({ client, message, context, logger, s
       if (tops[i].accountLevel && tops[i].accountLevel > 1) {
         const tokenStr = tops[i].pointdPalToken > 1 ? 'Tokens' : 'Token';
         messages.push(
-          `${i + 1}. ${Md.user(tops[i].slackId)}: ${tops[i].score} (*${tops[i].pointdPalToken} ${H.capitalizeFirstLetter(
-            'pointdPal',
-          )} ${tokenStr}*)`,
+          `${i + 1}. ${Md.user(tops[i].slackId)}: ${tops[i].score} (*${
+            tops[i].pointdPalToken
+          } ${H.capitalizeFirstLetter('pointdPal')} ${tokenStr}*)`,
         );
       } else {
         messages.push(`${i + 1}. ${Md.user(tops[i].slackId)}: ${tops[i].score}`);
@@ -136,7 +138,8 @@ async function respondWithLeaderLoserTokenBoard({ message, context, client }) {
       const tokenStr = tops[i].pointdPalToken > 1 ? 'Tokens' : 'Token';
       const pointStr = tops[i].score > 1 ? 'points' : 'point';
       messages.push(
-        `${i + 1}. ${Md.user(tops[i].slackId)}: *${tops[i].pointdPalToken} PointdPal ${tokenStr}* (${tops[i].score
+        `${i + 1}. ${Md.user(tops[i].slackId)}: *${tops[i].pointdPalToken} PointdPal ${tokenStr}* (${
+          tops[i].score
         } ${pointStr})`,
       );
     }

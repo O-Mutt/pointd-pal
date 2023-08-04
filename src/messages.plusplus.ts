@@ -1,11 +1,10 @@
 import { Blocks, Md, Message } from 'slack-block-builder';
 import tokenBuddy from 'token-buddy';
 
-
 import { app } from '../app';
 import { Helpers as H } from './lib/helpers';
 import { MessageBuilder as Builder } from './lib/messageBuilder';
-import { IUser, User } from './lib/models/user';
+import { IUser, User } from './entities/user';
 import { regExpCreator } from './lib/regexpCreator';
 import { DatabaseService } from './lib/services/database';
 import { decrypt } from './lib/services/decrypt';
@@ -14,9 +13,7 @@ import { ScoreKeeper } from './lib/services/scorekeeper';
 // this may need to move or be generic...er
 import * as token from './lib/token.json';
 import { DirectionEnum } from './lib/types/Enums';
-import {
-  PPEvent, PPEventName, PPFailureEvent, PPFailureEventName
-} from './lib/types/Events';
+import { PPEvent, PPEventName, PPFailureEvent, PPFailureEventName } from './lib/types/Events';
 import { directMention } from '@slack/bolt';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { ChatPostMessageResponse } from '@slack/web-api';
@@ -60,14 +57,13 @@ app.message(regExpCreator.createEraseUserScoreRegExp(), directMention(), eraseUs
 /**
  * Functions for responding to commands
  */
-async function upOrDownVote(args) { // Ignoring types right now because the event is missing user -> : SlackEventMiddlewareArgs<'message'> & AllMiddlewareArgs) {
+async function upOrDownVote(args) {
+  // Ignoring types right now because the event is missing user -> : SlackEventMiddlewareArgs<'message'> & AllMiddlewareArgs) {
   const fullText = args.context.matches.input;
   const teamId = args.body.team_id;
   const { channel, user: from } = args.message;
   let { premessage, userId, operator, conjunction, reason } = args.context.matches.groups;
   const cleanReason = H.cleanAndEncode(reason);
-
-
 
   if (userId.charAt(0).toLowerCase() === 's') {
     const { users } = await args.client.usergroups.users.list({ team_id: teamId, usergroup: userId });
@@ -80,19 +76,22 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
     const failureEvent: PPFailureEvent = {
       sender: from as string,
       recipients: userId as string,
-      notificationMessage: `False positive detected in ${Md.channel(channel)} from ${Md.user(from)}: \nPre - Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText} `,
+      notificationMessage: `False positive detected in ${Md.channel(channel)} from ${Md.user(
+        from,
+      )}: \nPre - Message text: [${!!premessage}].\nMissing Conjunction: [${!!(
+        !conjunction && reason
+      )}]\n\n${fullText} `,
       channel: channel,
       teamId: teamId,
     };
-    console.log('emit an event', PPFailureEventName, failureEvent)
+    console.log('emit an event', PPFailureEventName, failureEvent);
     eventBus.emit(PPFailureEventName, failureEvent);
     return;
   }
   const increment = operator.match(regExpCreator.positiveOperators) ? 1 : -1;
 
   args.logger.debug(
-    `${increment} score for [${userId}] from[${from}]${cleanReason ? ` because ${cleanReason}` : ''
-    } in [${channel}]`,
+    `${increment} score for [${userId}] from[${from}]${cleanReason ? ` because ${cleanReason}` : ''} in [${channel}]`,
   );
   let toUser;
   let fromUser;
@@ -110,9 +109,11 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
     const sayResponse: ChatPostMessageResponse = await args.say(sayArgs);
 
     const plusPlusEvent: PPEvent = {
-      notificationMessage: `${Md.user(fromUser.slackId)} ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
-        } a PointdPal point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'
-        } ${Md.user(toUser.slackId)} in ${Md.channel(channel)}`,
+      notificationMessage: `${Md.user(fromUser.slackId)} ${
+        operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
+      } a PointdPal point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'} ${Md.user(
+        toUser.slackId,
+      )} in ${Md.channel(channel)}`,
       sender: fromUser,
       recipients: [toUser],
       direction: operator,
@@ -121,7 +122,7 @@ async function upOrDownVote(args) { // Ignoring types right now because the even
       reason: cleanReason,
       teamId: teamId,
       originalMessageTs: H.getMessageTs(sayResponse.message) as string,
-      originalMessageParentTs: H.getMessageParentTs(sayResponse.message)
+      originalMessageParentTs: H.getMessageParentTs(sayResponse.message),
     };
 
     eventBus.emit(PPEventName, plusPlusEvent);
@@ -140,8 +141,11 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
     const failureEvent: PPFailureEvent = {
       sender: from as string,
       recipients: userId as string,
-      notificationMessage: `False positive detected in ${Md.channel(channel)} from ${Md.user(from)
-        }: \nPre - Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText} `,
+      notificationMessage: `False positive detected in ${Md.channel(channel)} from ${Md.user(
+        from,
+      )}: \nPre - Message text: [${!!premessage}].\nMissing Conjunction: [${!!(
+        !conjunction && reason
+      )}]\n\n${fullText} `,
       channel: channel,
       teamId: teamId,
     };
@@ -160,18 +164,15 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
     return;
   }
 
-  const theMessage = H.getMessageForTokenTransfer(
-    response.toUser,
-    response.fromUser,
-    amount,
-    cleanReason,
-  );
+  const theMessage = H.getMessageForTokenTransfer(response.toUser, response.fromUser, amount, cleanReason);
 
   if (message) {
     const sayArgs = H.getSayMessageArgs(message, theMessage);
     const sayResponse = await say(sayArgs);
     const plusPlusEvent: PPEvent = {
-      notificationMessage: `${Md.user(response.fromUser.slackId)} sent ${amount} PointdPal point${parseInt(amount, 10) > 1 ? 's' : ''} to ${Md.user(response.toUser.slackId)} in ${Md.channel(channel)}`,
+      notificationMessage: `${Md.user(response.fromUser.slackId)} sent ${amount} PointdPal point${
+        parseInt(amount, 10) > 1 ? 's' : ''
+      } to ${Md.user(response.toUser.slackId)} in ${Md.channel(channel)}`,
       recipients: [response.toUser],
       sender: response.fromUser,
       direction: DirectionEnum.PLUS,
@@ -180,7 +181,7 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
       reason: cleanReason,
       teamId: teamId,
       originalMessageTs: H.getMessageTs(sayResponse.message),
-      originalMessageParentTs: H.getMessageParentTs(sayResponse.message)
+      originalMessageParentTs: H.getMessageParentTs(sayResponse.message),
     };
 
     eventBus.emit(PPEventName, plusPlusEvent);
@@ -202,8 +203,11 @@ async function multipleUsersVote({ message, context, logger, say }) {
     const failureEvent: PPFailureEvent = {
       sender: from as string,
       recipients: allUsers as string[],
-      notificationMessage: `False positive detected in ${Md.channel(channel)} from ${Md.user(from)
-        }: \nPre - Message text: [${!!premessage}].\nMissing Conjunction: [${!!(!conjunction && reason)}]\n\n${fullText} `,
+      notificationMessage: `False positive detected in ${Md.channel(channel)} from ${Md.user(
+        from,
+      )}: \nPre - Message text: [${!!premessage}].\nMissing Conjunction: [${!!(
+        !conjunction && reason
+      )}]\n\n${fullText} `,
       channel: channel,
       teamId: teamId,
     };
@@ -240,14 +244,18 @@ async function multipleUsersVote({ message, context, logger, say }) {
     sender = response.fromUser;
     if (response.toUser) {
       logger.debug(
-        `clean names map[${toUserId}]: ${response.toUser.score}, the reason ${cleanReason ? response.toUser.reasons.get(cleanReason) : 'n/a'} `,
+        `clean names map[${toUserId}]: ${response.toUser.score}, the reason ${
+          cleanReason ? response.toUser.reasons.get(cleanReason) : 'n/a'
+        } `,
       );
       messages.push(Builder.getMessageForNewScore(response.toUser, cleanReason));
       recipients.push(response.toUser);
       notificationMessage.push(
-        `${Md.user(response.fromUser.slackId)} ${operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
-        } a PointdPal point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'
-        } ${Md.user(response.toUser.slackId)} in ${Md.channel(channel)} `,
+        `${Md.user(response.fromUser.slackId)} ${
+          operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
+        } a PointdPal point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'} ${Md.user(
+          response.toUser.slackId,
+        )} in ${Md.channel(channel)} `,
       );
     }
   }
@@ -267,7 +275,7 @@ async function multipleUsersVote({ message, context, logger, say }) {
       reason: cleanReason,
       teamId: teamId,
       originalMessageTs: H.getMessageTs(sayResponse.message),
-      originalMessageParentTs: H.getMessageParentTs(sayResponse.message)
+      originalMessageParentTs: H.getMessageParentTs(sayResponse.message),
     };
 
     eventBus.emit(PPEventName, plusPlusEvent);
@@ -301,5 +309,3 @@ async function eraseUserScore({ message, context, say }) {
     const sayResponse = await say(sayArgs);
   }
 }
-
-

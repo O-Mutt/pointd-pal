@@ -1,19 +1,18 @@
-import { CustomRoute } from "@slack/bolt/dist/receivers/custom-routes";
-import { IncomingMessage, ServerResponse } from "http";
-import { Stripe } from "stripe";
-import { StripeService } from "../services/stripe";
+import { CustomRoute } from '@slack/bolt/dist/receivers/custom-routes';
+import { IncomingMessage, ServerResponse } from 'http';
+import { Stripe } from 'stripe';
+import { StripeService } from '../services/stripe';
 
 export const stripeEndpoint: CustomRoute = {
   path: '/stripe-hook',
   method: ['POST'],
   handler: (req: IncomingMessage, res: ServerResponse) => {
-
     let body;
-    req.on('data', (chunk) => body ? body += chunk : body = chunk);
+    req.on('data', (chunk) => (body ? (body += chunk) : (body = chunk)));
     req.on('end', async () => {
-      await handleStripeEvent(body, req, res)
-    })
-  }
+      await handleStripeEvent(body, req, res);
+    });
+  },
 };
 
 async function handleStripeEvent(body: any, req: IncomingMessage, res: ServerResponse) {
@@ -23,7 +22,10 @@ async function handleStripeEvent(body: any, req: IncomingMessage, res: ServerRes
   let value;
   try {
     const stripe = new StripeService();
-    ({ type, data: { object: value } } = stripe.constructEvent(body, sig));
+    ({
+      type,
+      data: { object: value },
+    } = stripe.constructEvent(body, sig));
     // Handle the event
     let customer: Stripe.Customer;
     let subscription: Stripe.Subscription;
@@ -73,7 +75,7 @@ async function handleStripeEvent(body: any, req: IncomingMessage, res: ServerRes
   } catch (err: any | unknown) {
     res.writeHead(400);
     res.write(`Webhook Error: ${err.message}`);
-    res.end()
+    res.end();
     return;
   }
 }

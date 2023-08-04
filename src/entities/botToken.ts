@@ -1,5 +1,5 @@
 import { Schema, Document, model, Model } from 'mongoose';
-import { connectionFactory } from '../services/connectionsFactory';
+import { connectionFactory } from '../lib/services/connectionsFactory';
 
 export interface IBotToken extends Document {
   enabled: boolean;
@@ -25,4 +25,7 @@ export interface BotTokenInterfaceModelInterface extends Model<BotTokenInterface
   // static methods
 }
 
-export const BotToken = connectionFactory().model<BotTokenInterface, BotTokenInterfaceModelInterface>('botToken', BotTokenSchema);
+export const BotToken = connectionFactory().model<BotTokenInterface, BotTokenInterfaceModelInterface>(
+  'botToken',
+  BotTokenSchema,
+);

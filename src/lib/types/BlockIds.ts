@@ -10,20 +10,19 @@ export const blocks = {
         formalPraiseUrl: 'hometab-a-formal-url',
         formalPraiseMod: 'hometab-a-formal-mod',
       },
-      crypto: {
-      }
+      crypto: {},
     },
     user: {
       crypto: {
-        walletAddress: 'hometab-u-crypto-wallet'
-      }
-    }
+        walletAddress: 'hometab-u-crypto-wallet',
+      },
+    },
   },
   shortcuts: {
     message: {
       recipients: 'shortcut-message-recipients',
       operator: 'shortcuts-message-operator',
-      reason: 'shortcuts-message-reason'
-    }
-  }
+      reason: 'shortcuts-message-reason',
+    },
+  },
 };

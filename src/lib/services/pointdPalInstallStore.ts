@@ -1,13 +1,9 @@
 import { InstallationStore, Installation as OAuthInstallation, InstallationQuery } from '@slack/oauth';
-import Stripe from 'stripe';
 import { app } from '../../../app';
-import { IInstallation, Installation } from '../models/installation'
-import { StripeService } from './stripe';
-
+import { IInstallation, Installation } from '../../entities/installation';
 
 export const PointdPalInstallStore: InstallationStore = {
   storeInstallation: async (installation) => {
-    const stripe = new StripeService();
     let teamId;
     let teamName;
     let email;
@@ -25,37 +21,30 @@ export const PointdPalInstallStore: InstallationStore = {
     if (installation.bot?.token) {
       const { user } = await app.client.users.info({
         token: installation.bot?.token,
-        user: installation.user.id
+        user: installation.user.id,
       });
       email = user?.profile?.email;
     }
 
     let install: IInstallation | null;
     if (teamId) {
-      let customer: Stripe.Customer | undefined;
       install = await Installation.findOne({ teamId });
       if (install) {
         await Installation.deleteOne({ teamId });
-      } else {
-        customer = await stripe.createCustomer(teamId, teamName, email);
       }
 
       await Installation.create({
         teamId,
         installation,
-        customerId: install?.customerId || customer?.id
       });
-
-      // We created a new install, now we should create a stripe customer and subscription (and trial)
-      if (!install && customer) {
-        await stripe.createTrialAndSubscription(customer);
-      }
 
       return;
     }
     throw new Error('Failed saving installation data to installationStore');
   },
-  fetchInstallation: async (installQuery: InstallationQuery<boolean>): Promise<OAuthInstallation<'v1' | 'v2', boolean>> => {
+  fetchInstallation: async (
+    installQuery: InstallationQuery<boolean>,
+  ): Promise<OAuthInstallation<'v1' | 'v2', boolean>> => {
     let teamId;
     if (installQuery.isEnterpriseInstall && installQuery.enterpriseId !== undefined) {
       console.log(`[LOOKUP] org wide app ${installQuery.enterpriseId}`);
@@ -73,7 +62,9 @@ export const PointdPalInstallStore: InstallationStore = {
       }
       console.log(`[LOOKUP]  ${teamId}.`);
       if (!result.enabled) {
-        throw new Error(`This instance of pointdPal is not enabled Team [${result.teamId}], Customer [${result.customerId}], Subscription [${result.subscriptionId}], Status [${result.subscriptionStatus}]`);
+        throw new Error(
+          `This instance of pointdPal is not enabled Team [${result.teamId}], Customer [${result.customerId}], Subscription [${result.subscriptionId}], Status [${result.subscriptionStatus}]`,
+        );
       }
       return result.installation as OAuthInstallation<'v1' | 'v2', boolean>;
     }

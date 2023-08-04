@@ -38,8 +38,8 @@ async function respondWithHelpGuidance({ client, message, say }) {
       Blocks.Section({ text: helpMessage }),
       procVars.furtherHelpUrl
         ? Blocks.Section({
-          text: `For further help please visit ${Md.link(procVars.furtherHelpUrl.toString(), 'Help Page')}`,
-        })
+            text: `For further help please visit ${Md.link(procVars.furtherHelpUrl.toString(), 'Help Page')}`,
+          })
         : undefined,
     )
     .asUser();
@@ -65,10 +65,12 @@ async function tellHowMuchPointsAreWorth({ payload, logger, message, context, sa
     const ethInUsd = eth.data.rates.USD;
     const btcInUsd = btc.data.rates.USD;
     return say(
-      `A Bitcoin is worth $${btcInUsd} USD right now, Ethereum is $${ethInUsd} USD, and ${Md.bold('PointdPal points are worth nothing')}!`,
+      `A Bitcoin is worth $${btcInUsd} USD right now, Ethereum is $${ethInUsd} USD, and ${Md.bold(
+        'PointdPal points are worth nothing',
+      )}!`,
     );
   } catch (e: any) {
-    console.error("Error with how much points worth -_-", e);
+    console.error('Error with how much points worth -_-', e);
     return await say(
       "Seems like we are having trouble getting some data... Don't worry, though, your Pointd Pal points are still worth nothing!",
     );

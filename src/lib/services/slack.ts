@@ -2,7 +2,11 @@ import { ConversationsListResponse } from '@slack/web-api';
 import { app } from '../../../app';
 
 export class SlackService {
-  static async findOrCreateConversation(token?: string, teamId?: string, channelName?: string): Promise<string | undefined> {
+  static async findOrCreateConversation(
+    token?: string,
+    teamId?: string,
+    channelName?: string,
+  ): Promise<string | undefined> {
     if (!token || !teamId || !channelName) {
       return;
     }
@@ -26,11 +30,14 @@ export class SlackService {
     if (foundChannel && foundChannel.length === 1) {
       // make sure we're in the channel
       try {
-        await app.client.conversations.join({ token: token, channel: foundChannel[0].id as string })
+        await app.client.conversations.join({ token: token, channel: foundChannel[0].id as string });
       } catch (e: any | unknown) {
         // logger.error(e)
-        console.error('This may be a known error and we should probably check for the e.warning === \'already_in_channel\' but:', e.message);
-        return
+        console.error(
+          "This may be a known error and we should probably check for the e.warning === 'already_in_channel' but:",
+          e.message,
+        );
+        return;
       }
       return foundChannel[0].id;
     }
@@ -41,7 +48,7 @@ export class SlackService {
     } catch (e: any | unknown) {
       // logger.error(e)
       console.error('Error creating the conversation for notifications', e.message);
-      return
+      return;
     }
   }
 }

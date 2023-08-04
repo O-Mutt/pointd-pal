@@ -5,7 +5,7 @@ import { Member } from '@slack/web-api/dist/response/UsersListResponse';
 
 import { app } from '../app';
 import { Helpers as H } from './lib/helpers';
-import { IUser, User } from './lib/models/user';
+import { IUser, User } from './entities/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { ConversationsListResponse } from '@slack/web-api';
 
@@ -55,7 +55,6 @@ async function mapMoreUserFieldsBySlackId({ message, context, client, logger, sa
     return;
   }
 
-
   const members: Member[] = (await client.users.list()).members;
   for (const member of members) {
     if (member?.profile?.email) {
@@ -89,7 +88,6 @@ async function mapSingleUserToDb({ message, context, client, logger, say }) {
 
   // do the mention dance
   const to = { slackId: 'drp', name: 'derrp' };
-
 
   const { user } = await client.users.info({ user: to.slackId });
   try {
@@ -142,8 +140,6 @@ async function mapSlackIdToEmail({ message, context, logger, say, client }) {
     return;
   }
 
-
-
   try {
     const missingEmailUsers: IUser[] = await User(connectionFactory(teamId))
       .find({ id: { $exists: true }, email: { $exists: false } })
@@ -162,7 +158,9 @@ async function mapSlackIdToEmail({ message, context, logger, say, client }) {
         await user.save();
       }
       await say(
-        `Mapping completed for ${user.name}: { name: ${user.name}, slackId: ${Md.user(user.slackId)}, email: ${user.email} }`,
+        `Mapping completed for ${user.name}: { name: ${user.name}, slackId: ${Md.user(user.slackId)}, email: ${
+          user.email
+        } }`,
       );
     }
   } catch (er) {
@@ -173,7 +171,7 @@ async function mapSlackIdToEmail({ message, context, logger, say, client }) {
 async function migrateFromHubotToBolt({ message, context, logger, say, client }) {
   const teamId = context.teamId as string;
   const userId: string = message.user;
-  const connection = connectionFactory(teamId)
+  const connection = connectionFactory(teamId);
   const { isAdmin } = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
   if (!isAdmin) {
     logger.error("sorry, can't do that", message, context);
@@ -196,10 +194,16 @@ async function migrateFromHubotToBolt({ message, context, logger, say, client })
         if (isBase64(key)) {
           const decodedPointGiven = decode(key);
           hubotishUser.reasons.set(decodedPointGiven, value);
-          console.log("check each point given", key, decodedPointGiven, hubotishUser.pointsGiven[key], hubotishUser.pointsGiven[decodedPointGiven])
+          console.log(
+            'check each point given',
+            key,
+            decodedPointGiven,
+            hubotishUser.pointsGiven[key],
+            hubotishUser.pointsGiven[decodedPointGiven],
+          );
           delete hubotishUser.pointsGiven[key];
         } else {
-          console.log("point given not base 64", key);
+          console.log('point given not base 64', key);
         }
       }
       await say(`Decoding the reasons and the points given finished for ${Md.user(hubotishUser.slackId)}`);
@@ -216,7 +220,7 @@ async function joinAllPointdPalChannels({ say, logger, message, client, context 
   const oldPointdPal = 'U03HDRG36';
 
   const userId: string = message.user;
-  const connection = connectionFactory(teamId)
+  const connection = connectionFactory(teamId);
   const { isAdmin } = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
   if (!isAdmin) {
     logger.error("sorry, can't do that", message, context);
@@ -231,7 +235,7 @@ async function joinAllPointdPalChannels({ say, logger, message, client, context 
     console.error('Error getting list of conversations', e.message);
   }
   if (!result || !result.channels) {
-    console.log("could not find conversation list in migration");
+    console.log('could not find conversation list in migration');
     return;
   }
 

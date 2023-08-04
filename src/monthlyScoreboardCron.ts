@@ -8,8 +8,8 @@ import { Appendable, BlockBuilder, Blocks, Md, Message } from 'slack-block-build
 
 import { app } from '../app';
 import { Helpers as H } from './lib/helpers';
-import { Installation } from './lib/models/installation';
-import { PointdPalConfig } from './lib/models/pointdPalConfig';
+import { Installation } from './entities/installation';
+import { PointdPalConfig } from './entities/pointdPalConfig';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { DatabaseService } from './lib/services/database';
 import { SlackService } from './lib/services/slack';
@@ -99,11 +99,13 @@ const databaseService = new DatabaseService();
             .asUser();
 
           try {
-            const result = await app.client.chat.postMessage({ token: botToken, ...theMessage.buildToObject() } as ChatPostMessageArguments);
+            const result = await app.client.chat.postMessage({
+              token: botToken,
+              ...theMessage.buildToObject(),
+            } as ChatPostMessageArguments);
           } catch (e: any) {
             console.error('error', e, theMessage.printPreviewUrl());
           }
-
         }
       },
       null,
@@ -128,7 +130,7 @@ function buildBlocks(title: string, tops: any[], messages: string[]) {
   let blocks: Appendable<BlockBuilder> = [
     Blocks.Section({ text: Md.bold(Md.italic(title)) }),
     Blocks.Image({ imageUrl: chartUrl, altText: title }),
-    Blocks.Section({ text: messages.join('\n') })
+    Blocks.Section({ text: messages.join('\n') }),
   ];
   return blocks;
 }

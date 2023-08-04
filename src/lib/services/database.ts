@@ -4,9 +4,9 @@ import { Connection } from 'mongoose';
 
 import { app } from '../../../app';
 import { Helpers as H } from '../helpers';
-import { BotToken, IBotToken } from '../models/botToken';
-import { IScoreLog, ScoreLog } from '../models/scoreLog';
-import { IUser, User } from '../models/user';
+import { BotToken, IBotToken } from '../../entities/botToken';
+import { IScoreLog, ScoreLog } from '../../entities/scoreLog';
+import { IUser, User } from '../../entities/user';
 import { connectionFactory } from './connectionsFactory';
 import { eventBus } from './eventBus';
 
@@ -30,7 +30,6 @@ export class DatabaseService {
     const dbUsers = await User(connectionFactory(teamId)).find(search).exec();
     return dbUsers;
   }
-
 
   async isSpam(teamId: string, to: IUser, from: IUser) {
     //Logger.debug('spam check');
@@ -125,9 +124,7 @@ export class DatabaseService {
     user.pointdPalToken = user.score;
     user.accountLevel = 2;
     await user.save();
-    await BotToken
-      .findOneAndUpdate({}, { $inc: { pointdPalToken: -user.pointdPalToken } })
-      .exec();
+    await BotToken.findOneAndUpdate({}, { $inc: { pointdPalToken: -user.pointdPalToken } }).exec();
     eventBus.emit('plusplus-tokens');
     return;
   }
@@ -140,11 +137,11 @@ export class DatabaseService {
             from: 'scores',
             localField: 'from',
             foreignField: 'slackId',
-            as: 'user'
-          }
+            as: 'user',
+          },
         },
         {
-          $unwind: '$user'
+          $unwind: '$user',
         },
         {
           $match: { date: { $gt: new Date(new Date().setDate(new Date().getDate() - days)) } },
@@ -153,8 +150,8 @@ export class DatabaseService {
           $project: {
             slackId: '$from',
             name: '$user.name',
-            scoreChange: '$scoreChange'
-          }
+            scoreChange: '$scoreChange',
+          },
         },
         {
           $group: { _id: '$slackId', name: { $first: '$name' }, scoreChange: { $sum: '$scoreChange' } },
@@ -176,11 +173,11 @@ export class DatabaseService {
             from: 'scores',
             localField: 'to',
             foreignField: 'slackId',
-            as: 'user'
-          }
+            as: 'user',
+          },
         },
         {
-          $unwind: '$user'
+          $unwind: '$user',
         },
         {
           $match: { date: { $gt: new Date(new Date().setDate(new Date().getDate() - days)) } },
@@ -189,8 +186,8 @@ export class DatabaseService {
           $project: {
             slackId: '$to',
             name: '$user.name',
-            scoreChange: '$scoreChange'
-          }
+            scoreChange: '$scoreChange',
+          },
         },
         {
           $group: { _id: '$slackId', name: { $first: '$name' }, scoreChange: { $sum: '$scoreChange' } },

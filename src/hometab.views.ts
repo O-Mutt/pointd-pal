@@ -2,8 +2,8 @@ import { AllMiddlewareArgs, SlackViewMiddlewareArgs, ViewSubmitAction } from '@s
 import { ESMap } from 'typescript';
 
 import { app } from '../app';
-import { PointdPalConfig } from './lib/models/pointdPalConfig';
-import { User } from './lib/models/user';
+import { PointdPalConfig } from './entities/pointdPalConfig';
+import { User } from './entities/user';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { actions } from './lib/types/Actions';
 import { blocks } from './lib/types/BlockIds';
@@ -15,11 +15,10 @@ app.view(
     const teamId = context.teamId as string;
     const userId = body.user.id;
 
-
     const connection = connectionFactory(teamId);
     const pointdPal = await PointdPalConfig(connection).findOneOrCreate(teamId as string);
 
-    const errors: { [blockId: string]: string; } = {};
+    const errors: { [blockId: string]: string } = {};
     for (const option in view.state.values) {
       for (const key in view.state.values[option]) {
         const state = view.state.values[option][key];
@@ -94,7 +93,7 @@ app.view(
     if (Object.keys(errors).length > 0) {
       await ack({
         response_action: 'errors',
-        errors: errors
+        errors: errors,
       });
       return;
     } else {
@@ -117,7 +116,7 @@ app.view(
     const connection = connectionFactory(teamId);
     const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
 
-    const errors: { [blockId: string]: string; } = {};
+    const errors: { [blockId: string]: string } = {};
     for (const option in view.state.values) {
       for (const key in view.state.values[option]) {
         const value: string = (view.state.values[option][key].value ||
@@ -141,7 +140,7 @@ app.view(
     if (Object.keys(errors).length > 0) {
       await ack({
         response_action: 'errors',
-        errors: errors
+        errors: errors,
       });
       return;
     } else {

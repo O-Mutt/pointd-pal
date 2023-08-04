@@ -29,7 +29,6 @@
     "pg": "^8.11.1",
     "reflect-metadata": "^0.1.13",
     "slack-block-builder": "^2.2.0",
-    "stripe": "^8.186.1",
     "token-buddy": "^1.0.0",
     "ts-node": "^10.2.1",
     "typeorm": "^0.3.17",

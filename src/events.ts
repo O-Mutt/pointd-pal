@@ -1,13 +1,18 @@
 import { Md } from 'slack-block-builder';
 
 import { app } from '../app';
-import { Installation } from './lib/models/installation';
-import { PointdPalConfig } from './lib/models/pointdPalConfig';
+import { Installation } from './entities/installation';
+import { PointdPalConfig } from './entities/pointdPalConfig';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { eventBus } from './lib/services/eventBus';
 import { SlackService } from './lib/services/slack';
 import {
-  PPEvent, PPEventName, PPFailureEvent, PPFailureEventName, PPSpamEvent, PPSpamEventName
+  PPEvent,
+  PPEventName,
+  PPFailureEvent,
+  PPFailureEventName,
+  PPSpamEvent,
+  PPSpamEventName,
 } from './lib/types/Events';
 
 eventBus.on(PPEventName, sendPlusPlusNotification);
@@ -31,7 +36,7 @@ async function sendPlusPlusNotification(ppEvent: PPEvent) {
 
   const permalink = await getPermalinkToMessage(botToken, ppEvent.channel, ppEvent.originalMessageTs);
   if (permalink) {
-    ppEvent.notificationMessage = `${ppEvent.notificationMessage} ${Md.link(permalink, 'view here')}`
+    ppEvent.notificationMessage = `${ppEvent.notificationMessage} ${Md.link(permalink, 'view here')}`;
   }
 
   try {
@@ -40,9 +45,8 @@ async function sendPlusPlusNotification(ppEvent: PPEvent) {
       channel: channelId,
       text: ppEvent.notificationMessage,
     });
-
   } catch (error: any | unknown) {
-    console.error('There was an error when posting the `++` event to the notifications room', error.message)
+    console.error('There was an error when posting the `++` event to the notifications room', error.message);
     // logger.error(error);
   }
 }
@@ -92,7 +96,7 @@ async function logAndNotifySpam({ sender, recipient, notificationMessage, reason
       text: spamMessage,
     });
   } catch (e: any | unknown) {
-    console.error(e)
+    console.error(e);
     // logger.error(error);
   }
 }

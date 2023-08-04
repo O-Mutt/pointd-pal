@@ -57,7 +57,9 @@ export class Helpers {
       return '';
     }
 
-    const scoreStr = `${Md.user(from.slackId)} transferred *${number}* Pointd Pal Token${Helpers.getEsOnEndOfWord(number)} to ${Md.user(to.slackId)}.\n
+    const scoreStr = `${Md.user(from.slackId)} transferred *${number}* Pointd Pal Token${Helpers.getEsOnEndOfWord(
+      number,
+    )} to ${Md.user(to.slackId)}.\n
 ${Md.user(to.slackId)} now has ${to.pointdPalToken} token${Helpers.getEsOnEndOfWord(to.pointdPalToken || 0)}`;
     let reasonStr = '.';
     let cakeDayStr = '';
@@ -81,9 +83,9 @@ ${Md.user(to.slackId)} now has ${to.pointdPalToken} token${Helpers.getEsOnEndOfW
       const yearsAsString = Helpers.getYearsAsString(to.robotDay);
       cakeDayStr = `\n:birthday: Today is ${Md.user(to.slackId)}'s ${yearsAsString} Pointd Pal day! :birthday:`;
     }
-    return `${scoreStr}${reasonStr}${cakeDayStr}\n_${Md.user(from.slackId)} has ${from.pointdPalToken} token${Helpers.getEsOnEndOfWord(
-      from.pointdPalToken || 0,
-    )}_`;
+    return `${scoreStr}${reasonStr}${cakeDayStr}\n_${Md.user(from.slackId)} has ${
+      from.pointdPalToken
+    } token${Helpers.getEsOnEndOfWord(from.pointdPalToken || 0)}_`;
   }
 
   /*
@@ -147,13 +149,15 @@ ${Md.user(to.slackId)} now has ${to.pointdPalToken} token${Helpers.getEsOnEndOfW
     const backwards = Helpers.reverseString(str);
     let obfuscatedString = backwards;
     if (backwards.length > amountToLeaveUnobfuscated) {
-      obfuscatedString = backwards.slice(0, amountToLeaveUnobfuscated) + backwards.slice(amountToLeaveUnobfuscated, str.length).replace(/./g, '*');
+      obfuscatedString =
+        backwards.slice(0, amountToLeaveUnobfuscated) +
+        backwards.slice(amountToLeaveUnobfuscated, str.length).replace(/./g, '*');
     }
     return Helpers.reverseString(obfuscatedString);
   }
 
   static reverseString(str: string) {
-    return str.split("").reverse().join("");
+    return str.split('').reverse().join('');
   }
 
   static isScoreboardDayOfWeek(dayOfWeek: number): boolean {
