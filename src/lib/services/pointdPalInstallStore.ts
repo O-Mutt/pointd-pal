@@ -1,6 +1,6 @@
 import { InstallationStore, Installation as OAuthInstallation, InstallationQuery } from '@slack/oauth';
 import { app } from '../../../app';
-import { IInstallation, Installation } from '../../entities/installation';
+import { IInstallation, Installation } from '../../entities/installations';
 
 export const PointdPalInstallStore: InstallationStore = {
   storeInstallation: async (installation) => {

@@ -1,18 +1,18 @@
 import _ from 'lodash';
 import moment from 'moment';
 import ImageCharts from 'image-charts';
+import { ESMap } from 'typescript';
 
 import { directMention } from '@slack/bolt';
 
-import { app } from '../app';
-import { Helpers as H } from './lib/helpers';
-import { regExpCreator } from './lib/regexpCreator';
-import { DatabaseService } from './lib/services/database';
+import { app } from '../../app';
+import { Helpers as H } from '../lib/helpers';
+import { regExpCreator } from '../lib/regexpCreator';
+import { DatabaseService } from '../lib/services/database';
 import { Blocks, Md, Message } from 'slack-block-builder';
 import { ChatPostMessageArguments } from '@slack/web-api';
-import { ESMap } from 'typescript';
-import { IUser, User } from './entities/user';
-import { connectionFactory } from './lib/services/connectionsFactory';
+import { IUser, User } from '../entities/User';
+import { connectionFactory } from '../lib/services/connectionsFactory';
 
 require('dotenv').config();
 const procVars = H.getProcessVariables(process.env);

@@ -4,9 +4,9 @@ import { Connection } from 'mongoose';
 
 import { app } from '../../../app';
 import { Helpers as H } from '../helpers';
-import { BotToken, IBotToken } from '../../entities/botToken';
-import { IScoreLog, ScoreLog } from '../../entities/scoreLog';
-import { IUser, User } from '../../entities/user';
+import { BotToken, IBotToken } from '../../entities/BotToken';
+import { IScoreLog, ScoreLog } from '../../entities/ScoreLog';
+import { IUser, User } from '../../entities/User';
 import { connectionFactory } from './connectionsFactory';
 import { eventBus } from './eventBus';
 

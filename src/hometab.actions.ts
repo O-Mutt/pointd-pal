@@ -14,12 +14,12 @@ import { AllMiddlewareArgs, BlockButtonAction, BlockStaticSelectAction, SlackAct
 import { View } from '@slack/types';
 
 import { app } from '../app';
-import { BotToken } from './entities/botToken';
-import { IUser, User } from './entities/user';
+import { BotToken } from './entities/BotToken';
+import { IUser, User } from './entities/User';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { actions } from './lib/types/Actions';
 import { EnabledSettings, PromptSettings } from './lib/types/Enums';
-import { IPointdPalConfig, PointdPalConfig } from './entities/pointdPalConfig';
+import { IPointdPalConfig, PointdPalConfig } from './entities/PointdInstanceConfig';
 import { blocks } from './lib/types/BlockIds';
 import { ViewsUpdateArguments } from '@slack/web-api';
 

@@ -2,8 +2,8 @@ import { AllMiddlewareArgs, SlackViewMiddlewareArgs, ViewSubmitAction } from '@s
 import { ESMap } from 'typescript';
 
 import { app } from '../app';
-import { PointdPalConfig } from './entities/pointdPalConfig';
-import { User } from './entities/user';
+import { PointdPalConfig } from './entities/PointdInstanceConfig';
+import { User } from './entities/User';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { actions } from './lib/types/Actions';
 import { blocks } from './lib/types/BlockIds';

@@ -1,18 +1,24 @@
-import { Helpers as H } from '../helpers';
+import { load } from '../config';
+import postgres, { Sql } from 'postgres';
 
-import mongoose from 'mongoose';
+const config = load();
 
-require('dotenv').config();
-const procVars = H.getProcessVariables(process.env);
-
-const connections: { [key: string]: mongoose.Connection } = {};
-export function connectionFactory(teamId?: string): mongoose.Connection {
-  const databaseName = teamId || procVars.defaultDb || '';
-  if (connections[databaseName]) {
-    return connections[databaseName];
+const connections: { [key: string]: Sql } = {};
+export async function connectionFactory(teamId?: string): Promise<Sql> {
+  if (!teamId) {
+    if (connections[config.defaultDatabaseName]) {
+      return connections[config.defaultDatabaseName];
+    }
+    return (connections[config.defaultDatabaseName] = postgres({ database: config.defaultDatabaseName }));
   }
 
-  const connectionUri = procVars.mongoUri.replace('#TEAM_ID', teamId || procVars.defaultDb || '');
-  connections[databaseName] = mongoose.createConnection(`${connectionUri}`);
-  return connections[databaseName];
+  if (connections[teamId]) {
+    return connections[teamId];
+  }
+
+  await connections[config.defaultDatabaseName]`CREATE DATABASE IF NOT EXISTS ${teamId}`;
+
+  return (connections[teamId] = postgres({
+    database: teamId,
+  }));
 }

@@ -1,31 +1,30 @@
-import { Schema, Document, model, Model } from 'mongoose';
-import { connectionFactory } from '../lib/services/connectionsFactory';
+import { APointdPalEntity } from './APointdPalEntity';
 
-export interface IBotToken extends Document {
+export class BotToken extends APointdPalEntity {
   enabled: boolean;
   name: string;
   publicWalletAddress: string;
   token: number;
   magicString: string;
+  getCreateTableQuery(): string[] {
+    return [
+      `
+        CREATE TABLE IF NOT EXISTS bot_token (
+          enabled BOOLEAN NOT NULL DEFAULT true,
+          name TEXT NOT NULL,
+          publicWalletAddress TEXT NOT NULL,
+          token INTEGER NOT NULL,
+          magicString TEXT NOT NULL,
+          ${this.auditTableCreatePartial}
+        )
+      `,
+      `
+      CREATE INDEX IF NOT EXISTS botToken_id_idx
+          ON bot_token (id);
+      CREATE INDEX IF NOT EXISTS botToken_name_idx
+        ON bot_token (name);
+
+      `,
+    ];
+  }
 }
-
-export const BotTokenSchema = new Schema({
-  enabled: Boolean,
-  name: String,
-  publicWalletAddress: String,
-  token: Number,
-  magicString: String,
-});
-
-export interface BotTokenInterface extends IBotToken {
-  // instance methods
-}
-
-export interface BotTokenInterfaceModelInterface extends Model<BotTokenInterface> {
-  // static methods
-}
-
-export const BotToken = connectionFactory().model<BotTokenInterface, BotTokenInterfaceModelInterface>(
-  'botToken',
-  BotTokenSchema,
-);

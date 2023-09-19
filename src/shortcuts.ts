@@ -16,7 +16,7 @@ import { ChatGetPermalinkResponse, ChatPostEphemeralArguments, ChatPostMessageAr
 import { app } from '../app';
 import { Helpers as H } from './lib/helpers';
 import { MessageBuilder as Builder } from './lib/messageBuilder';
-import { IUser } from './entities/user';
+import { IUser } from './entities/User';
 import { eventBus } from './lib/services/eventBus';
 import { ScoreKeeper } from './lib/services/scorekeeper';
 import { actions } from './lib/types/Actions';

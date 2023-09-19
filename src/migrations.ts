@@ -5,7 +5,7 @@ import { Member } from '@slack/web-api/dist/response/UsersListResponse';
 
 import { app } from '../app';
 import { Helpers as H } from './lib/helpers';
-import { IUser, User } from './entities/user';
+import { IUser, User } from './entities/User';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { ConversationsListResponse } from '@slack/web-api';
 

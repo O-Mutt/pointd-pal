@@ -1,5 +1,4 @@
 import { ChatPostMessageArguments } from '@slack/web-api';
-import clark from 'clark';
 import { CronJob } from 'cron';
 import ImageCharts from 'image-charts';
 import _ from 'lodash';
@@ -8,8 +7,8 @@ import { Appendable, BlockBuilder, Blocks, Md, Message } from 'slack-block-build
 
 import { app } from '../app';
 import { Helpers as H } from './lib/helpers';
-import { Installation } from './entities/installation';
-import { PointdPalConfig } from './entities/pointdPalConfig';
+import { Installation } from './entities/installations';
+import { PointdPalConfig } from './entities/PointdInstanceConfig';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { DatabaseService } from './lib/services/database';
 import { SlackService } from './lib/services/slack';

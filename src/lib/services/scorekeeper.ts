@@ -1,15 +1,15 @@
 import { DatabaseService } from './database';
-import { IUser, User } from '../../entities/user';
+import { IUser, User } from '../../entities/User';
 import { PPSpamEvent, PPSpamEventName } from '../types/Events';
 import { eventBus } from './eventBus';
 import { Md } from 'slack-block-builder';
 import { connectionFactory } from './connectionsFactory';
-import { BotToken } from '../../entities/botToken';
-import { PointdPalConfig } from '../../entities/pointdPalConfig';
+import { BotToken } from '../../entities/BotToken';
+import { PointdPalConfig } from '../../entities/PointdInstanceConfig';
 import { ChatPostMessageArguments, ChatPostMessageResponse } from '@slack/web-api';
 import { app } from '../../../app';
-import { Installation } from '../../entities/installation';
-import { IScoreLog, ScoreLog } from '../../entities/scoreLog';
+import { Installation } from '../../entities/installations';
+import { IScoreLog, ScoreLog } from '../../entities/ScoreLog';
 import { Helpers as H } from '../helpers';
 
 export class ScoreKeeper {

@@ -1,8 +1,8 @@
 import { Md } from 'slack-block-builder';
 
 import { app } from '../app';
-import { Installation } from './entities/installation';
-import { PointdPalConfig } from './entities/pointdPalConfig';
+import { Installation } from './entities/installations';
+import { PointdPalConfig } from './entities/PointdInstanceConfig';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { eventBus } from './lib/services/eventBus';
 import { SlackService } from './lib/services/slack';

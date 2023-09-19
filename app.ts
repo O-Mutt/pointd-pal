@@ -47,7 +47,7 @@ export let app = new App({
 });
 
 // messages
-import './src/messages.crypto';
+import './src/messages/messages.crypto';
 import './src/messages.scoreboard';
 import './src/messages.help';
 import './src/messages.plusplus';

@@ -4,8 +4,8 @@ import { AllMiddlewareArgs, SlackEventMiddlewareArgs } from '@slack/bolt';
 import { View } from '@slack/types';
 
 import { app } from '../app';
-import { IPointdPalConfig, PointdPalConfig } from './entities/pointdPalConfig';
-import { IUser, User } from './entities/user';
+import { IPointdPalConfig, PointdPalConfig } from './entities/PointdInstanceConfig';
+import { IUser, User } from './entities/User';
 import { connectionFactory } from './lib/services/connectionsFactory';
 import { actions } from './lib/types/Actions';
 
