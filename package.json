@@ -19,7 +19,7 @@
 		"@slack/web-api": "^7.7.0",
 		"clark": "0.0.6",
 		"cron": "^3.2.1",
-		"dotenv": "^16.4.5",
+		"dotenv": "^16.4.7",
 		"image-charts": "^6.1.19",
 		"jest": "^29.7.0",
 		"lodash": "^4.17.21",
