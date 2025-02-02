@@ -1,50 +1,98 @@
 import convict from 'convict';
 import { PointdPalConfig } from './config.schema';
 
-export const config = convict<PointdPalConfig>({
-	spamMessage: {
-		doc: 'Message to send when a user is spamming.',
-		format: String,
-		default: 'Looks like you hit the spam filter. Please slow your roll.',
-		env: 'SPAM_MESSAGE',
+const config = convict<PointdPalConfig>({
+	env: {
+		doc: 'The application environment.',
+		format: ['production', 'development', 'test'],
+		default: 'development',
+		env: 'NODE_ENV',
 	},
-	spamTimeLimit: {
-		doc: 'Time limit for spamming.',
-		format: Number,
-		default: 5,
-		env: 'SPAM_TIME_LIMIT',
-	},
-	mongoUri: {
-		doc: 'MongoDB URI.',
+	logLevel: {
+		doc: 'Log level.',
 		format: String,
-		sensitive: true,
-		default: 'mongodb://localhost/plusPlus',
-		env: 'MONGO_URI',
+		default: 'info',
+		env: 'LOG_LEVEL',
 	},
-	cryptoRpcProvider: {
-		doc: 'Crypto RPC provider.',
-		format: String,
+	spam: {
+		responseMessage: {
+			doc: 'Message to send when a user is spamming.',
+			format: String,
+			default: 'Looks like you hit the spam filter. Please slow your roll.',
+			env: 'SPAM_MESSAGE',
+		},
+		timeout: {
+			doc: 'Time limit for spamming.',
+			format: Number,
+			default: 5,
+			env: 'SPAM_TIME_LIMIT',
+		},
+	},
+	postgres: {
 		default: null,
-		env: 'CRYPTO_RPC_PROVIDER',
+		host: {
+			doc: 'Postgres host.',
+			format: String,
+			default: 'localhost',
+			env: 'POSTGRES_HOST',
+		},
+		port: {
+			doc: 'Postgres port.',
+			format: 'port',
+			default: 5432,
+			env: 'POSTGRES_PORT',
+		},
+		username: {
+			doc: 'Postgres user.',
+			format: String,
+			default: 'postgres',
+			env: 'POSTGRES_USERNAME',
+		},
+		password: {
+			doc: 'Postgres password.',
+			format: String,
+			sensitive: true,
+			default: 'password',
+			env: 'POSTGRES_PASSWORD',
+		},
+		database: {
+			doc: 'Postgres root database.',
+			format: String,
+			default: 'pointdpal',
+			env: 'POSTGRES_DB',
+		},
 	},
-	magicNumber: {
-		doc: 'Magic number.',
-		format: String,
-		sensitive: true,
-		default: null,
-		env: 'MAGIC_NUMBER',
-	},
-	magicIv: {
-		doc: 'Magic IV.',
-		format: String,
-		sensitive: true,
-		default: null,
-		env: 'MAGIC_IV',
+	crypto: {
+		default: {
+			cryptoRpcProvider: null,
+			magicNumber: null,
+			magicIv: null,
+		},
+		cryptoRpcProvider: {
+			doc: 'Crypto RPC provider.',
+			format: String,
+			default: null,
+			env: 'CRYPTO_RPC_PROVIDER',
+		},
+		magicNumber: {
+			doc: 'Magic number.',
+			format: String,
+			sensitive: true,
+			default: null,
+			env: 'MAGIC_NUMBER',
+		},
+		magicIv: {
+			doc: 'Magic IV.',
+			format: String,
+			sensitive: true,
+			default: null,
+			env: 'MAGIC_IV',
+		},
 	},
 	furtherHelpUrl: {
 		doc: 'Further help URL.',
 		format: String,
-		default: null,
+		default: 'For more information on pointdpal please visit our help page: https://pointdpal.com/help',
 		env: 'FURTHER_HELP_URL',
 	},
 	monthlyScoreboardCron: {
@@ -58,12 +106,6 @@ export const config = convict<PointdPalConfig>({
 		format: Number,
 		default: 1,
 		env: 'MONTHLY_SCOREBOARD_DAY_OF_WEEK',
-	},
-	defaultDb: {
-		doc: 'Default DB name.',
-		format: String,
-		default: null,
-		env: 'DEFAULT_DB_NAME',
 	},
 	slack: {
 		signingSecret: {
@@ -94,10 +136,14 @@ export const config = convict<PointdPalConfig>({
 			env: 'SLACK_STATE_SECRET',
 		},
 	},
-	logLevel: {
-		doc: 'Log level.',
-		format: String,
-		default: 'info',
-		env: 'LOG_LEVEL',
-	},
 });
+
+// Load environment dependent configuration
+var env = config.get('env');
+config.loadFile('./config/' + env + '.json');
+
+// Perform validation
+config.validate({ allowed: 'strict' });
+
+export { config };
+export default config;

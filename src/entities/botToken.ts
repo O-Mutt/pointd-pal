@@ -2,30 +2,30 @@ import { Schema, Document, model, Model } from 'mongoose';
 import { connectionFactory } from '../lib/services/connectionsFactory';
 
 export interface IBotToken extends Document {
-  enabled: boolean;
-  name: string;
-  publicWalletAddress: string;
-  token: number;
-  magicString: string;
+	enabled: boolean;
+	name: string;
+	publicWalletAddress: string;
+	token: number;
+	magicString: string;
 }
 
 export const BotTokenSchema = new Schema({
-  enabled: Boolean,
-  name: String,
-  publicWalletAddress: String,
-  token: Number,
-  magicString: String,
+	enabled: Boolean,
+	name: String,
+	publicWalletAddress: String,
+	token: Number,
+	magicString: String,
 });
 
 export interface BotTokenInterface extends IBotToken {
-  // instance methods
+	// instance methods
 }
 
 export interface BotTokenInterfaceModelInterface extends Model<BotTokenInterface> {
-  // static methods
+	// static methods
 }
 
 export const BotToken = connectionFactory().model<BotTokenInterface, BotTokenInterfaceModelInterface>(
-  'botToken',
-  BotTokenSchema,
+	'botToken',
+	BotTokenSchema,
 );
