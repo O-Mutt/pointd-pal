@@ -1,0 +1,13 @@
+name: lint
+on: workflow_call
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Cached Checkout
+        uses: actions/download-artifact@v4
+        with:
+          name: my-checkout-${{ github.run_id }}
+      - name: lint
+        run: |
+          npm run lint

@@ -213,9 +213,9 @@ app.view(
 
 		logger.debug('We filtered out empty items and removed "self"', idArray.join(','));
 		let messages: string[] = [];
-		let notificationMessage: string[] = [];
+		const notificationMessage: string[] = [];
 		let sender: IUser | undefined = undefined;
-		let recipients: IUser[] = [];
+		const recipients: IUser[] = [];
 		for (const toUserId of idArray) {
 			let response: { toUser: IUser; fromUser: IUser };
 			try {

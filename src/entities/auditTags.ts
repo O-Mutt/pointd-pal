@@ -1,4 +1,4 @@
 export interface AuditTags {
-  updatedAt?: Date;
-  updatedBy?: string;
+	updatedAt?: Date;
+	updatedBy?: string;
 }

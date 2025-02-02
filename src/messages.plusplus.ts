@@ -62,7 +62,7 @@ async function upOrDownVote(args) {
 	const fullText = args.context.matches.input;
 	const teamId = args.body.team_id;
 	const { channel, user: from } = args.message;
-	let { premessage, userId, operator, conjunction, reason } = args.context.matches.groups;
+	const { premessage, userId, operator, conjunction, reason } = args.context.matches.groups;
 	const cleanReason = H.cleanAndEncode(reason);
 
 	if (userId.charAt(0).toLowerCase() === 's') {
@@ -132,7 +132,7 @@ async function upOrDownVote(args) {
 async function giveTokenBetweenUsers({ message, context, logger, say }) {
 	const fullText = context.matches.input;
 	const teamId = context.teamId as string;
-	let { premessage, userId, amount, conjunction, reason } = context.matches.groups;
+	const { premessage, userId, amount, conjunction, reason } = context.matches.groups;
 	const cleanReason = H.cleanAndEncode(reason);
 
 	const { channel, user: from } = message;
@@ -191,7 +191,7 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
 async function multipleUsersVote({ message, context, logger, say }) {
 	const fullText = context.matches.input;
 	const teamId = context.teamId as string;
-	let { premessage, allUsers, operator, conjunction, reason } = context.matches.groups;
+	const { premessage, allUsers, operator, conjunction, reason } = context.matches.groups;
 	const cleanReason = H.cleanAndEncode(reason);
 
 	const { channel, user: from } = message;
@@ -230,9 +230,9 @@ async function multipleUsersVote({ message, context, logger, say }) {
 
 	logger.debug('We filtered out empty items and removed "self"', cleanedIdArray.join(','));
 	let messages: string[] = [];
-	let notificationMessage: string[] = [];
+	const notificationMessage: string[] = [];
 	let sender: IUser | undefined = undefined;
-	let recipients: IUser[] = [];
+	const recipients: IUser[] = [];
 	for (const toUserId of cleanedIdArray) {
 		let response: { toUser: IUser; fromUser: IUser };
 		try {
