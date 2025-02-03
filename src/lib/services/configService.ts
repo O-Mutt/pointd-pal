@@ -5,7 +5,7 @@ import * as installService from '@/lib/services/installService';
 
 export async function findOneOrCreate(teamId: string): Promise<IPointdPalConfig> {
 	const connection = await getConnection(teamId);
-	let pointdPalConfig = await connection.query('SELECT * FROM configs;');
+	const pointdPalConfig = await connection.query('SELECT * FROM configs;');
 	if (pointdPalConfig) {
 		return pointdPalConfig;
 	}

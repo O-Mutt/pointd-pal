@@ -47,7 +47,7 @@ export async function isSpam(teamId: string, to: IUser, from: IUser) {
 		WHERE to = $1 AND from = $2 AND date >= $3
 		`,
 	);
-	let isSpam = result.rows[0].count > 0;
+	const isSpam = result.rows[0].count > 0;
 
 	logger.debug('spam check result', isSpam);
 	return isSpam;

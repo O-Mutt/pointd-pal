@@ -15,12 +15,18 @@ const compat = new FlatCompat({
 export default [
 	...compat.extends('plugin:@typescript-eslint/recommended', 'plugin:prettier/recommended'),
 	{
+		ignores: ['node_modules', 'dist'],
+	},
+	{
 		languageOptions: {
 			parser: tsParser,
 			ecmaVersion: 2020,
 			sourceType: 'module',
 		},
 
-		rules: {},
+		rules: {
+			'@typescript-eslint/no-explicit-any': 'warn',
+			'@typescript-eslint/no-unused-vars': 'warn',
+		},
 	},
 ];

@@ -23,10 +23,10 @@ export class DateUtil {
 		return this.getOrdinalSuffix(years);
 	}
 
-	static isScoreboardDayOfWeek(dayOfWeek: number = 1): boolean {
+	static isScoreboardDayOfWeek(): boolean {
 		//Logger.debug(`Run the cron but lets check what day it is Moment day: [${moment().day()}], Configured Day of Week: [${monthlyScoreboardDayOfWeek}], isThatDay: [${moment().day() === monthlyScoreboardDayOfWeek}]`);
 		const scoreboardDayOfWeek = config.get('scoreboard.dayOfWeek');
-		const isToday = new Date().getUTCDay() === dayOfWeek;
+		const isToday = new Date().getUTCDay() === scoreboardDayOfWeek;
 		return isToday;
 	}
 

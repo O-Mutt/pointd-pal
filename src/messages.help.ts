@@ -15,8 +15,6 @@ app.message(RegExp(/(plusplus version|-v|--version)/, 'i'), directMention, async
 });
 app.message(new RegExp('how much .*point.*', 'i'), tellHowMuchPointsAreWorth);
 
-require('dotenv').config();
-
 async function respondWithHelpGuidance({ client, message, say }) {
 	const helpMessage = ''
 		.concat('`< name > ++[<reason>]` - Increment score for a name (for a reason)\n')

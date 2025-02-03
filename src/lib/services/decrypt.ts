@@ -1,4 +1,4 @@
-const crypto = require('crypto');
+import crypto from 'crypto';
 
 export function decrypt(magicIv: string, magicNumber: string, magicString: string) {
 	let decrypted;

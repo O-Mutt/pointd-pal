@@ -24,7 +24,6 @@
 		"clark": "0.0.6",
 		"cron": "^3.2.1",
 		"date-fns": "^4.1.0",
-		"dotenv": "^16.4.5",
 		"image-charts": "^6.1.19",
 		"lodash.map": "^4.6.0",
 		"lodash.samplesize": "^4.2.0",

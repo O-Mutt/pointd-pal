@@ -288,7 +288,6 @@ async function multipleUsersVote({ message, context, logger, say }) {
 }
 
 async function eraseUserScore({ message, context, say }) {
-	let erased;
 	const fullText = context.matches.input;
 	const teamId = context.teamId as string;
 	const { premessage, userId, conjunction, reason } = context.matches.groups;
@@ -303,7 +302,7 @@ async function eraseUserScore({ message, context, say }) {
 		return;
 	}
 
-	erased = await scorekeeperService.erase(teamId, toBeErased, fromUser, channel, cleanReason);
+	const erased = await scorekeeperService.erase(teamId, toBeErased, fromUser, channel, cleanReason);
 
 	if (erased) {
 		const messageText = reason

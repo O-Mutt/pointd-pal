@@ -1,4 +1,4 @@
-import { Bits, Blocks, Elements, Md, Modal, Option, OptionBuilder } from 'slack-block-builder';
+import { Bits, Blocks, Elements, Md, Modal } from 'slack-block-builder';
 import { SlackModalDto } from 'slack-block-builder/dist/internal/dto';
 
 import {

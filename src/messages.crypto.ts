@@ -1,8 +1,8 @@
 import _ from 'lodash';
-import { Actions, Blocks, Elements, Md, Message } from 'slack-block-builder';
+import { Blocks, Elements, Md, Message } from 'slack-block-builder';
 import tokenBuddy from 'token-buddy';
 
-import { BlockButtonAction, directMention, Logger, SlackActionMiddlewareArgs, AllMiddlewareArgs } from '@slack/bolt';
+import { BlockButtonAction, directMention, SlackActionMiddlewareArgs, AllMiddlewareArgs } from '@slack/bolt';
 
 import { app } from '@/app';
 import { regExpCreator } from '@/lib/regexpCreator';
@@ -12,8 +12,6 @@ import * as userService from '@/lib/services/userService';
 import * as databaseService from '@/lib/services/databaseService';
 import { SlackMessage } from './lib/slackMessage';
 import * as botTokenService from '@/lib/services/botTokenService';
-
-require('dotenv').config();
 
 app.message(regExpCreator.getBotWallet(), directMention, botWalletCount);
 

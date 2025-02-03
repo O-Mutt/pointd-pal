@@ -3,6 +3,7 @@ import { withNamespace } from '@/logger';
 const logger = withNamespace('NumberUtil');
 export class NumberUtil {
 	static randomInt(min: number = 1, max: number = 0): number {
+		logger.debug('randomInt', { min, max });
 		const lower = Math.ceil(Math.min(min, max));
 		const upper = Math.floor(Math.max(min, max));
 		return Math.floor(lower + Math.random() * (upper - lower + 1));
@@ -15,6 +16,6 @@ export class NumberUtil {
 	}
 }
 
-declare global {
-	interface Number {}
-}
+// declare global {
+// 	interface Number {}
+// }
