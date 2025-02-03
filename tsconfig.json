@@ -28,7 +28,9 @@
 		// "paths": {},                                      /* Specify a set of entries that re-map imports to additional lookup locations. */
 		"paths": {
 			"@config": ["./config/index.ts"],
-			"@/*": ["./src/*"]
+			"@services": ["./src/lib/services/*"],
+			"@/*": ["./src/*"],
+			"@/app": ["./app.ts"]
 		},
 		// "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */
 		// "typeRoots": [],                                  /* Specify multiple folders that act like `./node_modules/@types`. */

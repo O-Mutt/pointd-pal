@@ -1,29 +1,16 @@
-import { DatabaseService } from './database';
-import { IUser, User } from '../../entities/user';
+import { IUser } from '@/entities/user';
+import { config } from '@config';
 import { PPSpamEvent, PPSpamEventName } from '../types/Events';
 import { eventBus } from './eventBus';
 import { Md } from 'slack-block-builder';
-import { connectionFactory } from './connectionsFactory';
-import { BotToken } from '../../entities/botToken';
 import { PointdPalConfig } from '../../entities/pointdPalConfig';
 import { ChatPostMessageArguments, ChatPostMessageResponse } from '@slack/web-api';
 import { app } from '../../../app';
-import { Installation } from '../../entities/installation';
+import * as installService from '@/lib/services/installService';
 import { IScoreLog, ScoreLog } from '../../entities/scoreLog';
-import { Helpers as H } from '../helpers';
-
-export class ScoreKeeper {
-	databaseService: DatabaseService;
-	spamMessage: string;
-	/*
-	 * params.spamMessage
-	 */
-	constructor() {
-		require('dotenv').config();
-		const { spamMessage } = H.getProcessVariables(process.env);
-		this.spamMessage = spamMessage;
-		this.databaseService = new DatabaseService();
-	}
+import { getConnection } from './database';
+import { findOneBySlackIdOrCreate } from './userService';
+import * as botTokenService from '@/services/botTokenService'
 
 	/*
 	 * Method to allow up or down vote of a user
@@ -34,7 +21,7 @@ export class ScoreKeeper {
 	 * incrementValue - [number] the value to change the score by
 	 * return scoreObject - the new document for the user who received the score
 	 */
-	async incrementScore(
+	export async function incrementScore(
 		teamId: string,
 		toId: string,
 		fromId: string,
@@ -43,12 +30,12 @@ export class ScoreKeeper {
 		reason?: string,
 	): Promise<{ toUser: IUser; fromUser: IUser }> {
 		try {
-			const connection = connectionFactory(teamId);
-			const toUser = await User(connection).findOneBySlackIdOrCreate(teamId, toId);
-			const fromUser = await User(connection).findOneBySlackIdOrCreate(teamId, fromId);
-			const bot = await BotToken.findOne({}).exec();
+			const connection = await getConnection(teamId);
+			const toUser = await findOneBySlackIdOrCreate(teamId, toId);
+			const fromUser = await findOneBySlackIdOrCreate(teamId, fromId);
+			const bot = await findOne()
 			const pointdPalConfig = await PointdPalConfig(connection).findOneOrCreate(teamId);
-			const install = await Installation.findOne({ teamId: teamId });
+			const install = await installService.findOne(teamId);
 
 			if (fromUser.isBot === true) {
 				throw new Error("Bots can't send points, silly.");
@@ -120,7 +107,7 @@ export class ScoreKeeper {
 		}
 	}
 
-	async transferTokens(
+	export async function transferTokens(
 		teamId: string,
 		toId: string,
 		fromId: string,
@@ -188,14 +175,14 @@ export class ScoreKeeper {
 		}
 	}
 
-	async erase(teamId: string, toBeErased: IUser, admin: IUser, channel: string, reason?: string) {
+	export async function erase(teamId: string, toBeErased: IUser, admin: IUser, channel: string, reason?: string) {
 		//Logger.error(`Erasing all scores for ${user} by ${from}`);
 		await this.databaseService.erase(toBeErased, reason);
 
 		return true;
 	}
 
-	async isSpam(teamId: string, recipient: IUser, sender: IUser) {
+	export async function isSpam(teamId: string, recipient: IUser, sender: IUser) {
 		const isSpam = await this.databaseService.isSpam(teamId, recipient, sender);
 		if (isSpam) {
 			const spamEvent: PPSpamEvent = {
@@ -211,14 +198,14 @@ export class ScoreKeeper {
 		return isSpam;
 	}
 
-	isSendingToSelf(teamId: string, recipient: IUser, sender: IUser) {
+	export function isSendingToSelf(teamId: string, recipient: IUser, sender: IUser) {
 		//Logger.debug(`Checking if is to self. To [${to.name}] From [${from.name}], Valid: ${to.name !== from.name}`);
 		const isToSelf = recipient.slackId === sender.slackId;
 		if (isToSelf) {
 			const spamEvent: PPSpamEvent = {
 				recipient,
 				sender,
-				notificationMessage: this.spamMessage,
+				notificationMessage: config.get('spam.responseMessage'),
 				reason: 'Looks like you may be trying to send a point to yourself.',
 				teamId,
 			};

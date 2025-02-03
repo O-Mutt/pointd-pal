@@ -1,6 +1,5 @@
-import { IUser, UserInterface } from '../models/user';
+import { IUser } from '@/entities/user';
 import { DirectionEnum } from './Enums';
-import { RespondFn } from '@slack/bolt';
 
 interface EventWithTeamId {
 	teamId: string;

@@ -1,6 +1,7 @@
-import { InstallationStore, Installation as OAuthInstallation, InstallationQuery } from '@slack/oauth';
+import { Installation, InstallationQuery, InstallationStore } from '@slack/bolt';
 import { app } from '../../../app';
-import { IInstallation, Installation } from '../../entities/installation';
+import { IInstallation } from '../../entities/installation';
+import * as installService from './installService';
 
 export const PointdPalInstallStore: InstallationStore = {
 	storeInstallation: async (installation) => {
@@ -28,23 +29,18 @@ export const PointdPalInstallStore: InstallationStore = {
 
 		let install: IInstallation | null;
 		if (teamId) {
-			install = await Installation.findOne({ teamId });
+			install = await installService.findOne(teamId);
 			if (install) {
-				await Installation.deleteOne({ teamId });
+				await installService.deleteOne(teamId);
 			}
 
-			await Installation.create({
-				teamId,
-				installation,
-			});
+			await installService.create(teamId, installation, email);
 
 			return;
 		}
 		throw new Error('Failed saving installation data to installationStore');
 	},
-	fetchInstallation: async (
-		installQuery: InstallationQuery<boolean>,
-	): Promise<OAuthInstallation<'v1' | 'v2', boolean>> => {
+	fetchInstallation: async (installQuery: InstallationQuery<boolean>): Promise<Installation> => {
 		let teamId;
 		if (installQuery.isEnterpriseInstall && installQuery.enterpriseId !== undefined) {
 			console.log(`[LOOKUP] org wide app ${installQuery.enterpriseId}`);
@@ -56,7 +52,7 @@ export const PointdPalInstallStore: InstallationStore = {
 		}
 
 		if (teamId) {
-			const result = await Installation.findOne({ teamId }).exec();
+			const result = await installService.findOne(teamId);
 			if (!result) {
 				throw new Error('Failed fetching installation');
 			}
@@ -66,7 +62,7 @@ export const PointdPalInstallStore: InstallationStore = {
 					`This instance of pointdPal is not enabled Team [${result.teamId}], Customer [${result.customerId}]`, //, Subscription [${result.subscriptionId}], Status [${result.subscriptionStatus}]`,
 				);
 			}
-			return result.installation as OAuthInstallation<'v1' | 'v2', boolean>;
+			return result.installation as Installation;
 		}
 
 		throw new Error('Failed fetching installation, failed overall');
@@ -81,7 +77,7 @@ export const PointdPalInstallStore: InstallationStore = {
 		}
 
 		if (teamId) {
-			await Installation.deleteOne({ teamId }).exec();
+			await installService.deleteOne(teamId);
 		}
 		throw new Error('Failed to delete installation');
 	},

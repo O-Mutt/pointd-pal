@@ -1,29 +1,28 @@
 import { Bits, Blocks, Elements, Md, Modal, Option, OptionBuilder } from 'slack-block-builder';
-import { SlackModalDto } from 'slack-block-builder/dist/lib';
+import { SlackModalDto } from 'slack-block-builder/dist/internal/dto';
 
 import {
 	AllMiddlewareArgs,
 	MessageShortcut,
 	SlackCommandMiddlewareArgs,
-	SlackShortcut,
 	SlackShortcutMiddlewareArgs,
 	SlackViewMiddlewareArgs,
 	ViewSubmitAction,
 } from '@slack/bolt';
-import { View } from '@slack/types';
+
 import { ChatGetPermalinkResponse, ChatPostEphemeralArguments, ChatPostMessageArguments } from '@slack/web-api';
 
 import { app } from '../app';
-import { Helpers as H } from './lib/helpers';
-import { MessageBuilder as Builder } from './lib/messageBuilder';
-import { IUser } from './entities/user';
-import { eventBus } from './lib/services/eventBus';
-import { ScoreKeeper } from './lib/services/scorekeeper';
-import { actions } from './lib/types/Actions';
-import { blocks } from './lib/types/BlockIds';
-import { DirectionEnum } from './lib/types/Enums';
-import { PPEvent, PPEventName } from './lib/types/Events';
-import { regExpCreator } from './lib/regexpCreator';
+import { Helpers as H } from '@/lib/helpers';
+import { MessageBuilder as Builder } from '@/lib/messageBuilder';
+import { IUser } from '@/entities/user';
+import { eventBus } from '@/lib/services/eventBus';
+import { ScoreKeeper } from '@/lib/services/scorekeeper';
+import { actions } from '@/lib/types/Actions';
+import { blocks } from '@/lib/types/BlockIds';
+import { DirectionEnum } from '@/lib/types/Enums';
+import { PPEvent, PPEventName } from '@/lib/types/Events';
+import { regExpCreator } from '@/lib/regexpCreator';
 
 const scoreKeeper = new ScoreKeeper();
 
