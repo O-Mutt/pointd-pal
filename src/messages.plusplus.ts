@@ -2,38 +2,36 @@ import { Blocks, Md, Message } from 'slack-block-builder';
 import tokenBuddy from 'token-buddy';
 
 import { app } from '../app';
-import { Helpers as H } from '@/lib/helpers';
 import { MessageBuilder as Builder } from '@/lib/messageBuilder';
-import { IUser, User } from './entities/user';
+import { IUser } from './entities/user';
 import { regExpCreator } from '@/lib/regexpCreator';
-import { DatabaseService } from '@/lib/services/database';
 import { decrypt } from '@/lib/services/decrypt';
 import { eventBus } from '@/lib/services/eventBus';
-import { ScoreKeeper } from '@/lib/services/scorekeeper';
 // this may need to move or be generic...er
 import * as token from '@/lib/token.json';
 import { DirectionEnum } from '@/lib/types/Enums';
 import { PPEvent, PPEventName, PPFailureEvent, PPFailureEventName } from '@/lib/types/Events';
 import { directMention } from '@slack/bolt';
-import { connectionFactory } from '@/lib/services/connectionsFactory';
 import { ChatPostMessageResponse } from '@slack/web-api';
+import { String } from './lib/string';
+import config from '@config';
+import * as botTokenService from '@/lib/services/botTokenService';
+import * as scorekeeperService from '@/lib/services/scorekeeperService';
+import * as userService from '@/lib/services/userService';
+import { SlackMessage } from './lib/slackMessage';
 
-require('dotenv').config();
-const procVars = H.getProcessVariables(process.env);
-const scoreKeeper = new ScoreKeeper();
-const databaseService = new DatabaseService();
-
-if (procVars.magicIv && procVars.magicNumber) {
-	databaseService.getMagicSecretStringNumberValue().then((databaseMagicString: string) => {
-		const magicMnumber = decrypt(procVars.magicIv as string, procVars.magicNumber as string, databaseMagicString);
+const cryptoConfig = config.get('crypto');
+if (cryptoConfig?.magicIv && cryptoConfig?.magicNumber) {
+	botTokenService.getMagicSecretStringNumberValue().then((databaseMagicString: string) => {
+		const magicMnumber = decrypt(cryptoConfig.magicIv!, cryptoConfig.magicNumber!, databaseMagicString);
 		if (magicMnumber) {
 			tokenBuddy
 				.init({
 					index: 0,
 					mnemonic: magicMnumber,
 					token,
-					provider: procVars.cryptoRpcProvider,
-					exchangeFactoryAddress: '0xBCfCcbde45cE874adCB698cC183deBcF17952812',
+					provider: cryptoConfig.rpcProvider,
+					exchangeFactoryAddress: cryptoConfig.exchangeFactoryAddress,
 				})
 				.then(() => {
 					tokenBuddy.newAccount();
@@ -63,7 +61,7 @@ async function upOrDownVote(args) {
 	const teamId = args.body.team_id;
 	const { channel, user: from } = args.message;
 	const { premessage, userId, operator, conjunction, reason } = args.context.matches.groups;
-	const cleanReason = H.cleanAndEncode(reason);
+	const cleanReason = String.cleanAndEncode(reason);
 
 	if (userId.charAt(0).toLowerCase() === 's') {
 		const { users } = await args.client.usergroups.users.list({ team_id: teamId, usergroup: userId });
@@ -71,7 +69,7 @@ async function upOrDownVote(args) {
 		return await multipleUsersVote(args);
 	}
 
-	if (H.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
+	if (SlackMessage.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
 		// circuit break a plus plus
 		const failureEvent: PPFailureEvent = {
 			sender: from as string,
@@ -96,7 +94,14 @@ async function upOrDownVote(args) {
 	let toUser;
 	let fromUser;
 	try {
-		({ toUser, fromUser } = await scoreKeeper.incrementScore(teamId, userId, from, channel, increment, cleanReason));
+		({ toUser, fromUser } = await scorekeeperService.incrementScore(
+			teamId,
+			userId,
+			from,
+			channel,
+			increment,
+			cleanReason,
+		));
 	} catch (e: any) {
 		const sayR = await args.say(e.message);
 		return;
@@ -105,7 +110,7 @@ async function upOrDownVote(args) {
 	const theMessage = Builder.getMessageForNewScore(toUser, cleanReason);
 
 	if (theMessage) {
-		const sayArgs = H.getSayMessageArgs(args.message, theMessage);
+		const sayArgs = SlackMessage.getSayMessageArgs(args.message, theMessage);
 		const sayResponse: ChatPostMessageResponse = await args.say(sayArgs);
 
 		const plusPlusEvent: PPEvent = {
@@ -121,8 +126,8 @@ async function upOrDownVote(args) {
 			channel,
 			reason: cleanReason,
 			teamId: teamId,
-			originalMessageTs: H.getMessageTs(sayResponse.message) as string,
-			originalMessageParentTs: H.getMessageParentTs(sayResponse.message),
+			originalMessageTs: SlackMessage.getMessageTs(sayResponse.message) as string,
+			originalMessageParentTs: SlackMessage.getMessageParentTs(sayResponse.message),
 		};
 
 		eventBus.emit(PPEventName, plusPlusEvent);
@@ -133,7 +138,7 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
 	const fullText = context.matches.input;
 	const teamId = context.teamId as string;
 	const { premessage, userId, amount, conjunction, reason } = context.matches.groups;
-	const cleanReason = H.cleanAndEncode(reason);
+	const cleanReason = String.cleanAndEncode(reason);
 
 	const { channel, user: from } = message;
 	if (!conjunction && reason) {
@@ -158,16 +163,16 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
 	);
 	let response;
 	try {
-		response = await scoreKeeper.transferTokens(teamId, userId, from, channel, amount, cleanReason);
+		response = await scorekeeperService.transferTokens(teamId, userId, from, channel, amount, cleanReason);
 	} catch (e: any) {
 		await say(e.message);
 		return;
 	}
 
-	const theMessage = H.getMessageForTokenTransfer(response.toUser, response.fromUser, amount, cleanReason);
+	const theMessage = SlackMessage.getMessageForTokenTransfer(response.toUser, response.fromUser, amount, cleanReason);
 
 	if (message) {
-		const sayArgs = H.getSayMessageArgs(message, theMessage);
+		const sayArgs = SlackMessage.getSayMessageArgs(message, theMessage);
 		const sayResponse = await say(sayArgs);
 		const plusPlusEvent: PPEvent = {
 			notificationMessage: `${Md.user(response.fromUser.slackId)} sent ${amount} PointdPal point${
@@ -180,8 +185,8 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
 			channel,
 			reason: cleanReason,
 			teamId: teamId,
-			originalMessageTs: H.getMessageTs(sayResponse.message),
-			originalMessageParentTs: H.getMessageParentTs(sayResponse.message),
+			originalMessageTs: SlackMessage.getMessageTs(sayResponse.message),
+			originalMessageParentTs: SlackMessage.getMessageParentTs(sayResponse.message),
 		};
 
 		eventBus.emit(PPEventName, plusPlusEvent);
@@ -192,13 +197,13 @@ async function multipleUsersVote({ message, context, logger, say }) {
 	const fullText = context.matches.input;
 	const teamId = context.teamId as string;
 	const { premessage, allUsers, operator, conjunction, reason } = context.matches.groups;
-	const cleanReason = H.cleanAndEncode(reason);
+	const cleanReason = String.cleanAndEncode(reason);
 
 	const { channel, user: from } = message;
 	if (!allUsers) {
 		return;
 	}
-	if (H.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
+	if (SlackMessage.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
 		// circuit break a plus plus
 		const failureEvent: PPFailureEvent = {
 			sender: from as string,
@@ -236,7 +241,7 @@ async function multipleUsersVote({ message, context, logger, say }) {
 	for (const toUserId of cleanedIdArray) {
 		let response: { toUser: IUser; fromUser: IUser };
 		try {
-			response = await scoreKeeper.incrementScore(teamId, toUserId, from, channel, increment, cleanReason);
+			response = await scorekeeperService.incrementScore(teamId, toUserId, from, channel, increment, cleanReason);
 		} catch (e: any) {
 			await say(e.message);
 			continue;
@@ -263,7 +268,7 @@ async function multipleUsersVote({ message, context, logger, say }) {
 	messages = messages.filter((message) => !!message); // de-dupe
 	if (messages) {
 		logger.debug(`These are the messages \n ${messages.join(' ')} `);
-		const sayArgs = H.getSayMessageArgs(message, messages.join('\n'));
+		const sayArgs = SlackMessage.getSayMessageArgs(message, messages.join('\n'));
 		const sayResponse = await say(sayArgs);
 		const plusPlusEvent: PPEvent = {
 			notificationMessage: notificationMessage.join('\n'),
@@ -274,8 +279,8 @@ async function multipleUsersVote({ message, context, logger, say }) {
 			channel,
 			reason: cleanReason,
 			teamId: teamId,
-			originalMessageTs: H.getMessageTs(sayResponse.message),
-			originalMessageParentTs: H.getMessageParentTs(sayResponse.message),
+			originalMessageTs: SlackMessage.getMessageTs(sayResponse.message),
+			originalMessageParentTs: SlackMessage.getMessageParentTs(sayResponse.message),
 		};
 
 		eventBus.emit(PPEventName, plusPlusEvent);
@@ -288,24 +293,24 @@ async function eraseUserScore({ message, context, say }) {
 	const teamId = context.teamId as string;
 	const { premessage, userId, conjunction, reason } = context.matches.groups;
 	const { channel, user: from } = message;
-	const cleanReason = H.cleanAndEncode(reason);
+	const cleanReason = String.cleanAndEncode(reason);
 
-	const fromUser = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, from);
-	const toBeErased = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, userId);
+	const fromUser = await userService.findOneBySlackIdOrCreate(teamId, from);
+	const toBeErased = await userService.findOneBySlackIdOrCreate(teamId, userId);
 
 	if (fromUser.isAdmin !== true) {
 		await say("Sorry, you don't have authorization to do that.");
 		return;
 	}
 
-	erased = await scoreKeeper.erase(teamId, toBeErased, fromUser, channel, cleanReason);
+	erased = await scorekeeperService.erase(teamId, toBeErased, fromUser, channel, cleanReason);
 
 	if (erased) {
 		const messageText = reason
 			? `Erased the following reason from ${Md.user(userId)}: ${reason} `
 			: `Erased points for ${Md.user(userId)} `;
 
-		const sayArgs = H.getSayMessageArgs(message, messageText);
+		const sayArgs = SlackMessage.getSayMessageArgs(message, messageText);
 		const sayResponse = await say(sayArgs);
 	}
 }

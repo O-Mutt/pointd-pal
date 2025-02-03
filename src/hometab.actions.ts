@@ -1,27 +1,15 @@
-import {
-	Appendable,
-	Bits,
-	BlockBuilder,
-	Blocks,
-	Elements,
-	Md,
-	Modal,
-	ModalBuilder,
-	ViewBlockBuilder,
-} from 'slack-block-builder';
-
-import { AllMiddlewareArgs, BlockButtonAction, BlockStaticSelectAction, SlackActionMiddlewareArgs } from '@slack/bolt';
+import { Blocks, Elements, Md, Modal, ModalBuilder, ViewBlockBuilder } from 'slack-block-builder';
+import { AllMiddlewareArgs, BlockButtonAction, SlackActionMiddlewareArgs } from '@slack/bolt';
 import { View } from '@slack/types';
+import { Appendable } from 'slack-block-builder/dist/internal';
 
-import { app } from '../app';
-import { BotToken } from './entities/botToken';
-import { IUser, User } from './entities/user';
-import { connectionFactory } from '@/lib/services/connectionsFactory';
+import { app } from '@/app';
+import { IUser } from '@//entities/user';
 import { actions } from '@/lib/types/Actions';
-import { EnabledSettings, PromptSettings } from '@/lib/types/Enums';
-import { IPointdPalConfig, PointdPalConfig } from './entities/pointdPalConfig';
+import { IPointdPalConfig } from '@/entities/pointdPalConfig';
 import { blocks } from '@/lib/types/BlockIds';
-import { ViewsUpdateArguments } from '@slack/web-api';
+import * as userService from '@/lib/services/userService';
+import * as configService from '@/lib/services/configService';
 
 app.action(
 	actions.hometab.admin_settings,
@@ -29,14 +17,17 @@ app.action(
 		await ack();
 		const teamId = context.teamId as string;
 		const userId = body.user.id;
-		const connection = connectionFactory(teamId);
-		const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
-		const pointdPalConfig = await PointdPalConfig(connection).findOneOrCreate(teamId);
+		const user = await userService.findOneBySlackIdOrCreate(teamId, userId);
+		const admins = await userService.getAllByPredicate(teamId, 'is_admin = true');
+		const pointdPalConfig = await configService.findOneOrCreate(teamId);
 
 		if (!user.isAdmin || !pointdPalConfig) {
 			return; //empty section because the user isn't an admin
 		}
-		const adminSettingsModal = buildAdminModal(pointdPalConfig).buildToObject();
+		const adminSettingsModal = buildAdminModal(
+			pointdPalConfig,
+			admins.map((a) => a.slackId),
+		).buildToObject();
 
 		const result = await client.views.open({
 			trigger_id: body.trigger_id,
@@ -51,9 +42,8 @@ app.action(
 		await ack();
 		const teamId = context.teamId as string;
 		const userId = body.user.id;
-		const connection = connectionFactory(teamId);
-		const pointdPalConfig = await PointdPalConfig(connection).findOneOrCreate(teamId);
-		const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
+		const pointdPalConfig = await configService.findOneOrCreate(teamId);
+		const user = await userService.findOneBySlackIdOrCreate(teamId, userId);
 
 		if (!user || !pointdPalConfig) {
 			return;
@@ -79,9 +69,8 @@ app.action(
 		await ack();
 		const teamId = context.teamId as string;
 		const userId = body.user.id;
-		const connection = connectionFactory(teamId);
-		const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
-		const pointdPalConfig = await PointdPalConfig(connection).findOneOrCreate(teamId as string);
+		const user = await userService.findOneBySlackIdOrCreate(teamId, userId);
+		const pointdPalConfig = await configService.findOneOrCreate(teamId);
 
 		if (!user.isAdmin) {
 			return;
@@ -91,16 +80,23 @@ app.action(
 		const admins: string[] = members
 			?.filter((user) => user.is_admin === true)
 			.map((admin) => admin.id as string) as string[];
-		const users = await User(connection).find({ isAdmin: true }).exec();
+		const users = await userService.getAllByPredicate(teamId, 'is_admin = true');
 		const adminUsers = users.map((admin) => admin.slackId);
 		adminUsers.concat(admins);
-		pointdPalConfig.pointdPalAdmins = adminUsers;
-		await pointdPalConfig.save();
+		const updateAll: Promise<IUser>[] = [];
+		for (const admin of adminUsers) {
+			updateAll.push(userService.setUserAsAdmin(teamId, admin));
+		}
+		await Promise.all(updateAll);
 		return;
 	},
 );
 
-function buildAdminModal(pointdPalConfig: IPointdPalConfig, enabledOverride: boolean = false): ModalBuilder {
+function buildAdminModal(
+	pointdPalConfig: IPointdPalConfig,
+	admins: string[],
+	enabledOverride: boolean = false,
+): ModalBuilder {
 	return Modal({
 		title: `${Md.emoji('gear')} PointdPal Settings`,
 		submit: 'Update Settings',
@@ -112,7 +108,7 @@ function buildAdminModal(pointdPalConfig: IPointdPalConfig, enabledOverride: boo
 				Elements.UserMultiSelect({
 					actionId: blocks.hometab.admin.basic.admins,
 					placeholder: 'Additional bot admins',
-				}).initialUsers(pointdPalConfig.pointdPalAdmins || []),
+				}).initialUsers(admins || []),
 			)
 			.optional(),
 		Blocks.Input({ label: 'Company Name', blockId: blocks.hometab.admin.basic.companyName })

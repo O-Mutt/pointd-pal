@@ -1,5 +1,5 @@
 import { IBotToken } from '@/entities/botToken';
-import { getConnection } from './database';
+import { getConnection } from './databaseService';
 
 export async function create(botToken: IBotToken): Promise<IBotToken> {
 	const { enabled, name, publicWalletAddress, token, magicString } = botToken;
@@ -38,4 +38,16 @@ export async function deleteToken(id: number): Promise<void> {
 	const connection = await getConnection();
 
 	await connection.query(`DELETE FROM bot_tokens WHERE id = $1`, [id]);
+}
+
+export async function getMagicSecretStringNumberValue(): Promise<string> {
+	const connection = await getConnection();
+	const result = await connection.query(`SELECT magic_string FROM bot_tokens WHERE name = 'pointdPal'`);
+	return result.rows[0]?.magic_string ?? '';
+}
+
+export async function subtractTokens(token: number): Promise<void> {
+	const connection = await getConnection();
+	const result = await connection.query(`UPDATE bot_tokens SET token = token - $1 WHERE name = 'pointdPal'`, [token]);
+	return;
 }

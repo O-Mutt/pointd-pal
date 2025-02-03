@@ -3,6 +3,8 @@ import { LogLevel } from '@slack/web-api';
 export interface PointdPalConfig {
 	env: string;
 	logLevel: `${LogLevel}`;
+	scoreKeywords: string[];
+	reasonConjunctions: string[];
 	spam: {
 		responseMessage: string;
 		timeout: number;
@@ -15,12 +17,14 @@ export interface PointdPalConfig {
 		password: string;
 	};
 	crypto?: {
-		cryptoRpcProvider?: string | null;
+		rpcProvider?: string | null;
 		magicNumber?: string | null;
 		magicIv?: string | null;
+		exchangeFactoryAddress?: string | null;
+		helpUrl: string;
 	};
-	helpMessage?: string;
-	scoreboard?: {
+	helpUrl: string;
+	scoreboard: {
 		cron: string;
 		dayOfWeek: number;
 	};

@@ -6,8 +6,8 @@ import { ChatPostMessageArguments } from '@slack/web-api';
 
 import { app } from '../app';
 import * as pjson from '../package.json';
-import { Helpers as H } from '@/lib/helpers';
 import { regExpCreator } from '@/lib/regexpCreator';
+import config from '@config';
 
 app.message(regExpCreator.getHelp(), directMention(), respondWithHelpGuidance);
 app.message(RegExp(/(plusplus version|-v|--version)/, 'i'), directMention(), async ({ message, context, say }) => {
@@ -16,7 +16,6 @@ app.message(RegExp(/(plusplus version|-v|--version)/, 'i'), directMention(), asy
 app.message(new RegExp('how much .*point.*', 'i'), tellHowMuchPointsAreWorth);
 
 require('dotenv').config();
-const procVars = H.getProcessVariables(process.env);
 
 async function respondWithHelpGuidance({ client, message, say }) {
 	const helpMessage = ''
@@ -36,11 +35,9 @@ async function respondWithHelpGuidance({ client, message, say }) {
 			Blocks.Header({ text: `Need help with Pointd Pal?` }),
 			Blocks.Section({ text: `_Commands_:` }),
 			Blocks.Section({ text: helpMessage }),
-			procVars.furtherHelpUrl
-				? Blocks.Section({
-						text: `For further help please visit ${Md.link(procVars.furtherHelpUrl.toString(), 'Help Page')}`,
-					})
-				: undefined,
+			Blocks.Section({
+				text: `For further help please visit ${Md.link(config.get('helpUrl'), 'Help Page')}`,
+			}),
 		)
 		.asUser();
 

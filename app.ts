@@ -3,7 +3,7 @@ import { Md } from 'slack-block-builder';
 import { App } from '@slack/bolt';
 import { LogLevel } from '@slack/logger';
 
-import { PointdPalInstallStore } from './src/lib/services/pointdPalInstallStore';
+import { PointdPalInstallStore } from './src/lib/services/installStore';
 
 import { config } from '@/config';
 require('newrelic');

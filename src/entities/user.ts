@@ -2,6 +2,7 @@ import { AuditTags } from './auditTags';
 
 export interface IUser extends AuditTags {
 	id: string;
+	teamId: string;
 	slackId: string;
 	score: number;
 	reasons: Map<string, number>;

@@ -1,5 +1,5 @@
 import { IUser } from '@/entities/user';
-import { getConnection } from './database';
+import { getConnection } from './databaseService';
 import * as installService from './installService';
 import { app } from '@/app';
 
@@ -51,25 +51,31 @@ export async function findOneBySlackIdOrCreate(teamId: string, slackId: string):
 	return createdUser.rows[0];
 }
 
+export async function setUserAsAdmin(teamId: string, slackId: string): Promise<IUser> {
+	const connection = await getConnection(teamId);
+	const result = await connection.query(`UPDATE users SET is_admin = true WHERE slack_id = $1 RETURNING *`, [slackId]);
+	return result.rows[0];
+}
+
 export async function update(teamId: string, user: IUser) {
 	const connection = await getConnection(teamId);
+	const fields = Object.keys(user)
+		.map((key, index) => `${key} = $${index + 2}`)
+		.join(', ');
+	const values = Object.values(user);
 	const result = await connection.query(
-		`UPDATE users SET score = $1, reasons = $2, points_given = $3, robot_day = $4, account_level = $5, total_points_given = $6, email = $7, name = $8, is_admin = $9, is_bot = $10, updated_by = $11, updated_at = $12 WHERE id = $13 RETURNING *`,
-		[
-			user.score,
-			user.reasons,
-			user.pointsGiven,
-			user.pointdPalDay,
-			user.accountLevel,
-			user.totalPointsGiven,
-			user.email,
-			user.name,
-			user.isAdmin,
-			user.isBot,
-			user.updatedBy,
-			user.updatedAt,
-			user.id,
-		],
+		`
+		UPDATE users
+			SET ${fields}
+			WHERE id = $1
+			RETURNING *`,
+		[user.id, ...values],
 	);
-	return result.rows[0];
+	return result.rows[0] || null;
+}
+
+export async function getAllByPredicate(teamId: string, predicate: string): Promise<IUser[]> {
+	const connection = await getConnection(teamId);
+	const result = await connection.query(`SELECT * FROM users WHERE ${predicate}`);
+	return result.rows;
 }

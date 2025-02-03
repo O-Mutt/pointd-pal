@@ -5,21 +5,22 @@ import _ from 'lodash';
 import { BlockBuilder, Blocks, Md, Message } from 'slack-block-builder';
 
 import { app } from '../app';
-import { Helpers as H } from '@/lib/helpers';
-import { PointdPalConfig } from './entities/pointdPalConfig';
-import { getConnection } from '@/lib/services/database';
 import * as SlackService from '@/lib/services/slack';
 import * as installService from '@/lib/services/installService';
 import * as scoreboardService from '@/lib/services/scoreboardService';
-import { StringUtil } from '@/lib/string';
+import { String } from '@/lib/string';
+import { DateUtil } from '@/lib/date';
+import config from '@config';
+import { Appendable } from 'slack-block-builder/dist/internal';
+import { getConnection } from '@/lib/services/databaseService';
+import * as configService from '@/lib/services/configService';
 
 (async () => {
 	const allInstalls = await installService.findAll();
 
 	for (const install of allInstalls) {
-		const { monthlyScoreboardCron, monthlyScoreboardDayOfWeek } = procVars;
 		const job = new CronJob(
-			monthlyScoreboardCron,
+			config.get('scoreboard.cron'),
 			async () => {
 				const teamId = install?.teamId;
 				const botToken = install?.installation.bot?.token;
@@ -27,7 +28,7 @@ import { StringUtil } from '@/lib/string';
 					return;
 				}
 				const connection = await getConnection(teamId);
-				const pointdPalConfig = await PointdPalConfig(connection).findOne().exec();
+				const pointdPalConfig = await configService.findOneOrCreate(teamId);
 				if (!pointdPalConfig) {
 					return;
 				}
@@ -36,7 +37,7 @@ import { StringUtil } from '@/lib/string';
 				if (!channelId) {
 					return;
 				}
-				if (H.isScoreboardDayOfWeek(monthlyScoreboardDayOfWeek)) {
+				if (DateUtil.isScoreboardDayOfWeek()) {
 					//Logger.debug('running the cron job');
 
 					let rank: number = 0;
@@ -45,7 +46,7 @@ import { StringUtil } from '@/lib/string';
 					let messages: string[] = [];
 					rank = 1;
 					for (const sender of topSenders) {
-						const pointStr = `point${H.getEsOnEndOfWord(sender.scoreChange)} given`;
+						const pointStr = `${'point'.pluralize(sender.scoreChange)} given`;
 						console.log(`Top room [i] ${JSON.stringify(topSenders)}[${rank}]`);
 						messages.push(`${rank}. ${Md.user(sender._id)} (${sender.scoreChange} ${pointStr})`);
 						rank++;
@@ -57,7 +58,7 @@ import { StringUtil } from '@/lib/string';
 					messages = [];
 					rank = 1;
 					for (const recipient of topRecipients) {
-						const pointStr = `point${H.getEsOnEndOfWord(recipient.scoreChange)} received`;
+						const pointStr = `${'point'.pluralize(recipient.scoreChange)} received`;
 						console.log(`Top room [i] ${JSON.stringify(topRecipients)}[${rank}]`);
 						messages.push(`${rank}. ${Md.user(recipient._id)} (${recipient.scoreChange} ${pointStr})`);
 						rank++;
@@ -74,7 +75,7 @@ import { StringUtil } from '@/lib/string';
 						if (channel) {
 							room.name = channel.name;
 						}
-						const pointStr = `point${StringUtil.pluralSuffix(room.scoreChange)} given`;
+						const pointStr = `${'point'.pluralize(room.scoreChange)} given`;
 						console.log(`Top room [i] ${JSON.stringify(topRooms)}[${rank}]`);
 						messages.push(`${rank}. ${Md.channel(room._id)} (${room.scoreChange} ${pointStr})`);
 						rank++;
@@ -113,13 +114,15 @@ import { StringUtil } from '@/lib/string';
 
 function buildBlocks(title: string, tops: any[], messages: string[]) {
 	const graphSize = Math.min(tops.length, Math.min(10, 20));
+	const topNNames = _.take(_.map(tops, 'name'), graphSize).join('|');
+	const topNPointsGiven = _.take(_.map(tops, 'scoreChange'), graphSize).join(',');
 	const chartUrl = new ImageCharts()
 		.cht('bvg')
 		.chs('999x200')
 		.chtt(title)
 		.chxt('x,y')
-		.chxl(`0:|${_.take(_.map(tops, 'name'), graphSize).join('|')}`)
-		.chd(`a:${_.take(_.map(tops, 'scoreChange'), graphSize).join(',')}`)
+		.chxl(`0:|${topNNames}`)
+		.chd(`a:${topNPointsGiven}`)
 		.toURL();
 
 	const blocks: Appendable<BlockBuilder> = [

@@ -2,7 +2,13 @@ import { IUser } from '@/entities/user';
 import { config } from '@/config';
 
 import { Client, Connection } from 'pg';
+import { subMinutes } from 'date-fns';
+import { withNamespace } from '@/logger';
+import * as userService from '@/lib/services/userService';
+import * as botTokenService from '@/lib/services/botTokenService';
+import { eventBus } from '@/lib/services/eventBus';
 
+const logger = withNamespace('databaseService');
 const rootDb = new Client({
 	host: config.get('postgres.host'),
 	user: config.get('postgres.username'),
@@ -31,23 +37,28 @@ export async function getConnection(teamId?: string): Promise<Connection> {
 }
 
 export async function isSpam(teamId: string, to: IUser, from: IUser) {
-	//Logger.debug('spam check');
-	const now = moment();
-	const fiveMinutesAgo = now.subtract(this.spamTimeLimit, 'minutes').toDate();
+	logger.debug('spam check');
+	const connection = await getConnection(teamId);
+	const fiveMinutesAgo = subMinutes(new Date(), config.get('spam.timeout'));
 	// There is 1+ and that means we have spam
-	const isSpam =
-		(await ScoreLog(connectionFactory(teamId))
-			.countDocuments({ to: to.slackId, from: from.slackId, date: { $gte: fiveMinutesAgo } })
-			.exec()) !== 0;
-	//Logger.debug('spam check result', previousScoreExists);
+	const result = await connection.query(
+		`
+		SELECT COUNT(*) FROM score_logs
+		WHERE to = $1 AND from = $2 AND date >= $3
+		`,
+	);
+	let isSpam = result.rows[0].count > 0;
+
+	logger.debug('spam check result', isSpam);
 	return isSpam;
 }
 
 export async function updateAccountLevelToTwo(user: IUser): Promise<void> {
 	user.pointdPalToken = user.score;
 	user.accountLevel = 2;
-	await user.save();
-	await BotToken.findOneAndUpdate({}, { $inc: { pointdPalToken: -user.pointdPalToken } }).exec();
+	await userService.update(user.teamId, user);
+
+	await botTokenService.subtractTokens(user.pointdPalToken);
 	eventBus.emit('plusplus-tokens');
 	return;
 }
@@ -62,14 +73,7 @@ export async function updateAccountLevelToTwo(user: IUser): Promise<void> {
 export async function transferTokens(teamId: string, user: IUser, from: IUser, scoreChange: number): Promise<void> {
 	user.pointdPalToken = user.pointdPalToken || 0 + scoreChange;
 	from.pointdPalToken = from.pointdPalToken || 0 - scoreChange;
-	await user.save();
-	await from.save();
-}
-
-export async function getMagicSecretStringNumberValue() {
-	const updateBotWallet = await BotToken.findOne({ name: 'pointdPal' });
-	if (updateBotWallet) {
-		return updateBotWallet.magicString;
-	}
-	return '';
+	await userService.update(teamId, user);
+	await userService.update(teamId, from);
+	return;
 }

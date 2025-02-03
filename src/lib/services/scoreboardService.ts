@@ -1,4 +1,4 @@
-import { getConnection } from './database';
+import { getConnection } from './databaseService';
 
 export async function getTopScores(teamId: string, amount: number) {
 	const connection = await getConnection(teamId);

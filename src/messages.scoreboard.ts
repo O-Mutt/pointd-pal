@@ -6,15 +6,13 @@ import { directMention } from '@slack/bolt';
 import { format } from 'date-fns';
 
 import { app } from '@/app';
-import { Helpers as H } from '@/lib/helpers';
+import { Helpers as H } from '@/lib/slackMessage';
 import { regExpCreator } from '@/lib/regexpCreator';
 import { Blocks, Md, Message } from 'slack-block-builder';
 import { ChatPostMessageArguments } from '@slack/web-api';
 import { IUser } from '@/entities/user';
 import * as userService from '@/lib/services/userService';
-import { NumberUtil } from '@/lib/number';
 import * as scoreboardService from '@/lib/services/scoreboardService';
-import { StringUtil } from '@/lib/string';
 
 app.message(regExpCreator.createAskForScoreRegExp(), directMention(), respondWithScore);
 app.message(regExpCreator.createTopBottomRegExp(), directMention(), respondWithLeaderLoserBoard);
@@ -29,11 +27,11 @@ async function respondWithScore({ message, context, logger, say }) {
 
 	let tokenString = '.';
 	if (user.accountLevel > 1) {
-		const partialTokenStr = `${user.pointdPalToken} PointdPal Token${StringUtil.pluralSuffix(user.pointdPalToken)}`;
+		const partialTokenStr = `${user.pointdPalToken} PointdPal ${'Token'.pluralize(user.pointdPalToken)}`;
 		tokenString = ` (${Md.bold(partialTokenStr)}).`;
 	}
 
-	const pointStr = `point${StringUtil.pluralSuffix(user.score)}`;
+	const pointStr = `${'point'.pluralize(user.score)}`;
 	let baseString = `${Md.user(user.slackId)} has ${Md.bold(user.score.toString())} ${Md.bold(pointStr)}${tokenString}`;
 	baseString += `\n${Md.italic('Account Level')}: ${user.accountLevel}`;
 	baseString += `\n${Md.italic('Total Points Given')}: ${user.totalPointsGiven}`;
@@ -68,7 +66,7 @@ async function respondWithScore({ message, context, logger, say }) {
 async function respondWithLeaderLoserBoard({ client, message, context, logger, say }) {
 	const { topOrBottom, digits }: { topOrBottom: string; digits: number } = context.matches.groups;
 	const teamId = context.teamId as string;
-	const topOrBottomString = H.capitalizeFirstLetter(topOrBottom);
+	const topOrBottomString = topOrBottom.capitalizeFirstLetter();
 	const methodName = `get${topOrBottomString}Scores`;
 	const tops = await scoreboardService[methodName](teamId, digits);
 
@@ -80,7 +78,7 @@ async function respondWithLeaderLoserBoard({ client, message, context, logger, s
 				messages.push(
 					`${i + 1}. ${Md.user(tops[i].slackId)}: ${tops[i].score} (*${
 						tops[i].pointdPalToken
-					} ${H.capitalizeFirstLetter('pointdPal')} ${tokenStr}*)`,
+					} ${'pointdPal'.capitalizeFirstLetter()} ${tokenStr}*)`,
 				);
 			} else {
 				messages.push(`${i + 1}. ${Md.user(tops[i].slackId)}: ${tops[i].score}`);
@@ -121,7 +119,7 @@ async function respondWithLeaderLoserBoard({ client, message, context, logger, s
 async function respondWithLeaderLoserTokenBoard({ message, context, client }) {
 	const { topOrBottom, digits }: { topOrBottom: string; digits: number } = context.matches.groups;
 	const teamId = context.teamId as string;
-	const topOrBottomString = H.capitalizeFirstLetter(topOrBottom);
+	const topOrBottomString = topOrBottom.capitalizeFirstLetter();
 	const methodName = `get${topOrBottomString}Tokens`;
 	const tops = await scoreboardService[methodName](teamId, digits);
 
@@ -171,14 +169,14 @@ async function respondWithLeaderLoserTokenBoard({ message, context, client }) {
 async function getTopPointSenders({ message, context, client }) {
 	const { topOrBottom, digits }: { topOrBottom: string; digits: number } = context.matches.groups;
 	const teamId = context.teamId as string;
-	const topOrBottomString = H.capitalizeFirstLetter(topOrBottom);
+	const topOrBottomString = topOrBottom.capitalizeFirstLetter();
 	const methodName = `get${topOrBottomString}Sender`;
 	const tops = await scoreboardService[methodName](teamId, digits);
 
 	const messages: string[] = [];
 	if (tops.length > 0) {
 		for (let i = 0, end = tops.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
-			const pointStr = `point${StringUtil.pluralSuffix(tops[i].totalPointsGiven)} given`;
+			const pointStr = `${'point'.pluralize(tops[i].totalPointsGiven)} given`;
 			messages.push(`${i + 1}. ${Md.user(tops[i].slackId)} (${tops[i].totalPointsGiven} ${pointStr})`);
 		}
 	} else {
@@ -186,7 +184,7 @@ async function getTopPointSenders({ message, context, client }) {
 	}
 
 	const graphSize = Math.min(tops.length, Math.min(digits, 20));
-	const chartText = `${topOrBottomString} ${graphSize} PointdPal Point Sender${StringUtil.pluralSuffix(graphSize)}`;
+	const chartText = `${topOrBottomString} ${graphSize} PointdPal Point ${'Sender'.pluralize(graphSize)}`;
 	const topNNames = take(map(tops, 'name'), graphSize).join('|');
 	const topNPointsGiven = take(map(tops, 'totalPointsGiven'), graphSize).join(',');
 	const chartUrl = new ImageCharts()

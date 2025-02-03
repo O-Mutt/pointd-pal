@@ -13,18 +13,15 @@ import {
 import { ChatGetPermalinkResponse, ChatPostEphemeralArguments, ChatPostMessageArguments } from '@slack/web-api';
 
 import { app } from '../app';
-import { Helpers as H } from '@/lib/helpers';
 import { MessageBuilder as Builder } from '@/lib/messageBuilder';
 import { IUser } from '@/entities/user';
 import { eventBus } from '@/lib/services/eventBus';
-import { ScoreKeeper } from '@/lib/services/scorekeeper';
+import * as scorekeeperService from '@/lib/services/scorekeeperService';
 import { actions } from '@/lib/types/Actions';
 import { blocks } from '@/lib/types/BlockIds';
 import { DirectionEnum } from '@/lib/types/Enums';
 import { PPEvent, PPEventName } from '@/lib/types/Events';
 import { regExpCreator } from '@/lib/regexpCreator';
-
-const scoreKeeper = new ScoreKeeper();
 
 app.command('/plusplus', handleSlashCommand);
 app.shortcut(actions.shortcuts.message, handleShortcut);
@@ -207,7 +204,7 @@ app.view(
 		}
 
 		idArray = idArray.filter((id) => id !== from);
-		const cleanReason = H.cleanAndEncode(reason);
+		const cleanReason = reason?.cleanAndEncode();
 		const increment: number = operator === DirectionEnum.PLUS ? 1 : -1;
 
 		logger.debug('We filtered out empty items and removed "self"', idArray.join(','));
@@ -218,7 +215,7 @@ app.view(
 		for (const toUserId of idArray) {
 			let response: { toUser: IUser; fromUser: IUser };
 			try {
-				response = await scoreKeeper.incrementScore(teamId, toUserId, from, channel, increment, cleanReason);
+				response = await scorekeeperService.incrementScore(teamId, toUserId, from, channel, increment, cleanReason);
 			} catch (e: any) {
 				const ephemeral: ChatPostEphemeralArguments = {
 					text: e.message,

@@ -2,7 +2,7 @@ import { withNamespace } from '@/logger';
 import pluralize from 'pluralize';
 
 const logger = withNamespace('StringUtil');
-export class StringUtil {
+export class String {
 	static pluralize(countable: any, noun: string) {
 		if (Array.isArray(countable)) {
 			return pluralize(countable.length, noun);
@@ -55,28 +55,54 @@ export class StringUtil {
 	static reverse(str: string): string {
 		return str.split('').reverse().join('');
 	}
+
+	static endsWithPunctuation(str: string): boolean {
+		return !!str.match(/[.,:!?]$/);
+	}
+
+	static capitalizeFirstLetter(str: string): string {
+		if (!str) {
+			return '';
+		}
+		return str.charAt(0).toUpperCase() + str.slice(1);
+	}
 }
 
 declare global {
 	interface String {
+		pluralize(countable: any): string;
 		cleanAndEncode(): string | undefined;
 		decode(): string | undefined;
 		obfuscate(amountToLeaveUnobfuscated?: number): string;
 		reverse(): string;
+		endsWithPunctuation(): boolean;
+		capitalizeFirstLetter(): string;
 	}
 }
+
+String.prototype.pluralize = function (countable: any): string {
+	return String.pluralize(countable, this.toString());
+};
 String.prototype.cleanAndEncode = function (): string {
-	return StringUtil.cleanAndEncode(this.toString()) ?? '';
+	return String.cleanAndEncode(this.toString()) ?? '';
 };
 
 String.prototype.decode = function (): string {
-	return StringUtil.decode(this.toString()) ?? '';
+	return String.decode(this.toString()) ?? '';
 };
 
 String.prototype.obfuscate = function (amountToLeaveUnobfuscated: number = 3): string {
-	return StringUtil.obfuscate(this.toString(), amountToLeaveUnobfuscated);
+	return String.obfuscate(this.toString(), amountToLeaveUnobfuscated);
 };
 
 String.prototype.reverse = function (): string {
-	return StringUtil.reverse(this.toString());
+	return String.reverse(this.toString());
+};
+
+String.prototype.endsWithPunctuation = function (): boolean {
+	return String.endsWithPunctuation(this.toString());
+};
+
+String.prototype.capitalizeFirstLetter = function (): string {
+	return String.capitalizeFirstLetter(this.toString());
 };

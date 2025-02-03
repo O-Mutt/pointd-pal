@@ -1,5 +1,5 @@
 import { IUser } from '@/entities/user';
-import { getConnection } from './database';
+import { getConnection } from './databaseService';
 
 export async function erase(teamId: string, toBeErased: IUser, reason?: string): Promise<void> {
 	const connection = await getConnection(teamId);

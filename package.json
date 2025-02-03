@@ -13,7 +13,8 @@
 		"build": "tsc",
 		"lint": "eslint '*/**' --quiet",
 		"lint:fix": "npm run lint -- --fix",
-		"test": "echo \"Error: no test specified\" && exit 0"
+		"test": "echo \"Error: no test specified\" && exit 0",
+		"migrate": "do the thing"
 	},
 	"license": "MIT",
 	"dependencies": {

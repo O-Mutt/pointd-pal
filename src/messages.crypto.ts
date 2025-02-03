@@ -5,18 +5,17 @@ import tokenBuddy from 'token-buddy';
 import { directMention, Logger } from '@slack/bolt';
 
 import { app } from '../app';
-import { Helpers as H } from '@/lib/helpers';
-import { BotToken, IBotToken } from './entities/botToken';
-import { User } from './entities/user';
+import { IBotToken } from './entities/botToken';
+import { IUser } from './entities/user';
 import { regExpCreator } from '@/lib/regexpCreator';
-import { connectionFactory } from '@/lib/services/connectionsFactory';
-import { DatabaseService } from '@/lib/services/database';
 import { actions } from '@/lib/types/Actions';
 import { ConfirmOrCancel } from '@/lib/types/Enums';
+import * as userService from '@/lib/services/userService';
+import * as databaseService from '@/lib/services/databaseService';
+import { SlackMessage } from './lib/slackMessage';
+import * as botTokenService from '@/lib/services/botTokenService';
 
 require('dotenv').config();
-const procVars = H.getProcessVariables(process.env);
-const databaseService = new DatabaseService();
 
 app.message(regExpCreator.getBotWallet(), directMention(), botWalletCount);
 
@@ -26,13 +25,12 @@ app.message(regExpCreator.createLevelUpAccount(), directMention(), levelUpAccoun
 app.action('confirm_levelup', levelUpToLevelThree);
 
 async function levelUpAccount({ message, context, logger, say }) {
-	if (!H.isPrivateMessage(message.channel)) {
+	if (!SlackMessage.isPrivateMessage(message.channel)) {
 		return await say(`You should only execute a level up from within the context of a DM with PointdPal`);
 	}
 	const teamId = context.teamId as string;
 
-	const connection = connectionFactory(teamId);
-	const user = await User(connection).findOneBySlackIdOrCreate(teamId, message.user);
+	const user = await userService.findOneBySlackIdOrCreate(teamId, message.user);
 	if (user.accountLevel === 2) {
 		const theBlocks = Message({ channel: context.channel, text: "Let's level you up!" })
 			.blocks(
@@ -82,7 +80,7 @@ async function levelUpToLevelThree({ action, body, logger, ack, say }) {
 
 async function botWalletCount({ message, context, logger, say }) {
 	const teamId = context.teamId as string;
-	const botWallet = await BotToken.findOne({}).exec();
+	const botWallet = await botTokenService.find();
 	if (!botWallet) {
 		return;
 	}

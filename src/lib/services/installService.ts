@@ -1,5 +1,5 @@
 import { IInstallation } from '@/entities/installation';
-import { getConnection } from './database';
+import { getConnection } from './databaseService';
 import { Installation } from '@slack/oauth';
 
 export async function findAll(): Promise<IInstallation[]> {

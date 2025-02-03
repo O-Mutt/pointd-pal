@@ -1,13 +1,11 @@
 import { AllMiddlewareArgs, SlackViewMiddlewareArgs, ViewSubmitAction } from '@slack/bolt';
-import { ESMap } from 'typescript';
 
 import { app } from '../app';
 import { PointdPalConfig } from './entities/pointdPalConfig';
-import { User } from './entities/user';
-import { connectionFactory } from '@/lib/services/connectionsFactory';
 import { actions } from '@/lib/types/Actions';
 import { blocks } from '@/lib/types/BlockIds';
 import { EnabledSettings } from '@/lib/types/Enums';
+import * as userService from '@/lib/services/userService';
 
 app.view(
 	actions.hometab.admin_settings_submit,
@@ -15,7 +13,6 @@ app.view(
 		const teamId = context.teamId as string;
 		const userId = body.user.id;
 
-		const connection = connectionFactory(teamId);
 		const pointdPal = await PointdPalConfig(connection).findOneOrCreate(teamId as string);
 
 		const errors: { [blockId: string]: string } = {};
@@ -29,9 +26,9 @@ app.view(
 						pointdPal.pointdPalAdmins = selectedUsers;
 						for (const newAdminId of selectedUsers) {
 							console.log(newAdminId);
-							const user = await User(connection).findOneBySlackIdOrCreate(teamId, newAdminId);
+							const user = await userService.findOneBySlackIdOrCreate(teamId, newAdminId);
 							user.isAdmin = true;
-							await user.save();
+							await userService.update(teamId, user);
 						}
 						break;
 					}
@@ -114,7 +111,7 @@ app.view(
 		const userId = body.user.id;
 
 		const connection = connectionFactory(teamId);
-		const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
+		const user = await userService.findOneBySlackIdOrCreate(teamId, userId);
 
 		const errors: { [blockId: string]: string } = {};
 		for (const option in view.state.values) {

@@ -57,7 +57,7 @@ export const PointdPalInstallStore: InstallationStore = {
 				throw new Error('Failed fetching installation');
 			}
 			console.log(`[LOOKUP]  ${teamId}.`);
-			if (!result.enabled) {
+			if (!result.isEnabled) {
 				throw new Error(
 					`This instance of pointdPal is not enabled Team [${result.teamId}], Customer [${result.customerId}]`, //, Subscription [${result.subscriptionId}], Status [${result.subscriptionStatus}]`,
 				);

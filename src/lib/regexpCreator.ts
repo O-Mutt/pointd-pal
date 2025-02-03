@@ -1,5 +1,7 @@
-const scoreKeyword = process.env.HUBOT_PLUSPLUS_KEYWORD || 'score|scores|karma';
-const reasonConjunctions = process.env.HUBOT_PLUSPLUS_CONJUNCTIONS || 'for|because|cause|cuz|as|porque|just|thanks for';
+import config from '@config';
+
+const scoreKeyword = config.get('scoreKeywords').join('|');
+const reasonConjunctions = config.get('reasonConjunctions').join('|');
 
 export class RegExpCreator {
 	userObject = `<@(?<userId>[^>|]+)(?:\\|(?<label>[^>]+))?>`;
@@ -45,6 +47,7 @@ export class RegExpCreator {
 	}
 
 	createTopBottomTokenRegExp(): RegExp {
+		ppEvent;
 		return new RegExp(
 			`${this.topOrBottom}${this.allowSpacesAfterObject}tokens${this.allowSpacesAfterObject}${this.digits}`,
 			'i',

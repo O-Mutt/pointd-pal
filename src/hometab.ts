@@ -1,13 +1,15 @@
-import { Appendable, Blocks, Elements, HomeTab, Md, ViewBlockBuilder } from 'slack-block-builder';
+import { Blocks, Elements, HomeTab, Md, ViewBlockBuilder } from 'slack-block-builder';
 
 import { AllMiddlewareArgs, SlackEventMiddlewareArgs } from '@slack/bolt';
 import { View } from '@slack/types';
 
 import { app } from '../app';
-import { IPointdPalConfig, PointdPalConfig } from './entities/pointdPalConfig';
-import { IUser, User } from './entities/user';
-import { connectionFactory } from '@/lib/services/connectionsFactory';
+import { IPointdPalConfig } from './entities/pointdPalConfig';
+import { IUser } from './entities/user';
 import { actions } from '@/lib/types/Actions';
+import { Appendable } from 'slack-block-builder/dist/internal';
+import * as configService from '@/lib/services/configService';
+import * as userService from '@/lib/services/userService';
 
 app.event('app_home_opened', updateHomeTab);
 
@@ -22,9 +24,8 @@ async function updateHomeTab({
 		const userId = event.user;
 		const teamId = context.teamId as string;
 
-		const connection = connectionFactory(teamId);
-		const user = await User(connection).findOneBySlackIdOrCreate(teamId, userId);
-		const pointdPalConfig = await PointdPalConfig(connection).findOneOrCreate(teamId as string);
+		const user = await userService.findOneBySlackIdOrCreate(teamId, userId);
+		const pointdPalConfig = await configService.findOneOrCreate(teamId);
 
 		const hometab = HomeTab({ callbackId: 'hometab' }).blocks(
 			Blocks.Image({ altText: 'PointdPal!', imageUrl: 'https://okeefe.dev/cdn_images/pointdPal_header.png' }),

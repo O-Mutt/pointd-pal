@@ -1,11 +1,10 @@
 import { Md } from 'slack-block-builder';
 
 import { app } from '../app';
-import { Installation } from './entities/installation';
-import { PointdPalConfig } from './entities/pointdPalConfig';
-import { connectionFactory } from '@/lib/services/connectionsFactory';
 import { eventBus } from '@/lib/services/eventBus';
-import { SlackService } from '@/lib/services/slack';
+import * as configService from '@/lib/services/configService';
+import * as installService from '@/lib/services/installService';
+import * as slackService from '@/lib/services/slack';
 import {
 	PPEvent,
 	PPEventName,
@@ -20,16 +19,16 @@ eventBus.on(PPFailureEventName, sendPlusPlusFalsePositiveNotification);
 eventBus.on(PPSpamEventName, logAndNotifySpam);
 
 async function sendPlusPlusNotification(ppEvent: PPEvent) {
-	const config = await PointdPalConfig(connectionFactory(ppEvent.teamId)).findOneOrCreate(ppEvent.teamId);
+	const config = await configService.findOneOrCreate(ppEvent.teamId);
 	if (!config?.notificationRoom) {
 		return;
 	}
-	const teamInstallConfig = await Installation.findOne({ teamId: ppEvent.teamId }).exec();
+	const teamInstallConfig = await installService.findOne(ppEvent.teamId);
 	if (!teamInstallConfig?.installation.bot?.token) {
 		return;
 	}
 	const botToken = teamInstallConfig.installation.bot.token;
-	const channelId = await SlackService.findOrCreateConversation(botToken, ppEvent.teamId, config.notificationRoom);
+	const channelId = await slackService.findOrCreateConversation(botToken, ppEvent.teamId, config.notificationRoom);
 	if (!channelId) {
 		return;
 	}
@@ -44,6 +43,7 @@ async function sendPlusPlusNotification(ppEvent: PPEvent) {
 			token: botToken,
 			channel: channelId,
 			text: ppEvent.notificationMessage,
+			attachments: [],
 		});
 	} catch (error: any | unknown) {
 		console.error('There was an error when posting the `++` event to the notifications room', error.message);
@@ -52,16 +52,18 @@ async function sendPlusPlusNotification(ppEvent: PPEvent) {
 }
 
 async function sendPlusPlusFalsePositiveNotification(ppEvent: PPFailureEvent) {
-	const config = await PointdPalConfig(connectionFactory(ppEvent.teamId)).findOneOrCreate(ppEvent.teamId);
+	const config = await configService.findOneOrCreate(ppEvent.teamId);
+
 	if (!config?.falsePositiveRoom) {
 		return;
 	}
-	const teamInstallConfig = await Installation.findOne({ teamId: ppEvent.teamId }).exec();
+	const teamInstallConfig = await installService.findOne(ppEvent.teamId);
+
 	if (!teamInstallConfig?.installation.bot?.token) {
 		return;
 	}
 	const botToken = teamInstallConfig.installation.bot.token;
-	const channelId = await SlackService.findOrCreateConversation(botToken, ppEvent.teamId, config.falsePositiveRoom);
+	const channelId = await slackService.findOrCreateConversation(botToken, ppEvent.teamId, config.falsePositiveRoom);
 	if (!channelId) {
 		return;
 	}
@@ -82,7 +84,7 @@ async function logAndNotifySpam({ sender, recipient, notificationMessage, reason
 	if (!sender.slackId) {
 		return;
 	}
-	const teamInstallConfig = await Installation.findOne({ teamId: teamId }).exec();
+	const teamInstallConfig = await installService.findOne(teamId);
 	if (!teamInstallConfig?.installation.bot?.token) {
 		return;
 	}

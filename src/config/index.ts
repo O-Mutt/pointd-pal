@@ -14,6 +14,18 @@ const config = convict<PointdPalConfig>({
 		default: 'info',
 		env: 'LOG_LEVEL',
 	},
+	scoreKeywords: {
+		doc: 'Keywords to trigger score changes.',
+		format: Array,
+		default: ['score', 'scores', 'karma'],
+		env: 'SCORE_KEYWORDS',
+	},
+	reasonConjunctions: {
+		doc: 'Conjunctions for reasons.',
+		format: Array,
+		default: ['for', 'because', 'cause', 'cuz', 'as', 'porque', 'just', 'thanks for', 'since'],
+		env: 'REASON_CONJUNCTIONS',
+	},
 	spam: {
 		responseMessage: {
 			doc: 'Message to send when a user is spamming.',
@@ -29,7 +41,6 @@ const config = convict<PointdPalConfig>({
 		},
 	},
 	postgres: {
-		default: null,
 		host: {
 			doc: 'Postgres host.',
 			format: String,
@@ -63,12 +74,7 @@ const config = convict<PointdPalConfig>({
 		},
 	},
 	crypto: {
-		default: {
-			cryptoRpcProvider: null,
-			magicNumber: null,
-			magicIv: null,
-		},
-		cryptoRpcProvider: {
+		rpcProvider: {
 			doc: 'Crypto RPC provider.',
 			format: String,
 			default: null,
@@ -79,28 +85,33 @@ const config = convict<PointdPalConfig>({
 			format: String,
 			sensitive: true,
 			default: null,
-			env: 'MAGIC_NUMBER',
+			env: 'CRYPTO_MAGIC_NUMBER',
 		},
 		magicIv: {
 			doc: 'Magic IV.',
 			format: String,
 			sensitive: true,
 			default: null,
-			env: 'MAGIC_IV',
+			env: 'CRYPTO_MAGIC_IV',
 		},
-		furtherHelpMessage: {
+		helpUrl: {
 			doc: 'Further help message.',
 			format: String,
-			default:
-				'For more information on pointdpal token please visit our crypto specific help page: https://pointdpal.com/crypto/help',
-			env: 'CRYPTO_FURTHER_HELP_MESSAGE',
+			default: 'https://pointdpal.com/crypto/help',
+			env: 'CRYPTO_FURTHER_HELP_URL',
+		},
+		exchangeFactoryAddress: {
+			doc: 'Exchange factory address.',
+			format: String,
+			default: '0xBCfCcbde45cE874adCB698cC183deBcF17952812',
+			env: 'CRYPTO_EXCHANGE_FACTORY_ADDRESS',
 		},
 	},
-	helpMessage: {
+	helpUrl: {
 		doc: 'Message when a user asks for help.',
 		format: String,
-		default: 'For more information on pointdpal please visit our help page: https://pointdpal.com/help',
-		env: 'FURTHER_HELP_MESSAGE',
+		default: 'https://pointdpal.com/help',
+		env: 'FURTHER_HELP_URL',
 	},
 	scoreboard: {
 		default: {

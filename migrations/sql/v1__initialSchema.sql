@@ -1,5 +1,4 @@
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp",
 CREATE TABLE bot_tokens (
   id UUID PRIMARY KEY,
   enabled BOOLEAN NOT NULL,
@@ -26,3 +25,16 @@ CREATE INDEX idx_installation_team_id ON installation(team_id);
 CREATE INDEX idx_installation_customer_id ON installation(customer_id);
 
 CREATE INDEX idx_installation_team_id_customer_id ON installation(team_id, customer_id);
+
+CREATE TABLE config(
+  id UUID PRIMARY KEY,
+  notificationRoom VARCHAR(255) NOT NULL,
+  falsePositiveRoom VARCHAR(255) NULL,
+  scoreboardRoom VARCHAR(255) NULL,
+  formalFeedbackUrl VARCHAR(255) NULL,
+  formalFeedbackModulo INTEGER NOT NULL DEFAULT 10,
+  reasonsKeyword VARCHAR(255) NULL,
+  companyName VARCHAR(255) NULL,
+  -- admins used to be here
+  pointdPalAdmins tokenLedgerBalance INTEGER NOT NULL DEFAULT 0,
+);
