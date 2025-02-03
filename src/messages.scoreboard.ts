@@ -6,18 +6,18 @@ import { directMention } from '@slack/bolt';
 import { format } from 'date-fns';
 
 import { app } from '@/app';
-import { Helpers as H } from '@/lib/slackMessage';
 import { regExpCreator } from '@/lib/regexpCreator';
 import { Blocks, Md, Message } from 'slack-block-builder';
 import { ChatPostMessageArguments } from '@slack/web-api';
 import { IUser } from '@/entities/user';
 import * as userService from '@/lib/services/userService';
 import * as scoreboardService from '@/lib/services/scoreboardService';
+import { SlackMessage } from './lib/slackMessage';
 
-app.message(regExpCreator.createAskForScoreRegExp(), directMention(), respondWithScore);
-app.message(regExpCreator.createTopBottomRegExp(), directMention(), respondWithLeaderLoserBoard);
-app.message(regExpCreator.createTopBottomTokenRegExp(), directMention(), respondWithLeaderLoserTokenBoard);
-app.message(regExpCreator.createTopPointGiversRegExp(), directMention(), getTopPointSenders);
+app.message(regExpCreator.createAskForScoreRegExp(), directMention, respondWithScore);
+app.message(regExpCreator.createTopBottomRegExp(), directMention, respondWithLeaderLoserBoard);
+app.message(regExpCreator.createTopBottomTokenRegExp(), directMention, respondWithLeaderLoserTokenBoard);
+app.message(regExpCreator.createTopPointGiversRegExp(), directMention, getTopPointSenders);
 
 async function respondWithScore({ message, context, logger, say }) {
 	logger.debug('respond with the score');
@@ -59,7 +59,7 @@ async function respondWithScore({ message, context, logger, say }) {
 		reasonsStr = `\n\n:star: Here are some reasons :star:\n${reasonMessageArray.join('\n')}`;
 	}
 
-	const sayArgs = H.getSayMessageArgs(message, `${baseString}${reasonsStr}`);
+	const sayArgs = SlackMessage.getSayMessageArgs(message, `${baseString}${reasonsStr}`);
 	const sayResponse = await say(sayArgs);
 }
 

@@ -20,3 +20,20 @@ export async function findOneOrCreate(teamId: string): Promise<IPointdPalConfig>
 	await connection.query('INSERT INTO admins ');
 	return await connection.query('INSERT INTO configs');
 }
+
+export async function update(teamId: string, config: IPointdPalConfig): Promise<IPointdPalConfig> {
+	const connection = await getConnection(teamId);
+	const fields = Object.keys(config)
+		.map((key, index) => `${key} = $${index + 2}`)
+		.join(', ');
+	const values = Object.values(config);
+	const result = await connection.query(
+		`
+			UPDATE configs
+				SET ${fields}
+				WHERE id = $1
+				RETURNING *`,
+		[config.id, ...values],
+	);
+	return result.rows[0] || null;
+}

@@ -13,7 +13,7 @@ import { DirectionEnum } from '@/lib/types/Enums';
 import { PPEvent, PPEventName, PPFailureEvent, PPFailureEventName } from '@/lib/types/Events';
 import { directMention } from '@slack/bolt';
 import { ChatPostMessageResponse } from '@slack/web-api';
-import { String } from './lib/string';
+import { StringUtil } from './lib/string';
 import config from '@config';
 import * as botTokenService from '@/lib/services/botTokenService';
 import * as scorekeeperService from '@/lib/services/scorekeeperService';
@@ -47,10 +47,10 @@ app.message(regExpCreator.createUpDownVoteRegExp(), upOrDownVote);
 app.message(regExpCreator.createMultiUserVoteRegExp(), multipleUsersVote);
 
 // listen for bot tag/ping
-app.message(regExpCreator.createGiveTokenRegExp(), directMention(), giveTokenBetweenUsers);
+app.message(regExpCreator.createGiveTokenRegExp(), directMention, giveTokenBetweenUsers);
 
 // admin
-app.message(regExpCreator.createEraseUserScoreRegExp(), directMention(), eraseUserScore);
+app.message(regExpCreator.createEraseUserScoreRegExp(), directMention, eraseUserScore);
 
 /**
  * Functions for responding to commands
@@ -61,7 +61,7 @@ async function upOrDownVote(args) {
 	const teamId = args.body.team_id;
 	const { channel, user: from } = args.message;
 	const { premessage, userId, operator, conjunction, reason } = args.context.matches.groups;
-	const cleanReason = String.cleanAndEncode(reason);
+	const cleanReason = StringUtil.cleanAndEncode(reason);
 
 	if (userId.charAt(0).toLowerCase() === 's') {
 		const { users } = await args.client.usergroups.users.list({ team_id: teamId, usergroup: userId });
@@ -138,7 +138,7 @@ async function giveTokenBetweenUsers({ message, context, logger, say }) {
 	const fullText = context.matches.input;
 	const teamId = context.teamId as string;
 	const { premessage, userId, amount, conjunction, reason } = context.matches.groups;
-	const cleanReason = String.cleanAndEncode(reason);
+	const cleanReason = StringUtil.cleanAndEncode(reason);
 
 	const { channel, user: from } = message;
 	if (!conjunction && reason) {
@@ -197,7 +197,7 @@ async function multipleUsersVote({ message, context, logger, say }) {
 	const fullText = context.matches.input;
 	const teamId = context.teamId as string;
 	const { premessage, allUsers, operator, conjunction, reason } = context.matches.groups;
-	const cleanReason = String.cleanAndEncode(reason);
+	const cleanReason = StringUtil.cleanAndEncode(reason);
 
 	const { channel, user: from } = message;
 	if (!allUsers) {
@@ -293,7 +293,7 @@ async function eraseUserScore({ message, context, say }) {
 	const teamId = context.teamId as string;
 	const { premessage, userId, conjunction, reason } = context.matches.groups;
 	const { channel, user: from } = message;
-	const cleanReason = String.cleanAndEncode(reason);
+	const cleanReason = StringUtil.cleanAndEncode(reason);
 
 	const fromUser = await userService.findOneBySlackIdOrCreate(teamId, from);
 	const toBeErased = await userService.findOneBySlackIdOrCreate(teamId, userId);

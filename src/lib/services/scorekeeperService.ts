@@ -6,7 +6,7 @@ import { Md } from 'slack-block-builder';
 import { ChatPostMessageArguments } from '@slack/web-api';
 import { app } from '../../../app';
 import * as installService from '@/lib/services/installService';
-import { IScoreLog, ScoreLog } from '../../entities/scoreLog';
+import { IScoreLog } from '../../entities/scoreLog';
 import { getConnection } from './databaseService';
 import * as botTokenService from '@/lib/services/botTokenService';
 import * as userService from '@/lib/services/userService';
@@ -14,6 +14,7 @@ import * as adminService from '@/lib/services/adminService';
 import * as databaseService from '@/lib/services/databaseService';
 import { withNamespace } from '@/logger';
 import * as configService from '@/lib/services/configService';
+import * as scoreLogService from '@/lib/services/scoreLogService';
 
 const logger = withNamespace('scorekeeperService');
 /**
@@ -81,7 +82,7 @@ export async function incrementScore(
 				reason,
 				scoreChange: incrementValue,
 			} as IScoreLog;
-			await ScoreLog(connection).create(scoreLog);
+			await scoreLogService.create(teamId, scoreLog);
 		} catch (e) {
 			console.error(
 				`failed saving spam log for user ${toUser.name} from ${fromUser.name} in channel ${channel} because ${reason}`,
@@ -149,7 +150,7 @@ export async function transferTokens(
 		fromUser.pointsGiven.set(toUser.slackId, newScore);
 		fromUser.totalPointsGiven = fromUser.totalPointsGiven + numberOfTokens;
 		try {
-			await ScoreLog(connection).create({
+			await scoreLogService.create(teamId, {
 				from: fromUser.slackId,
 				to: toUser.slackId,
 				date: new Date(),

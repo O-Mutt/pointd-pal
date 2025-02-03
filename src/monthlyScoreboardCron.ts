@@ -8,7 +8,7 @@ import { app } from '../app';
 import * as SlackService from '@/lib/services/slack';
 import * as installService from '@/lib/services/installService';
 import * as scoreboardService from '@/lib/services/scoreboardService';
-import { String } from '@/lib/string';
+import { StringUtil } from '@/lib/string';
 import { DateUtil } from '@/lib/date';
 import config from '@config';
 import { Appendable } from 'slack-block-builder/dist/internal';

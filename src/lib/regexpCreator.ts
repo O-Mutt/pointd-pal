@@ -47,7 +47,6 @@ export class RegExpCreator {
 	}
 
 	createTopBottomTokenRegExp(): RegExp {
-		ppEvent;
 		return new RegExp(
 			`${this.topOrBottom}${this.allowSpacesAfterObject}tokens${this.allowSpacesAfterObject}${this.digits}`,
 			'i',

@@ -7,7 +7,7 @@ export class MessageBuilder {
 			return '';
 		}
 
-		let message = `${Md.user(user.slackId)} has ${user.score} point${H.getEsOnEndOfWord(user.score)}`;
+		let message = `${Md.user(user.slackId)} has ${user.score} ${'point'.pluralize(user.score)}`;
 
 		message = MessageBuilder.getScoreFlare(user.score, message);
 

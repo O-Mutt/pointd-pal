@@ -1,11 +1,11 @@
 import { AllMiddlewareArgs, SlackViewMiddlewareArgs, ViewSubmitAction } from '@slack/bolt';
 
 import { app } from '../app';
-import { PointdPalConfig } from './entities/pointdPalConfig';
 import { actions } from '@/lib/types/Actions';
 import { blocks } from '@/lib/types/BlockIds';
 import { EnabledSettings } from '@/lib/types/Enums';
 import * as userService from '@/lib/services/userService';
+import * as configService from '@/lib/services/configService';
 
 app.view(
 	actions.hometab.admin_settings_submit,
@@ -13,7 +13,7 @@ app.view(
 		const teamId = context.teamId as string;
 		const userId = body.user.id;
 
-		const pointdPal = await PointdPalConfig(connection).findOneOrCreate(teamId as string);
+		const pointdPal = await configService.findOneOrCreate(teamId as string);
 
 		const errors: { [blockId: string]: string } = {};
 		for (const option in view.state.values) {
@@ -23,7 +23,7 @@ app.view(
 				switch (key) {
 					case blocks.hometab.admin.basic.admins: {
 						const selectedUsers = state.selected_users as string[];
-						pointdPal.pointdPalAdmins = selectedUsers;
+						// pointdPal.pointdPalAdmins = selectedUsers;
 						for (const newAdminId of selectedUsers) {
 							console.log(newAdminId);
 							const user = await userService.findOneBySlackIdOrCreate(teamId, newAdminId);
@@ -100,7 +100,7 @@ app.view(
 		pointdPal.updatedBy = userId;
 		pointdPal.updatedAt = new Date();
 		logger.debug(`Updating admin configs for ${teamId} by ${userId}`);
-		await pointdPal.save();
+		await configService.update(teamId, pointdPal);
 	},
 );
 
@@ -110,7 +110,6 @@ app.view(
 		const teamId = context.teamId as string;
 		const userId = body.user.id;
 
-		const connection = connectionFactory(teamId);
 		const user = await userService.findOneBySlackIdOrCreate(teamId, userId);
 
 		const errors: { [blockId: string]: string } = {};
@@ -146,6 +145,6 @@ app.view(
 		user.updatedAt = new Date();
 		user.updatedBy = user.slackId;
 		logger.debug(`Updating user configs for ${teamId} by ${userId}`);
-		await user.save();
+		await userService.update(teamId, user);
 	},
 );

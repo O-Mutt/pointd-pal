@@ -9,8 +9,8 @@ import * as pjson from '../package.json';
 import { regExpCreator } from '@/lib/regexpCreator';
 import config from '@config';
 
-app.message(regExpCreator.getHelp(), directMention(), respondWithHelpGuidance);
-app.message(RegExp(/(plusplus version|-v|--version)/, 'i'), directMention(), async ({ message, context, say }) => {
+app.message(regExpCreator.getHelp(), directMention, respondWithHelpGuidance);
+app.message(RegExp(/(plusplus version|-v|--version)/, 'i'), directMention, async ({ message, context, say }) => {
 	await say(`PointdPal Version: _${pjson.version}_`);
 });
 app.message(new RegExp('how much .*point.*', 'i'), tellHowMuchPointsAreWorth);

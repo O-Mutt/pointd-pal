@@ -2,7 +2,7 @@ import { withNamespace } from '@/logger';
 import pluralize from 'pluralize';
 
 const logger = withNamespace('StringUtil');
-export class String {
+export class StringUtil {
 	static pluralize(countable: any, noun: string) {
 		if (Array.isArray(countable)) {
 			return pluralize(countable.length, noun);
@@ -81,28 +81,28 @@ declare global {
 }
 
 String.prototype.pluralize = function (countable: any): string {
-	return String.pluralize(countable, this.toString());
+	return StringUtil.pluralize(countable, this.toString());
 };
 String.prototype.cleanAndEncode = function (): string {
-	return String.cleanAndEncode(this.toString()) ?? '';
+	return StringUtil.cleanAndEncode(this.toString()) ?? '';
 };
 
 String.prototype.decode = function (): string {
-	return String.decode(this.toString()) ?? '';
+	return StringUtil.decode(this.toString()) ?? '';
 };
 
 String.prototype.obfuscate = function (amountToLeaveUnobfuscated: number = 3): string {
-	return String.obfuscate(this.toString(), amountToLeaveUnobfuscated);
+	return StringUtil.obfuscate(this.toString(), amountToLeaveUnobfuscated);
 };
 
 String.prototype.reverse = function (): string {
-	return String.reverse(this.toString());
+	return StringUtil.reverse(this.toString());
 };
 
 String.prototype.endsWithPunctuation = function (): boolean {
-	return String.endsWithPunctuation(this.toString());
+	return StringUtil.endsWithPunctuation(this.toString());
 };
 
 String.prototype.capitalizeFirstLetter = function (): string {
-	return String.capitalizeFirstLetter(this.toString());
+	return StringUtil.capitalizeFirstLetter(this.toString());
 };

@@ -2,11 +2,9 @@ import _ from 'lodash';
 import { Actions, Blocks, Elements, Md, Message } from 'slack-block-builder';
 import tokenBuddy from 'token-buddy';
 
-import { directMention, Logger } from '@slack/bolt';
+import { BlockButtonAction, directMention, Logger, SlackActionMiddlewareArgs, AllMiddlewareArgs } from '@slack/bolt';
 
-import { app } from '../app';
-import { IBotToken } from './entities/botToken';
-import { IUser } from './entities/user';
+import { app } from '@/app';
 import { regExpCreator } from '@/lib/regexpCreator';
 import { actions } from '@/lib/types/Actions';
 import { ConfirmOrCancel } from '@/lib/types/Enums';
@@ -17,12 +15,17 @@ import * as botTokenService from '@/lib/services/botTokenService';
 
 require('dotenv').config();
 
-app.message(regExpCreator.getBotWallet(), directMention(), botWalletCount);
+app.message(regExpCreator.getBotWallet(), directMention, botWalletCount);
 
 // DM only
-app.message(regExpCreator.createLevelUpAccount(), directMention(), levelUpAccount);
+app.message(regExpCreator.createLevelUpAccount(), directMention, levelUpAccount);
 
-app.action('confirm_levelup', levelUpToLevelThree);
+app.action(
+	actions.hometab.sync_admins,
+	// 'confirm_levelup',
+	async ({ ack, body, context }: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) =>
+		levelUpToLevelThree({ action: body.actions[0].action_id, body, logger: context.logger, ack, say: context.say }),
+);
 
 async function levelUpAccount({ message, context, logger, say }) {
 	if (!SlackMessage.isPrivateMessage(message.channel)) {
@@ -37,9 +40,7 @@ async function levelUpAccount({ message, context, logger, say }) {
 				Blocks.Section({
 					text: `You are already Level 2, ${Md.user(
 						user.slackId,
-					)}. It looks as if you are ready for Level 3 where you can deposit/withdraw ${H.capitalizeFirstLetter(
-						'pointdPal',
-					)} Tokens!`,
+					)}. It looks as if you are ready for Level 3 where you can deposit/withdraw ${'pointdPal'.capitalizeFirstLetter()} Tokens!`,
 				}),
 				Blocks.Actions({}).elements(
 					Elements.Button({
@@ -66,9 +67,7 @@ async function levelUpAccount({ message, context, logger, say }) {
 	await say(
 		`${Md.user(
 			user.slackId,
-		)}, we are going to level up your account to Level 2! This means you will start getting ${H.capitalizeFirstLetter(
-			'pointdPal',
-		)} Tokens as well as points!`,
+		)}, we are going to level up your account to Level 2! This means you will start getting ${'pointdPal'.capitalizeFirstLetter()} Tokens as well as points!`,
 	);
 }
 

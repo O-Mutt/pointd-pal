@@ -8,9 +8,7 @@ export class SlackMessage {
 			return '';
 		}
 
-		const scoreStr = `${Md.user(from.slackId)} transferred *${number}* Pointd Pal Token${Helpers.getEsOnEndOfWord(
-			number,
-		)} to ${Md.user(to.slackId)}.\n${Md.user(to.slackId)} now has ${to.pointdPalToken} token${Helpers.getEsOnEndOfWord(to.pointdPalToken || 0)}`;
+		const scoreStr = `${Md.user(from.slackId)} transferred *${number}* Pointd Pal ${'Token'.pluralize(number)} to ${Md.user(to.slackId)}.\n${Md.user(to.slackId)} now has ${to.pointdPalToken} ${'token'.pluralize(to.pointdPalToken || 0)}`;
 		let reasonStr = '.';
 		let cakeDayStr = '';
 

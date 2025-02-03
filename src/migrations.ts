@@ -7,13 +7,13 @@ import { app } from '@/app';
 import { IUser } from '@/entities/user';
 import * as userService from '@/lib/services/userService';
 
-app.message('try to map all slack users to db users', directMention(), mapUsersToDb);
-app.message('try to map more data to all slack users to db users', directMention(), mapMoreUserFieldsBySlackId);
-app.message('try to map @.* to db users', directMention(), mapSingleUserToDb);
-// app.message('unmap all users', directMention(), unmapUsersToDb);
-app.message('map all slackIds to slackEmail', directMention(), mapSlackIdToEmail);
-// app.message('hubot to bolt', directMention(), migrateFromHubotToBolt);
-app.message('join all old pointdPal channels', directMention(), joinAllPointdPalChannels);
+app.message('try to map all slack users to db users', directMention, mapUsersToDb);
+app.message('try to map more data to all slack users to db users', directMention, mapMoreUserFieldsBySlackId);
+app.message('try to map @.* to db users', directMention, mapSingleUserToDb);
+// app.message('unmap all users', directMention, unmapUsersToDb);
+app.message('map all slackIds to slackEmail', directMention, mapSlackIdToEmail);
+// app.message('hubot to bolt', directMention, migrateFromHubotToBolt);
+app.message('join all old pointdPal channels', directMention, joinAllPointdPalChannels);
 
 async function mapUsersToDb({ message, context, client, logger, say }) {
 	const teamId = context.teamId as string;
