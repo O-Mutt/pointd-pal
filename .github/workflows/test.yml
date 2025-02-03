@@ -1,7 +1,7 @@
 name: lint
 on: workflow_call
 jobs:
-  lint:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Get Cached Checkout
