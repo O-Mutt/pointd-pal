@@ -16,11 +16,11 @@ import { View } from '@slack/types';
 import { app } from '../app';
 import { BotToken } from './entities/botToken';
 import { IUser, User } from './entities/user';
-import { connectionFactory } from './lib/services/connectionsFactory';
-import { actions } from './lib/types/Actions';
-import { EnabledSettings, PromptSettings } from './lib/types/Enums';
+import { connectionFactory } from '@/lib/services/connectionsFactory';
+import { actions } from '@/lib/types/Actions';
+import { EnabledSettings, PromptSettings } from '@/lib/types/Enums';
 import { IPointdPalConfig, PointdPalConfig } from './entities/pointdPalConfig';
-import { blocks } from './lib/types/BlockIds';
+import { blocks } from '@/lib/types/BlockIds';
 import { ViewsUpdateArguments } from '@slack/web-api';
 
 app.action(

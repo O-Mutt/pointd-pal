@@ -3,6 +3,10 @@ import { getConnection } from './database';
 import * as installService from './installService';
 import { app } from '@/app';
 
+/**
+ * Get all users in a team
+ * @param teamId
+ */
 export async function getAllUsersByTeam(teamId: string): Promise<IUser[]> {
 	const connection = await getConnection(teamId);
 	const result = await connection.query(`SELECT * FROM users`);
@@ -45,4 +49,27 @@ export async function findOneBySlackIdOrCreate(teamId: string, slackId: string):
 		],
 	);
 	return createdUser.rows[0];
+}
+
+export async function update(teamId: string, user: IUser) {
+	const connection = await getConnection(teamId);
+	const result = await connection.query(
+		`UPDATE users SET score = $1, reasons = $2, points_given = $3, robot_day = $4, account_level = $5, total_points_given = $6, email = $7, name = $8, is_admin = $9, is_bot = $10, updated_by = $11, updated_at = $12 WHERE id = $13 RETURNING *`,
+		[
+			user.score,
+			user.reasons,
+			user.pointsGiven,
+			user.pointdPalDay,
+			user.accountLevel,
+			user.totalPointsGiven,
+			user.email,
+			user.name,
+			user.isAdmin,
+			user.isBot,
+			user.updatedBy,
+			user.updatedAt,
+			user.id,
+		],
+	);
+	return result.rows[0];
 }

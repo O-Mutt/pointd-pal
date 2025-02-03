@@ -12,7 +12,7 @@ export async function create(botToken: IBotToken): Promise<IBotToken> {
 	return result.rows[0];
 }
 
-export async function findById(id?: number): Promise<IBotToken | null> {
+export async function find(id?: number): Promise<IBotToken | null> {
 	const connection = await getConnection();
 
 	if (!id) {

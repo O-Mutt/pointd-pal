@@ -6,8 +6,8 @@ import { View } from '@slack/types';
 import { app } from '../app';
 import { IPointdPalConfig, PointdPalConfig } from './entities/pointdPalConfig';
 import { IUser, User } from './entities/user';
-import { connectionFactory } from './lib/services/connectionsFactory';
-import { actions } from './lib/types/Actions';
+import { connectionFactory } from '@/lib/services/connectionsFactory';
+import { actions } from '@/lib/types/Actions';
 
 app.event('app_home_opened', updateHomeTab);
 

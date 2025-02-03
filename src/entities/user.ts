@@ -1,12 +1,11 @@
 import { AuditTags } from './auditTags';
-import { Installation } from './installation';
 
 export interface IUser extends AuditTags {
 	id: string;
 	slackId: string;
 	score: number;
-	reasons: Record<string, number>;
-	pointsGiven: Record<string, number>;
+	reasons: Map<string, number>;
+	pointsGiven: Map<string, number>;
 	pointdPalDay: Date;
 	accountLevel: number;
 	totalPointsGiven: number;

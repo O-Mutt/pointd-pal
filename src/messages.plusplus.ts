@@ -2,20 +2,20 @@ import { Blocks, Md, Message } from 'slack-block-builder';
 import tokenBuddy from 'token-buddy';
 
 import { app } from '../app';
-import { Helpers as H } from './lib/helpers';
-import { MessageBuilder as Builder } from './lib/messageBuilder';
+import { Helpers as H } from '@/lib/helpers';
+import { MessageBuilder as Builder } from '@/lib/messageBuilder';
 import { IUser, User } from './entities/user';
-import { regExpCreator } from './lib/regexpCreator';
-import { DatabaseService } from './lib/services/database';
-import { decrypt } from './lib/services/decrypt';
-import { eventBus } from './lib/services/eventBus';
-import { ScoreKeeper } from './lib/services/scorekeeper';
+import { regExpCreator } from '@/lib/regexpCreator';
+import { DatabaseService } from '@/lib/services/database';
+import { decrypt } from '@/lib/services/decrypt';
+import { eventBus } from '@/lib/services/eventBus';
+import { ScoreKeeper } from '@/lib/services/scorekeeper';
 // this may need to move or be generic...er
-import * as token from './lib/token.json';
-import { DirectionEnum } from './lib/types/Enums';
-import { PPEvent, PPEventName, PPFailureEvent, PPFailureEventName } from './lib/types/Events';
+import * as token from '@/lib/token.json';
+import { DirectionEnum } from '@/lib/types/Enums';
+import { PPEvent, PPEventName, PPFailureEvent, PPFailureEventName } from '@/lib/types/Events';
 import { directMention } from '@slack/bolt';
-import { connectionFactory } from './lib/services/connectionsFactory';
+import { connectionFactory } from '@/lib/services/connectionsFactory';
 import { ChatPostMessageResponse } from '@slack/web-api';
 
 require('dotenv').config();
@@ -245,7 +245,7 @@ async function multipleUsersVote({ message, context, logger, say }) {
 		if (response.toUser) {
 			logger.debug(
 				`clean names map[${toUserId}]: ${response.toUser.score}, the reason ${
-					cleanReason ? response.toUser.reasons[cleanReason] : 'n/a'
+					cleanReason ? response.toUser.reasons.get(cleanReason) : 'n/a'
 				} `,
 			);
 			messages.push(Builder.getMessageForNewScore(response.toUser, cleanReason));

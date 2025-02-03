@@ -4,9 +4,9 @@ import { AllMiddlewareArgs, directMention, SlackEventMiddlewareArgs } from '@sla
 import { Member } from '@slack/web-api/dist/response/UsersListResponse';
 
 import { app } from '../app';
-import { Helpers as H } from './lib/helpers';
+import { Helpers as H } from '@/lib/helpers';
 import { IUser, User } from './entities/user';
-import { connectionFactory } from './lib/services/connectionsFactory';
+import { connectionFactory } from '@/lib/services/connectionsFactory';
 import { ConversationsListResponse } from '@slack/web-api';
 
 app.message('try to map all slack users to db users', directMention(), mapUsersToDb);

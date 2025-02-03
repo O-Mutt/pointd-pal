@@ -5,14 +5,14 @@ import tokenBuddy from 'token-buddy';
 import { directMention, Logger } from '@slack/bolt';
 
 import { app } from '../app';
-import { Helpers as H } from './lib/helpers';
+import { Helpers as H } from '@/lib/helpers';
 import { BotToken, IBotToken } from './entities/botToken';
 import { User } from './entities/user';
-import { regExpCreator } from './lib/regexpCreator';
-import { connectionFactory } from './lib/services/connectionsFactory';
-import { DatabaseService } from './lib/services/database';
-import { actions } from './lib/types/Actions';
-import { ConfirmOrCancel } from './lib/types/Enums';
+import { regExpCreator } from '@/lib/regexpCreator';
+import { connectionFactory } from '@/lib/services/connectionsFactory';
+import { DatabaseService } from '@/lib/services/database';
+import { actions } from '@/lib/types/Actions';
+import { ConfirmOrCancel } from '@/lib/types/Enums';
 
 require('dotenv').config();
 const procVars = H.getProcessVariables(process.env);

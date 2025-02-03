@@ -1,5 +1,5 @@
 import { IUser } from '@/entities/user';
-import { config } from '@config';
+import { config } from '@/config';
 
 import { Client, Connection } from 'pg';
 
@@ -13,7 +13,7 @@ const rootDb = new Client({
 });
 
 const connections: { [key: string]: Connection } = {};
-export async function getConnection(teamId?: string) {
+export async function getConnection(teamId?: string): Promise<Connection> {
 	if (!teamId) {
 		return (connections['root'] = connections['root'] || (await rootDb.connect()));
 	} else if (!connections[teamId]) {

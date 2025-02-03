@@ -1,5 +1,5 @@
 import { IUser } from '@/entities/user';
-import { config } from '@config';
+import { config } from '@/config';
 import { PPSpamEvent, PPSpamEventName } from '../types/Events';
 import { eventBus } from './eventBus';
 import { Md } from 'slack-block-builder';
@@ -9,8 +9,8 @@ import { app } from '../../../app';
 import * as installService from '@/lib/services/installService';
 import { IScoreLog, ScoreLog } from '../../entities/scoreLog';
 import { getConnection } from './database';
-import { findOneBySlackIdOrCreate } from './userService';
-import * as botTokenService from '@/services/botTokenService'
+import * as botTokenService from '@/lib/services/botTokenService'
+import * as userService from '@/lib/services/userService'
 
 	/*
 	 * Method to allow up or down vote of a user
@@ -31,9 +31,9 @@ import * as botTokenService from '@/services/botTokenService'
 	): Promise<{ toUser: IUser; fromUser: IUser }> {
 		try {
 			const connection = await getConnection(teamId);
-			const toUser = await findOneBySlackIdOrCreate(teamId, toId);
-			const fromUser = await findOneBySlackIdOrCreate(teamId, fromId);
-			const bot = await findOne()
+			const toUser = await userService.findOneBySlackIdOrCreate(teamId, toId);
+			const fromUser = await userService.findOneBySlackIdOrCreate(teamId, fromId);
+			const bot = await botTokenService.find()
 			const pointdPalConfig = await PointdPalConfig(connection).findOneOrCreate(teamId);
 			const install = await installService.findOne(teamId);
 
@@ -41,12 +41,12 @@ import * as botTokenService from '@/services/botTokenService'
 				throw new Error("Bots can't send points, silly.");
 			}
 
-			if ((await this.isSpam(teamId, toUser, fromUser)) || this.isSendingToSelf(teamId, toUser, fromUser)) {
+			if ((await isSpam(teamId, toUser, fromUser)) || isSendingToSelf(teamId, toUser, fromUser)) {
 				throw new Error(`I'm sorry ${Md.user(fromUser.slackId)}, I'm afraid I can't do that.`);
 			}
 			toUser.score = toUser.score + incrementValue;
 			if (reason) {
-				const newReasonScore = (toUser.reasons[reason] || 0) + incrementValue;
+				const newReasonScore = (toUser.reasons.get(reason) ?? 0) + incrementValue;
 				toUser.reasons.set(reason, newReasonScore);
 			}
 
@@ -92,9 +92,10 @@ import * as botTokenService from '@/services/botTokenService'
 				toUser.pointdPalToken = toUser.pointdPalToken + incrementValue;
 				//saveResponse = await this.databaseService.transferScoreFromBotToUser(toUser, incrementValue, fromUser);
 			}
-			await toUser.save();
-			await fromUser.save();
-			await bot?.save();
+			await userService.save(toUser);
+			await userService.save(fromUser);
+			await botTokenService.save(bot);
+
 			return { toUser, fromUser };
 		} catch (e) {
 			console.error(
@@ -129,14 +130,14 @@ import * as botTokenService from '@/services/botTokenService'
 				throw new Error(`You don't have enough tokens to send ${numberOfTokens} to ${Md.user(toUser.slackId)}`);
 			}
 
-			if ((await this.isSpam(teamId, toUser, fromUser)) || this.isSendingToSelf(teamId, toUser, fromUser)) {
+			if ((await isSpam(teamId, toUser, fromUser)) || isSendingToSelf(teamId, toUser, fromUser)) {
 				throw new Error(`I'm sorry ${Md.user(fromUser.slackId)}, I'm afraid I can't do that.`);
 			}
 
-			fromUser.pointdPalToken = fromUser.pointdPalToken || 0 - numberOfTokens;
-			toUser.pointdPalToken = toUser.pointdPalToken || 0 + numberOfTokens;
+			fromUser.pointdPalToken = (fromUser.pointdPalToken ?? 0) - numberOfTokens;
+			toUser.pointdPalToken = (toUser.pointdPalToken ?? 0) + numberOfTokens;
 			if (reason) {
-				const newReasonScore = (toUser.reasons[reason] || 0) + numberOfTokens;
+				const newReasonScore = (toUser.reasons.get(reason) ?? 0) + numberOfTokens;
 				toUser.reasons.set(reason, newReasonScore);
 			}
 

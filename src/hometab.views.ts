@@ -4,10 +4,10 @@ import { ESMap } from 'typescript';
 import { app } from '../app';
 import { PointdPalConfig } from './entities/pointdPalConfig';
 import { User } from './entities/user';
-import { connectionFactory } from './lib/services/connectionsFactory';
-import { actions } from './lib/types/Actions';
-import { blocks } from './lib/types/BlockIds';
-import { EnabledSettings } from './lib/types/Enums';
+import { connectionFactory } from '@/lib/services/connectionsFactory';
+import { actions } from '@/lib/types/Actions';
+import { blocks } from '@/lib/types/BlockIds';
+import { EnabledSettings } from '@/lib/types/Enums';
 
 app.view(
 	actions.hometab.admin_settings_submit,

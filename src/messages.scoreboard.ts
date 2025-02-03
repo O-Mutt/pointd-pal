@@ -1,22 +1,20 @@
-import _ from 'lodash';
-import moment from 'moment';
+import { sampleSize } from 'lodash.samplesize';
+import { map } from 'lodash.map';
+import { take } from 'lodash.take';
 import ImageCharts from 'image-charts';
-
 import { directMention } from '@slack/bolt';
+import { format } from 'date-fns';
 
-import { app } from '../app';
-import { Helpers as H } from './lib/helpers';
-import { regExpCreator } from './lib/regexpCreator';
-import { DatabaseService } from './lib/services/database';
+import { app } from '@/app';
+import { Helpers as H } from '@/lib/helpers';
+import { regExpCreator } from '@/lib/regexpCreator';
 import { Blocks, Md, Message } from 'slack-block-builder';
 import { ChatPostMessageArguments } from '@slack/web-api';
-import { ESMap } from 'typescript';
-import { IUser, User } from './entities/user';
-import { connectionFactory } from './lib/services/connectionsFactory';
-
-require('dotenv').config();
-const procVars = H.getProcessVariables(process.env);
-const databaseService = new DatabaseService();
+import { IUser } from '@/entities/user';
+import * as userService from '@/lib/services/userService';
+import { NumberUtil } from '@/lib/number';
+import * as scoreboardService from '@/lib/services/scoreboardService';
+import { StringUtil } from '@/lib/string';
 
 app.message(regExpCreator.createAskForScoreRegExp(), directMention(), respondWithScore);
 app.message(regExpCreator.createTopBottomRegExp(), directMention(), respondWithLeaderLoserBoard);
@@ -27,39 +25,32 @@ async function respondWithScore({ message, context, logger, say }) {
 	logger.debug('respond with the score');
 	const { userId } = context.matches.groups;
 	const teamId = context.teamId as string;
-	const user: IUser = await User(connectionFactory(teamId)).findOneBySlackIdOrCreate(teamId, userId);
+	const user: IUser = await userService.findOneBySlackIdOrCreate(teamId, userId);
 
 	let tokenString = '.';
 	if (user.accountLevel > 1) {
-		tokenString = ` (*${user.pointdPalToken} PointdPal Token${H.getEsOnEndOfWord(user.pointdPalToken)}*).`;
+		const partialTokenStr = `${user.pointdPalToken} PointdPal Token${StringUtil.pluralSuffix(user.pointdPalToken)}`;
+		tokenString = ` (${Md.bold(partialTokenStr)}).`;
 	}
 
-	let baseString = `${Md.user(user.slackId)} has ${Md.bold(user.score.toString())} ${Md.bold(
-		'point' + H.getEsOnEndOfWord(user.score),
-	)}${tokenString}`;
+	const pointStr = `point${StringUtil.pluralSuffix(user.score)}`;
+	let baseString = `${Md.user(user.slackId)} has ${Md.bold(user.score.toString())} ${Md.bold(pointStr)}${tokenString}`;
 	baseString += `\n${Md.italic('Account Level')}: ${user.accountLevel}`;
 	baseString += `\n${Md.italic('Total Points Given')}: ${user.totalPointsGiven}`;
-	if (user.robotDay) {
-		const dateObj = new Date(user.robotDay);
-		baseString += `\n:birthday: ${Md.bold('Pointd Pal day')} is ${Md.bold(moment(dateObj).format('MM-DD-yyyy'))}`;
+	if (user.pointdPalDay) {
+		const dateObj = new Date(user.pointdPalDay);
+		baseString += `\n:birthday: ${Md.bold('Pointd Pal day')} is ${Md.bold(format(dateObj, 'MM-DD-yyyy'))}`;
 	}
 
 	let reasonsStr: string = '';
-	const keys: string[] = [];
-	user.reasons.forEach((points, key) => {
-		keys.push(key);
-	});
+	// get all reasons and put them in a keys array
+	const keys: string[] = Array.from(user.reasons.keys());
+
 	logger.debug('all the keys!', user.reasons.keys(), keys);
 	if (keys.length > 0) {
-		const sampleReasons: ESMap<string, number> = new Map();
+		// get n unique random reasons and their scores
 		const maxReasons = keys.length >= 5 ? 5 : keys.length;
-		do {
-			const randomNumber = _.random(0, keys.length - 1);
-			const reason = keys[randomNumber];
-			const value = user.reasons[reason] as number;
-			sampleReasons.set(H.decode(reason) || '', value);
-			logger.debug('loop the reasons!', reason, value);
-		} while (sampleReasons.size < maxReasons);
+		const sampleReasons = sampleSize(user.reasons, maxReasons);
 
 		const reasonMessageArray: string[] = [];
 		sampleReasons.forEach((points, reason) => {
@@ -79,7 +70,7 @@ async function respondWithLeaderLoserBoard({ client, message, context, logger, s
 	const teamId = context.teamId as string;
 	const topOrBottomString = H.capitalizeFirstLetter(topOrBottom);
 	const methodName = `get${topOrBottomString}Scores`;
-	const tops = await databaseService[methodName](teamId, digits);
+	const tops = await scoreboardService[methodName](teamId, digits);
 
 	const messages: string[] = [];
 	if (tops.length > 0) {
@@ -101,13 +92,15 @@ async function respondWithLeaderLoserBoard({ client, message, context, logger, s
 
 	const chartText = `PointdPal ${topOrBottomString} ${digits} Score(s)`;
 	const graphSize = Math.min(tops.length, Math.min(digits, 20));
+	const topNNames = take(map(tops, 'name'), graphSize).join('|');
+	const topNScores = take(map(tops, 'scores'), graphSize).join(',');
 	const chartUrl = new ImageCharts()
 		.cht('bvg')
 		.chs('999x200')
 		.chtt(chartText)
 		.chxt('x,y')
-		.chxl(`0:|${_.take(_.map(tops, 'name'), graphSize).join('|')}`)
-		.chd(`a:${_.take(_.map(tops, 'score'), graphSize).join(',')}`)
+		.chxl(`0:|${topNNames}`)
+		.chd(`a:${topNScores}`)
 		.toURL();
 
 	const theMessage = Message({ channel: message.channel, text: chartText })
@@ -130,7 +123,7 @@ async function respondWithLeaderLoserTokenBoard({ message, context, client }) {
 	const teamId = context.teamId as string;
 	const topOrBottomString = H.capitalizeFirstLetter(topOrBottom);
 	const methodName = `get${topOrBottomString}Tokens`;
-	const tops = await databaseService[methodName](teamId, digits);
+	const tops = await scoreboardService[methodName](teamId, digits);
 
 	const messages: string[] = [];
 	if (tops.length > 0) {
@@ -149,13 +142,15 @@ async function respondWithLeaderLoserTokenBoard({ message, context, client }) {
 
 	const chartText = `PointdPal ${topOrBottomString} ${digits} Token(s)`;
 	const graphSize = Math.min(tops.length, Math.min(digits, 20));
+	const topNNames = take(map(tops, 'name'), graphSize).join('|');
+	const topNTokens = take(map(tops, 'pointdPalToken'), graphSize).join(',');
 	const chartUrl = new ImageCharts()
 		.cht('bvg')
 		.chs('999x200')
 		.chtt(chartText)
 		.chxt('x,y')
-		.chxl(`0:|${_.take(_.map(tops, 'name'), graphSize).join('|')}`)
-		.chd(`a:${_.take(_.map(tops, 'pointdPalToken'), graphSize).join(',')}`)
+		.chxl(`0:|${topNNames}`)
+		.chd(`a:${topNTokens}`)
 		.toURL();
 
 	const theMessage = Message({ channel: message.channel, text: chartText })
@@ -178,27 +173,29 @@ async function getTopPointSenders({ message, context, client }) {
 	const teamId = context.teamId as string;
 	const topOrBottomString = H.capitalizeFirstLetter(topOrBottom);
 	const methodName = `get${topOrBottomString}Sender`;
-	const tops = await databaseService[methodName](teamId, digits);
+	const tops = await scoreboardService[methodName](teamId, digits);
 
 	const messages: string[] = [];
 	if (tops.length > 0) {
 		for (let i = 0, end = tops.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
-			const pointStr = tops[i].totalPointsGiven > 1 ? 'points given' : 'point given';
+			const pointStr = `point${StringUtil.pluralSuffix(tops[i].totalPointsGiven)} given`;
 			messages.push(`${i + 1}. ${Md.user(tops[i].slackId)} (${tops[i].totalPointsGiven} ${pointStr})`);
 		}
 	} else {
 		messages.push('No scores to keep track of yet!');
 	}
 
-	const chartText = `${topOrBottomString} ${digits} PointdPal Point Senders(s)`;
 	const graphSize = Math.min(tops.length, Math.min(digits, 20));
+	const chartText = `${topOrBottomString} ${graphSize} PointdPal Point Sender${StringUtil.pluralSuffix(graphSize)}`;
+	const topNNames = take(map(tops, 'name'), graphSize).join('|');
+	const topNPointsGiven = take(map(tops, 'totalPointsGiven'), graphSize).join(',');
 	const chartUrl = new ImageCharts()
 		.cht('bvg')
 		.chs('999x200')
 		.chtt(chartText)
 		.chxt('x,y')
-		.chxl(`0:|${_.take(_.map(tops, 'name'), graphSize).join('|')}`)
-		.chd(`a:${_.take(_.map(tops, 'totalPointsGiven'), graphSize).join(',')}`)
+		.chxl(`0:|${topNNames}`)
+		.chd(`a:${topNPointsGiven}`)
 		.toURL();
 
 	const theMessage = Message({ channel: message.channel, text: chartText })

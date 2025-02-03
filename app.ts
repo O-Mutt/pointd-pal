@@ -5,7 +5,7 @@ import { LogLevel } from '@slack/logger';
 
 import { PointdPalInstallStore } from './src/lib/services/pointdPalInstallStore';
 
-import { config } from '@config';
+import { config } from '@/config';
 require('newrelic');
 
 import { healthEndpoint } from './src/lib/routes/health';

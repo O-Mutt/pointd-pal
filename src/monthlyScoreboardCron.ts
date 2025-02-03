@@ -1,25 +1,20 @@
 import { ChatPostMessageArguments } from '@slack/web-api';
-import clark from 'clark';
 import { CronJob } from 'cron';
 import ImageCharts from 'image-charts';
 import _ from 'lodash';
-import moment from 'moment';
-import { Appendable, BlockBuilder, Blocks, Md, Message } from 'slack-block-builder';
+import { BlockBuilder, Blocks, Md, Message } from 'slack-block-builder';
 
 import { app } from '../app';
-import { Helpers as H } from './lib/helpers';
-import { Installation } from './entities/installation';
+import { Helpers as H } from '@/lib/helpers';
 import { PointdPalConfig } from './entities/pointdPalConfig';
-import { connectionFactory } from './lib/services/connectionsFactory';
-import { DatabaseService } from './lib/services/database';
-import { SlackService } from './lib/services/slack';
-
-require('dotenv').config();
-const procVars = H.getProcessVariables(process.env);
-const databaseService = new DatabaseService();
+import { getConnection } from '@/lib/services/database';
+import * as SlackService from '@/lib/services/slack';
+import * as installService from '@/lib/services/installService';
+import * as scoreboardService from '@/lib/services/scoreboardService';
+import { StringUtil } from '@/lib/string';
 
 (async () => {
-	const allInstalls = await Installation.find({}).exec();
+	const allInstalls = await installService.findAll();
 
 	for (const install of allInstalls) {
 		const { monthlyScoreboardCron, monthlyScoreboardDayOfWeek } = procVars;
@@ -31,7 +26,7 @@ const databaseService = new DatabaseService();
 				if (!teamId || !botToken) {
 					return;
 				}
-				const connection = connectionFactory(teamId);
+				const connection = await getConnection(teamId);
 				const pointdPalConfig = await PointdPalConfig(connection).findOne().exec();
 				if (!pointdPalConfig) {
 					return;
@@ -46,7 +41,7 @@ const databaseService = new DatabaseService();
 
 					let rank: number = 0;
 					// Senders
-					const topSenders = await databaseService.getTopSenderInDuration(connection, 10, 30);
+					const topSenders = await scoreboardService.getTopSenderInDuration(connection, 10, 30);
 					let messages: string[] = [];
 					rank = 1;
 					for (const sender of topSenders) {
@@ -58,7 +53,7 @@ const databaseService = new DatabaseService();
 					const topSenderBlocks = buildBlocks(`Top 10 PointdPal Point Senders`, topSenders, messages);
 
 					// Recipients
-					const topRecipients = await databaseService.getTopReceiverInDuration(connection, 10, 30);
+					const topRecipients = await scoreboardService.getTopReceiverInDuration(connection, 10, 30);
 					messages = [];
 					rank = 1;
 					for (const recipient of topRecipients) {
@@ -70,7 +65,7 @@ const databaseService = new DatabaseService();
 					const topRecipientBlocks = buildBlocks(`Top 10 PointdPal Point Recipients`, topRecipients, messages);
 
 					// Channel
-					const topRooms = await databaseService.getTopRoomInDuration(connection, 3, 30);
+					const topRooms = await scoreboardService.getTopRoomInDuration(connection, 3, 30);
 					messages = [];
 					rank = 1;
 					for (const room of topRooms) {
@@ -79,7 +74,7 @@ const databaseService = new DatabaseService();
 						if (channel) {
 							room.name = channel.name;
 						}
-						const pointStr = `point${H.getEsOnEndOfWord(room.scoreChange)} given`;
+						const pointStr = `point${StringUtil.pluralSuffix(room.scoreChange)} given`;
 						console.log(`Top room [i] ${JSON.stringify(topRooms)}[${rank}]`);
 						messages.push(`${rank}. ${Md.channel(room._id)} (${room.scoreChange} ${pointStr})`);
 						rank++;

@@ -6,8 +6,8 @@ import { ChatPostMessageArguments } from '@slack/web-api';
 
 import { app } from '../app';
 import * as pjson from '../package.json';
-import { Helpers as H } from './lib/helpers';
-import { regExpCreator } from './lib/regexpCreator';
+import { Helpers as H } from '@/lib/helpers';
+import { regExpCreator } from '@/lib/regexpCreator';
 
 app.message(regExpCreator.getHelp(), directMention(), respondWithHelpGuidance);
 app.message(RegExp(/(plusplus version|-v|--version)/, 'i'), directMention(), async ({ message, context, say }) => {

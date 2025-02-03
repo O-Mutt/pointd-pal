@@ -3,9 +3,9 @@ import { Md } from 'slack-block-builder';
 import { app } from '../app';
 import { Installation } from './entities/installation';
 import { PointdPalConfig } from './entities/pointdPalConfig';
-import { connectionFactory } from './lib/services/connectionsFactory';
-import { eventBus } from './lib/services/eventBus';
-import { SlackService } from './lib/services/slack';
+import { connectionFactory } from '@/lib/services/connectionsFactory';
+import { eventBus } from '@/lib/services/eventBus';
+import { SlackService } from '@/lib/services/slack';
 import {
 	PPEvent,
 	PPEventName,
@@ -13,7 +13,7 @@ import {
 	PPFailureEventName,
 	PPSpamEvent,
 	PPSpamEventName,
-} from './lib/types/Events';
+} from '@/lib/types/Events';
 
 eventBus.on(PPEventName, sendPlusPlusNotification);
 eventBus.on(PPFailureEventName, sendPlusPlusFalsePositiveNotification);

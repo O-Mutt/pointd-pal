@@ -2,6 +2,12 @@ import { IInstallation } from '@/entities/installation';
 import { getConnection } from './database';
 import { Installation } from '@slack/oauth';
 
+export async function findAll(): Promise<IInstallation[]> {
+	const connection = await getConnection();
+	const result = await connection.query(`SELECT * FROM installation`);
+	return result.rows;
+}
+
 export async function findOne(teamId: string): Promise<IInstallation | null> {
 	const connection = await getConnection();
 	const result = await connection.query(`SELECT * FROM installation where team_id = $1`, [teamId]);
