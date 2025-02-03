@@ -10,4 +10,5 @@ jobs:
           name: my-checkout-${{ github.run_id }}
       - name: lint
         run: |
+          npm ci
           npm run lint
