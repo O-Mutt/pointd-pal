@@ -1,13 +1,8 @@
 {
-  "editor.tabSize": 2,
-  "editor.renderWhitespace": "all",
-  "files.trimTrailingWhitespace": true,
-  "editor.formatOnSave": true,
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "cSpell.words": [
-    "Pointd",
-    "pointdPal",
-    "PointdPal",
-    "Subdocument"
-  ]
+	"editor.tabSize": 2,
+	"editor.renderWhitespace": "all",
+	"files.trimTrailingWhitespace": true,
+	"editor.formatOnSave": true,
+	"typescript.tsdk": "node_modules/typescript/lib",
+	"cSpell.words": ["Pointd", "pointdPal", "PointdPal", "Subdocument", "Unobfuscated"]
 }

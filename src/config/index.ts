@@ -88,24 +88,37 @@ const config = convict<PointdPalConfig>({
 			default: null,
 			env: 'MAGIC_IV',
 		},
+		furtherHelpMessage: {
+			doc: 'Further help message.',
+			format: String,
+			default:
+				'For more information on pointdpal token please visit our crypto specific help page: https://pointdpal.com/crypto/help',
+			env: 'CRYPTO_FURTHER_HELP_MESSAGE',
+		},
 	},
-	furtherHelpUrl: {
-		doc: 'Further help URL.',
+	helpMessage: {
+		doc: 'Message when a user asks for help.',
 		format: String,
 		default: 'For more information on pointdpal please visit our help page: https://pointdpal.com/help',
-		env: 'FURTHER_HELP_URL',
+		env: 'FURTHER_HELP_MESSAGE',
 	},
-	monthlyScoreboardCron: {
-		doc: 'Monthly scoreboard cron.',
-		format: String,
-		default: '0 10 1-7 * *',
-		env: 'MONTHLY_SCOREBOARD_CRON',
-	},
-	monthlyScoreboardDayOfWeek: {
-		doc: 'Monthly scoreboard day of week.',
-		format: Number,
-		default: 1,
-		env: 'MONTHLY_SCOREBOARD_DAY_OF_WEEK',
+	scoreboard: {
+		default: {
+			cron: '0 10 1-7 * *',
+			dayOfWeek: 1,
+		},
+		cron: {
+			doc: 'Monthly scoreboard cron.',
+			format: String,
+			default: '0 10 1-7 * *',
+			env: 'MONTHLY_SCOREBOARD_CRON',
+		},
+		dayOfWeek: {
+			doc: 'Monthly scoreboard day of week.',
+			format: Number,
+			default: 1,
+			env: 'MONTHLY_SCOREBOARD_DAY_OF_WEEK',
+		},
 	},
 	slack: {
 		signingSecret: {

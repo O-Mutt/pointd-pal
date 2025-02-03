@@ -15,13 +15,15 @@ export interface PointdPalConfig {
 		password: string;
 	};
 	crypto?: {
-		cryptoRpcProvider: string | null;
-		magicNumber: string | null;
-		magicIv: string | null;
+		cryptoRpcProvider?: string | null;
+		magicNumber?: string | null;
+		magicIv?: string | null;
 	};
-	furtherHelpUrl: string | null;
-	monthlyScoreboardCron: string;
-	monthlyScoreboardDayOfWeek: number;
+	helpMessage?: string;
+	scoreboard?: {
+		cron: string;
+		dayOfWeek: number;
+	};
 	slack: {
 		signingSecret: string;
 		clientId: string;

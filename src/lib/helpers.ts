@@ -1,4 +1,5 @@
 import { SlackEventMiddlewareArgs } from '@slack/bolt';
+import { getDayOfYear, differenceInYears } from 'date-fns';
 import { Md } from 'slack-block-builder';
 import { IUser } from '../entities/user';
 import { regExpCreator } from './regexpCreator';
@@ -20,9 +21,9 @@ export class Helpers {
 
 	static isCakeDay(dateObject: Date): boolean {
 		try {
-			const robotDay = moment(dateObject);
-			const today = moment();
-			if (robotDay.date() === today.date() && robotDay.month() === today.month()) {
+			const pointdPalDay = getDayOfYear(dateObject);
+			const today = getDayOfYear(new Date());
+			if (pointdPalDay === today) {
 				return true;
 			}
 		} catch (e) {
@@ -31,24 +32,25 @@ export class Helpers {
 		return false;
 	}
 
-	static getYearsAsString(dateObj: Date): string {
-		const robotDay = new Date(dateObj);
+	static getOrdinalSuffix(num: number): string {
+		const j = num % 10;
+		const k = num % 100;
+		if (j === 1 && k !== 11) {
+			return `${num}st`;
+		}
+		if (j === 2 && k !== 12) {
+			return `${num}nd`;
+		}
+		if (j === 3 && k !== 13) {
+			return `${num}rd`;
+		}
+		return `${num}th`;
+	}
+
+	static getYearsAsString(pointdPalDay: Date): string {
 		const today = new Date();
-		const years = today.getFullYear() - robotDay.getFullYear();
-		const lastDigit = years.toString().split('').pop();
-		if (years === 0) {
-			return '';
-		}
-		if (lastDigit === '1') {
-			return `${years}st `;
-		}
-		if (lastDigit === '2') {
-			return `${years}nd `;
-		}
-		if (lastDigit === '3') {
-			return `${years}rd `;
-		}
-		return `${years}th `;
+		const years = differenceInYears(today, pointdPalDay);
+		return this.getOrdinalSuffix(years);
 	}
 
 	static getMessageForTokenTransfer(to: IUser, from: IUser, number: number, reason: string | undefined) {
@@ -58,23 +60,22 @@ export class Helpers {
 
 		const scoreStr = `${Md.user(from.slackId)} transferred *${number}* Pointd Pal Token${Helpers.getEsOnEndOfWord(
 			number,
-		)} to ${Md.user(to.slackId)}.\n
-${Md.user(to.slackId)} now has ${to.pointdPalToken} token${Helpers.getEsOnEndOfWord(to.pointdPalToken || 0)}`;
+		)} to ${Md.user(to.slackId)}.\n${Md.user(to.slackId)} now has ${to.pointdPalToken} token${Helpers.getEsOnEndOfWord(to.pointdPalToken || 0)}`;
 		let reasonStr = '.';
 		let cakeDayStr = '';
 
 		if (reason) {
-			const decodedReason = Helpers.decode(reason);
-			if (to.reasons[reason] === 1 || to.reasons[reason] === -1) {
+			const decodedReason = reason.decode();
+			if (to.reasons.get(reason) === 1 || to.reasons.get(reason) === -1) {
 				if (to.score === 1 || to.score === -1) {
 					reasonStr = ` for ${decodedReason}.`;
 				} else {
-					reasonStr = `, ${to.reasons[reason]} of which is for ${decodedReason}.`;
+					reasonStr = `, ${to.reasons.get(reason)} of which is for ${decodedReason}.`;
 				}
-			} else if (to.reasons[reason] === 0) {
+			} else if (to.reasons.get(reason) === 0) {
 				reasonStr = `, none of which are for ${decodedReason}.`;
 			} else {
-				reasonStr = `, ${to.reasons[reason]} of which are for ${decodedReason}.`;
+				reasonStr = `, ${to.reasons.get(reason)} of which are for ${decodedReason}.`;
 			}
 		}
 
@@ -99,64 +100,6 @@ ${Md.user(to.slackId)} now has ${to.pointdPalToken} token${Helpers.getEsOnEndOfW
 	static isKnownFalsePositive(premessage, conjunction, reason, operator) {
 		const falsePositive = premessage && !conjunction && reason && operator.match(regExpCreator.negativeOperators);
 		return falsePositive;
-	}
-
-	static getProcessVariables(env: { [key: string]: string | undefined }): ProcessVariable {
-		return {
-			spamMessage: env.HUBOT_SPAM_MESSAGE || 'Looks like you hit the spam filter. Please slow your roll.',
-			spamTimeLimit: (env.SPAM_TIME_LIMIT && parseInt(env.SPAM_TIME_LIMIT, 10)) || 5,
-			mongoUri: env.MONGO_URI || 'mongodb://localhost/plusPlus',
-			cryptoRpcProvider: env.HUBOT_CRYPTO_RPC_PROVIDER || undefined,
-			magicNumber: env.HUBOT_UNIMPORTANT_MAGIC_NUMBER || undefined,
-			magicIv: env.HUBOT_UNIMPORTANT_MAGIC_IV || undefined,
-			furtherHelpUrl: (env.HUBOT_CRYPTO_FURTHER_HELP_URL && new URL(env.HUBOT_CRYPTO_FURTHER_HELP_URL)) || undefined,
-			monthlyScoreboardCron: env.HUBOT_PLUSPLUS_MONTHLY_SCOREBOARD_CRON || '0 10 1-7 * *',
-			monthlyScoreboardDayOfWeek:
-				(env.HUBOT_PLUSPLUS_MONTHLY_SCOREBOARD_DAY_OF_WEEK &&
-					parseInt(env.HUBOT_PLUSPLUS_MONTHLY_SCOREBOARD_DAY_OF_WEEK, 10)) ||
-				1, // 0-6 (Sun - Sat)
-			defaultDb: env.DEFAULT_DB_NAME || undefined,
-		};
-	}
-
-	static cleanAndEncode(str: string | null | undefined): string | undefined {
-		if (!str) {
-			return;
-		}
-
-		// this should fix a dumb issue with mac quotes
-		const trimmed = JSON.parse(JSON.stringify(str.trim().toLowerCase()));
-		const buff = Buffer.from(trimmed);
-		const base64data = buff.toString('base64');
-		return base64data;
-	}
-
-	static decode(str?: string): string | undefined {
-		if (!str) {
-			return undefined;
-		}
-
-		const buff = Buffer.from(str, 'base64');
-		const text = buff.toString('utf-8');
-		return text;
-	}
-
-	static obfuscate(str: string, amountToLeaveUnobfuscated: number = 3): string {
-		if (!str) {
-			return str;
-		}
-		const backwards = Helpers.reverseString(str);
-		let obfuscatedString = backwards;
-		if (backwards.length > amountToLeaveUnobfuscated) {
-			obfuscatedString =
-				backwards.slice(0, amountToLeaveUnobfuscated) +
-				backwards.slice(amountToLeaveUnobfuscated, str.length).replace(/./g, '*');
-		}
-		return Helpers.reverseString(obfuscatedString);
-	}
-
-	static reverseString(str: string) {
-		return str.split('').reverse().join('');
 	}
 
 	static isScoreboardDayOfWeek(dayOfWeek: number): boolean {
