@@ -15,7 +15,7 @@ export async function getAllUsersByTeam(teamId: string): Promise<IUser[]> {
 
 export async function findOneBySlackIdOrCreate(teamId: string, slackId: string): Promise<IUser> {
 	const connection = await getConnection(teamId);
-	const result = await connection.query(`SELECT * FROM users WHERE slack_id = $1`, [slackId]);
+	const result = await connection.query<IUser>(`SELECT * FROM users WHERE slack_id = $1`, [slackId]);
 	if (result.rows.length === 1) {
 		return result.rows[0];
 	}
@@ -29,7 +29,7 @@ export async function findOneBySlackIdOrCreate(teamId: string, slackId: string):
 		token: (teamInstall.installation.bot ?? teamInstall.installation.user).token,
 		user: slackId,
 	});
-	const createdUser = await connection.query(
+	const createdUser = await connection.query<IUser>(
 		`INSERT INTO users (slack_id, score, reasons, points_given, robot_day, account_level, total_points_given, email, name, is_admin, is_bot, updated_by, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
 		[
