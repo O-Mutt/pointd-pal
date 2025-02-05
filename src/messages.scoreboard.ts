@@ -1,17 +1,22 @@
-import { sampleSize } from 'lodash.samplesize';
-import { map } from 'lodash.map';
-import { take } from 'lodash.take';
-import ImageCharts from 'image-charts';
-import { directMention } from '@slack/bolt';
 import { format } from 'date-fns';
+import ImageCharts from 'image-charts';
+import { sampleSize, map, take } from 'lodash';
+import { Blocks, Md, Message } from 'slack-block-builder';
 
 import { app } from '@/app';
-import { regExpCreator } from '@/lib/regexpCreator';
-import { Blocks, Md, Message } from 'slack-block-builder';
-import { ChatPostMessageArguments } from '@slack/web-api';
 import { IUser } from '@/entities/user';
-import * as userService from '@/lib/services/userService';
+import { regExpCreator } from '@/lib/regexpCreator';
 import * as scoreboardService from '@/lib/services/scoreboardService';
+import * as userService from '@/lib/services/userService';
+import {
+	AllMiddlewareArgs,
+	directMention,
+	EventTypePattern,
+	SlackEventMiddlewareArgs,
+	StringIndexed,
+} from '@slack/bolt';
+import { ChatPostMessageArguments } from '@slack/web-api';
+
 import { SlackMessage } from './lib/slackMessage';
 
 app.message(regExpCreator.createAskForScoreRegExp(), directMention, respondWithScore);
@@ -19,11 +24,18 @@ app.message(regExpCreator.createTopBottomRegExp(), directMention, respondWithLea
 app.message(regExpCreator.createTopBottomTokenRegExp(), directMention, respondWithLeaderLoserTokenBoard);
 app.message(regExpCreator.createTopPointGiversRegExp(), directMention, getTopPointSenders);
 
-async function respondWithScore({ message, context, logger, say }) {
+async function respondWithScore({
+	message,
+	context,
+	logger,
+	say,
+}: AllMiddlewareArgs & SlackEventMiddlewareArgs<'message'> & StringIndexed) {
 	logger.debug('respond with the score');
+
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 	const { userId } = context.matches.groups;
-	const teamId = context.teamId as string;
-	const user: IUser = await userService.findOneBySlackIdOrCreate(teamId, userId);
+	const teamId = context.teamId!;
+	const user: IUser = await userService.findOneBySlackIdOrCreate(teamId, userId as string);
 
 	let tokenString = '.';
 	if (user.accountLevel > 1) {
@@ -31,8 +43,7 @@ async function respondWithScore({ message, context, logger, say }) {
 		tokenString = ` (${Md.bold(partialTokenStr)}).`;
 	}
 
-	const pointStr = `${'point'.pluralize(user.score)}`;
-	let baseString = `${Md.user(user.slackId)} has ${Md.bold(user.score.toString())} ${Md.bold(pointStr)}${tokenString}`;
+	let baseString = `${Md.user(user.slackId)} has ${Md.bold('point'.pluralize(user.score, true))}${tokenString}`;
 	baseString += `\n${Md.italic('Account Level')}: ${user.accountLevel}`;
 	baseString += `\n${Md.italic('Total Points Given')}: ${user.totalPointsGiven}`;
 	if (user.pointdPalDay) {
@@ -40,7 +51,7 @@ async function respondWithScore({ message, context, logger, say }) {
 		baseString += `\n:birthday: ${Md.bold('Pointd Pal day')} is ${Md.bold(format(dateObj, 'MM-DD-yyyy'))}`;
 	}
 
-	let reasonsStr: string = '';
+	let reasonsStr = '';
 	// get all reasons and put them in a keys array
 	const keys: string[] = Array.from(user.reasons.keys());
 
@@ -52,8 +63,7 @@ async function respondWithScore({ message, context, logger, say }) {
 
 		const reasonMessageArray: string[] = [];
 		sampleReasons.forEach((points, reason) => {
-			const pointStr = points > 1 ? 'points' : 'point';
-			reasonMessageArray.push(`_${reason}_: ${points} ${pointStr}`);
+			reasonMessageArray.push(`_${reason}_: ${'point'.pluralize(points, true)}`);
 		});
 
 		reasonsStr = `\n\n:star: Here are some reasons :star:\n${reasonMessageArray.join('\n')}`;
@@ -63,7 +73,14 @@ async function respondWithScore({ message, context, logger, say }) {
 	const sayResponse = await say(sayArgs);
 }
 
-async function respondWithLeaderLoserBoard({ client, message, context, logger, say }) {
+async function respondWithLeaderLoserBoard({
+	client,
+	message,
+	context,
+	logger,
+	_say,
+}: AllMiddlewareArgs & SlackEventMiddlewareArgs<'message'> & StringIndexed & EventTypePattern) {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 	const { topOrBottom, digits }: { topOrBottom: string; digits: number } = context.matches.groups;
 	const teamId = context.teamId as string;
 	const topOrBottomString = topOrBottom.capitalizeFirstLetter();
@@ -110,13 +127,19 @@ async function respondWithLeaderLoserBoard({ client, message, context, logger, s
 		.asUser();
 
 	try {
-		const result = await client.chat.postMessage(theMessage.buildToObject() as ChatPostMessageArguments);
-	} catch (e: any) {
-		console.error('error', e, theMessage.printPreviewUrl());
+		await client.chat.postMessage(theMessage.buildToObject() as ChatPostMessageArguments);
+	} catch (e: unknown) {
+		logger.error('error', e, theMessage.printPreviewUrl());
 	}
 }
 
-async function respondWithLeaderLoserTokenBoard({ message, context, client }) {
+async function respondWithLeaderLoserTokenBoard({
+	message,
+	context,
+	client,
+	logger,
+}: AllMiddlewareArgs & SlackEventMiddlewareArgs<'message'> & StringIndexed) {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 	const { topOrBottom, digits }: { topOrBottom: string; digits: number } = context.matches.groups;
 	const teamId = context.teamId as string;
 	const topOrBottomString = topOrBottom.capitalizeFirstLetter();
@@ -160,13 +183,19 @@ async function respondWithLeaderLoserTokenBoard({ message, context, client }) {
 		.asUser();
 
 	try {
-		const result = await client.chat.postMessage(theMessage.buildToObject() as ChatPostMessageArguments);
-	} catch (e: any) {
-		console.error('error', e, theMessage.printPreviewUrl());
+		await client.chat.postMessage(theMessage.buildToObject() as ChatPostMessageArguments);
+	} catch (e: unknown) {
+		logger.error('error', e, theMessage.printPreviewUrl());
 	}
 }
 
-async function getTopPointSenders({ message, context, client }) {
+async function getTopPointSenders({
+	message,
+	context,
+	client,
+	logger,
+}: AllMiddlewareArgs & SlackEventMiddlewareArgs<'message'> & StringIndexed) {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 	const { topOrBottom, digits }: { topOrBottom: string; digits: number } = context.matches.groups;
 	const teamId = context.teamId as string;
 	const topOrBottomString = topOrBottom.capitalizeFirstLetter();
@@ -205,8 +234,8 @@ async function getTopPointSenders({ message, context, client }) {
 		.asUser();
 
 	try {
-		const result = await client.chat.postMessage(theMessage.buildToObject() as ChatPostMessageArguments);
-	} catch (e: any) {
-		console.error('error', e, theMessage.printPreviewUrl());
+		await client.chat.postMessage(theMessage.buildToObject() as ChatPostMessageArguments);
+	} catch (e: unknown) {
+		logger.error('error', e, theMessage.printPreviewUrl());
 	}
 }

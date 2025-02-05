@@ -3,7 +3,6 @@ import { AllMiddlewareArgs, SlackViewMiddlewareArgs, ViewSubmitAction } from '@s
 import { app } from '../app';
 import { actions } from '@/lib/types/Actions';
 import { blocks } from '@/lib/types/BlockIds';
-import { EnabledSettings } from '@/lib/types/Enums';
 import * as userService from '@/lib/services/userService';
 import * as configService from '@/lib/services/configService';
 
@@ -13,9 +12,9 @@ app.view(
 		const teamId = context.teamId as string;
 		const userId = body.user.id;
 
-		const pointdPal = await configService.findOneOrCreate(teamId as string);
+		const pointdPal = await configService.findOneOrCreate(teamId);
 
-		const errors: { [blockId: string]: string } = {};
+		const errors: Record<string, string> = {};
 		for (const option in view.state.values) {
 			for (const key in view.state.values[option]) {
 				const state = view.state.values[option][key];
@@ -25,7 +24,7 @@ app.view(
 						const selectedUsers = state.selected_users as string[];
 						// pointdPal.pointdPalAdmins = selectedUsers;
 						for (const newAdminId of selectedUsers) {
-							console.log(newAdminId);
+							logger.info(newAdminId);
 							const user = await userService.findOneBySlackIdOrCreate(teamId, newAdminId);
 							user.isAdmin = true;
 							await userService.update(teamId, user);
@@ -112,7 +111,7 @@ app.view(
 
 		const user = await userService.findOneBySlackIdOrCreate(teamId, userId);
 
-		const errors: { [blockId: string]: string } = {};
+		const errors: Record<string, string> = {};
 		for (const option in view.state.values) {
 			for (const key in view.state.values[option]) {
 				const value: string = (view.state.values[option][key].value ||

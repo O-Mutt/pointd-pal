@@ -68,7 +68,7 @@ function getAdminConfigSection(user: IUser): Appendable<ViewBlockBuilder> {
 	return blocks;
 }
 
-function getUserConfigSection(user: IUser, pointdPalConfig: IPointdPalConfig | null): Appendable<ViewBlockBuilder> {
+function getUserConfigSection(_user: IUser, _pointdPalConfig: IPointdPalConfig | null): Appendable<ViewBlockBuilder> {
 	const blocks: Appendable<ViewBlockBuilder> = [];
 
 	blocks.push(

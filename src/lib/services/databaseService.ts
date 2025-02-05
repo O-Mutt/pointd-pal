@@ -1,7 +1,7 @@
 import { IUser } from '@/entities/user';
 import { config } from '@/config';
 
-import { Client, Connection } from 'pg';
+import { Client } from 'pg';
 import { subMinutes } from 'date-fns';
 import { withNamespace } from '@/logger';
 import * as userService from '@/lib/services/userService';
@@ -9,31 +9,49 @@ import * as botTokenService from '@/lib/services/botTokenService';
 import { eventBus } from '@/lib/services/eventBus';
 
 const logger = withNamespace('databaseService');
-const rootDb = new Client({
-	host: config.get('postgres.host'),
-	user: config.get('postgres.username'),
-	database: config.get('postgres.database'),
-	keepAlive: true,
-	idleTimeoutMillis: 30000,
-	connectionTimeoutMillis: 2000,
-});
 
-const connections: { [key: string]: Connection } = {};
-export async function getConnection(teamId?: string): Promise<Connection> {
+const clients = new Map<string, Client>();
+
+export async function getConnection(teamId?: string): Promise<Client> {
 	if (!teamId) {
-		return (connections['root'] = connections['root'] || (await rootDb.connect()));
-	} else if (!connections[teamId]) {
-		const teamConnection = new Client({
-			host: config.get('postgres.host'),
-			user: config.get('postgres.username'),
-			database: teamId,
-			keepAlive: true,
-			idleTimeoutMillis: 30000,
-			connectionTimeoutMillis: 2000,
-		});
-		connections[teamId] = await teamConnection.connect();
+		let rootClient: Client;
+		if (clients.has('root')) {
+			rootClient = clients.get('root')!;
+		} else {
+			rootClient = new Client({
+				host: config.get('postgres.host'),
+				user: config.get('postgres.username'),
+				database: config.get('postgres.database'),
+				keepAlive: true,
+				connectionTimeoutMillis: 2000,
+			});
+			clients.set('root', rootClient);
+			rootClient.on('error', onConnectionCloseOrError);
+		}
+		await rootClient.connect();
+		return rootClient;
+	} else {
+		let teamClient: Client;
+		if (clients.has(teamId)) {
+			teamClient = clients.get(teamId)!;
+		} else {
+			teamClient = new Client({
+				host: config.get('postgres.host'),
+				user: config.get('postgres.username'),
+				database: `${config.get('postgres.database')}_${teamId}`,
+				keepAlive: true,
+				connectionTimeoutMillis: 2000,
+			});
+			clients.set(teamId, teamClient);
+			teamClient.on('error', onConnectionCloseOrError);
+		}
+		await teamClient.connect();
+		return teamClient;
 	}
-	return connections[teamId];
+}
+
+function onConnectionCloseOrError() {
+	logger.debug('connection closed');
 }
 
 export async function isSpam(teamId: string, to: IUser, from: IUser) {
@@ -41,11 +59,12 @@ export async function isSpam(teamId: string, to: IUser, from: IUser) {
 	const connection = await getConnection(teamId);
 	const fiveMinutesAgo = subMinutes(new Date(), config.get('spam.timeout'));
 	// There is 1+ and that means we have spam
-	const result = await connection.query(
+	const result = await connection.query<{ count: number }>(
 		`
-		SELECT COUNT(*) FROM score_logs
+		SELECT COUNT(*) as count FROM score_logs
 		WHERE to = $1 AND from = $2 AND date >= $3
 		`,
+		[to.id, from.id, fiveMinutesAgo],
 	);
 	const isSpam = result.rows[0].count > 0;
 

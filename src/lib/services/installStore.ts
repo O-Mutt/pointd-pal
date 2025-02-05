@@ -9,12 +9,12 @@ export const PointdPalInstallStore: InstallationStore = {
 		let teamName;
 		let email;
 		if (installation.isEnterpriseInstall && installation.enterprise !== undefined) {
-			console.log(`[INSTALL] org wide ${installation.enterprise.id}`);
+			logger.info(`[INSTALL] org wide ${installation.enterprise.id}`);
 			teamId = installation.enterprise.id;
 			teamName = installation.enterprise.name;
 		}
 		if (installation.team !== undefined) {
-			console.log(`[INSTALL] single team ${installation.team.id}`);
+			logger.info(`[INSTALL] single team ${installation.team.id}`);
 			teamId = installation.team.id;
 			teamName = installation.team.name;
 		}
@@ -43,11 +43,11 @@ export const PointdPalInstallStore: InstallationStore = {
 	fetchInstallation: async (installQuery: InstallationQuery<boolean>): Promise<Installation> => {
 		let teamId;
 		if (installQuery.isEnterpriseInstall && installQuery.enterpriseId !== undefined) {
-			console.log(`[LOOKUP] org wide app ${installQuery.enterpriseId}`);
+			logger.info(`[LOOKUP] org wide app ${installQuery.enterpriseId}`);
 			teamId = installQuery.enterpriseId;
 		}
 		if (installQuery.teamId !== undefined) {
-			console.log(`[LOOKUP] single team app ${installQuery.teamId}`);
+			logger.info(`[LOOKUP] single team app ${installQuery.teamId}`);
 			teamId = installQuery.teamId;
 		}
 
@@ -56,13 +56,13 @@ export const PointdPalInstallStore: InstallationStore = {
 			if (!result) {
 				throw new Error('Failed fetching installation');
 			}
-			console.log(`[LOOKUP]  ${teamId}.`);
+			logger.info(`[LOOKUP]  ${teamId}.`);
 			if (!result.isEnabled) {
 				throw new Error(
 					`This instance of pointdPal is not enabled Team [${result.teamId}], Customer [${result.customerId}]`, //, Subscription [${result.subscriptionId}], Status [${result.subscriptionStatus}]`,
 				);
 			}
-			return result.installation as Installation;
+			return result.installation;
 		}
 
 		throw new Error('Failed fetching installation, failed overall');

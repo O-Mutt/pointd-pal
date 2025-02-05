@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Blocks, Md, Message } from 'slack-block-builder';
 
-import { directMention } from '@slack/bolt';
+import { AllMiddlewareArgs, directMention, SlackEventMiddlewareArgs, StringIndexed } from '@slack/bolt';
 import { ChatPostMessageArguments } from '@slack/web-api';
 
 import { app } from '../app';
@@ -10,12 +10,19 @@ import { regExpCreator } from '@/lib/regexpCreator';
 import config from '@config';
 
 app.message(regExpCreator.getHelp(), directMention, respondWithHelpGuidance);
-app.message(RegExp(/(plusplus version|-v|--version)/, 'i'), directMention, async ({ message, context, say }) => {
-	await say(`PointdPal Version: _${pjson.version}_`);
-});
+app.message(
+	RegExp(/(plusplus version|-v|--version)/, 'i'),
+	directMention,
+	async ({ say }: AllMiddlewareArgs & SlackEventMiddlewareArgs<'message'> & StringIndexed) => {
+		await say(`PointdPal Version: _${pjson.version}_`);
+	},
+);
 app.message(new RegExp('how much .*point.*', 'i'), tellHowMuchPointsAreWorth);
 
-async function respondWithHelpGuidance({ client, message, say }) {
+async function respondWithHelpGuidance({
+	client,
+	message,
+}: AllMiddlewareArgs & SlackEventMiddlewareArgs<'message'> & StringIndexed) {
 	const helpMessage = ''
 		.concat('`< name > ++[<reason>]` - Increment score for a name (for a reason)\n')
 		.concat('`< name > --[<reason>]` - Decrement score for a name (for a reason)\n')
@@ -40,34 +47,47 @@ async function respondWithHelpGuidance({ client, message, say }) {
 		.asUser();
 
 	try {
-		const result = await client.chat.postMessage(theMessage.buildToObject() as ChatPostMessageArguments);
-	} catch (e: any) {
-		console.error('error', e.data.response_metadata.message, theMessage.printPreviewUrl());
+		await client.chat.postMessage(theMessage.buildToObject() as ChatPostMessageArguments);
+	} catch (e: unknown) {
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-expect-error
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		logger.error('error', e?.data?.response_metadata?.message, theMessage.printPreviewUrl());
 	}
 }
 
-async function tellHowMuchPointsAreWorth({ payload, logger, message, context, say }) {
+async function tellHowMuchPointsAreWorth({
+	payload,
+	logger,
+	message,
+	context,
+	say,
+}: AllMiddlewareArgs & SlackEventMiddlewareArgs<'message'> & StringIndexed) {
 	logger.error(message, context, payload);
 	try {
-		const { data: eth } = await axios({
+		const ethRes = await axios({
 			url: 'https://api.coinbase.com/v2/exchange-rates?currency=ETH',
 		});
 
-		const { data: btc } = await axios({
+		const btcRes = await axios({
 			url: 'https://api.coinbase.com/v2/exchange-rates?currency=BTC',
 		});
 
-		const ethInUsd = eth.data.rates.USD;
-		const btcInUsd = btc.data.rates.USD;
-		return say(
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+		const ethInUsd = ethRes.data.eth.data.rates.USD;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+		const btcInUsd = btcRes.data.btc.data.rates.USD;
+		await say(
 			`A Bitcoin is worth $${btcInUsd} USD right now, Ethereum is $${ethInUsd} USD, and ${Md.bold(
 				'PointdPal points are worth nothing',
 			)}!`,
 		);
-	} catch (e: any) {
-		console.error('Error with how much points worth -_-', e);
-		return await say(
+		return;
+	} catch (e: unknown) {
+		logger.error('Error with how much points worth -_-', e);
+		await say(
 			"Seems like we are having trouble getting some data... Don't worry, though, your Pointd Pal points are still worth nothing!",
 		);
+		return;
 	}
 }

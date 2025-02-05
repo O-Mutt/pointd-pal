@@ -12,13 +12,13 @@ export async function findOrCreateConversation(
 	let result: ConversationsListResponse | undefined = undefined;
 	try {
 		result = await app.client.conversations.list({ token: token, team_id: teamId });
-	} catch (e: any | unknown) {
+	} catch (e: unknown) {
 		// logger.error(e)
-		console.error('Error getting list of conversations', e.message);
+		logger.error('Error getting list of conversations', e.message);
 	}
 
 	if (!result || !result.channels) {
-		console.log(`Could not get channels for Team ${teamId}. We were looking for ${channelName}`);
+		logger.info(`Could not get channels for Team ${teamId}. We were looking for ${channelName}`);
 		return;
 	}
 
@@ -30,9 +30,9 @@ export async function findOrCreateConversation(
 		// make sure we're in the channel
 		try {
 			await app.client.conversations.join({ token: token, channel: foundChannel[0].id as string });
-		} catch (e: any | unknown) {
+		} catch (e: unknown) {
 			// logger.error(e)
-			console.error(
+			logger.error(
 				"This may be a known error and we should probably check for the e.warning === 'already_in_channel' but:",
 				e.message,
 			);
@@ -44,9 +44,9 @@ export async function findOrCreateConversation(
 	try {
 		const { channel } = await app.client.conversations.create({ token: token, team_id: teamId, name: channelName });
 		return channel?.id;
-	} catch (e: any | unknown) {
+	} catch (e: unknown) {
 		// logger.error(e)
-		console.error('Error creating the conversation for notifications', e.message);
+		logger.error('Error creating the conversation for notifications', e.message);
 		return;
 	}
 }

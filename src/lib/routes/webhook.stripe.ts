@@ -63,7 +63,7 @@ async function handleStripeEvent(body: any, req: IncomingMessage, res: ServerRes
 		// 		break;
 		// 	// ... handle other event types
 		// 	default:
-		// 		console.log(`Unhandled event type ${type}`);
+		// 		logger.info(`Unhandled event type ${type}`);
 		// }
 
 		// Return a 200 response to acknowledge receipt of the event

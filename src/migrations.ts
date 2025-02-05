@@ -1,11 +1,15 @@
+/* eslint-disable */
 import { Md } from 'slack-block-builder';
-import { directMention } from '@slack/bolt';
-import { Member } from '@slack/web-api/dist/types/response/UsersListResponse';
-import { ConversationsListResponse } from '@slack/web-api';
 
 import { app } from '@/app';
 import { IUser } from '@/entities/user';
 import * as userService from '@/lib/services/userService';
+import { withNamespace } from '@/logger';
+import { directMention } from '@slack/bolt';
+import { ConversationsListResponse } from '@slack/web-api';
+import { Member } from '@slack/web-api/dist/types/response/UsersListResponse';
+
+const logger = withNamespace('migrations');
 
 app.message('try to map all slack users to db users', directMention, mapUsersToDb);
 app.message('try to map more data to all slack users to db users', directMention, mapMoreUserFieldsBySlackId);
@@ -15,7 +19,7 @@ app.message('map all slackIds to slackEmail', directMention, mapSlackIdToEmail);
 // app.message('hubot to bolt', directMention, migrateFromHubotToBolt);
 app.message('join all old pointdPal channels', directMention, joinAllPointdPalChannels);
 
-async function mapUsersToDb({ message, context, client, logger, say }) {
+async function mapUsersToDb({ message, context, client, say }) {
 	const teamId = context.teamId as string;
 	const userId: string = message.user;
 
@@ -92,7 +96,7 @@ async function mapSingleUserToDb({ message, context, client, logger, say }) {
 		logger.debug('Map this member', JSON.stringify(user));
 		const localMember = await userService.findOneBySlackIdOrCreate(teamId, user);
 		localMember.slackId = user.slackId;
-		// eslint-disable-next-line no-underscore-dangle
+
 		if (localMember.id) {
 			userService.update(teamId, localMember);
 			await say(
@@ -187,7 +191,7 @@ async function mapSlackIdToEmail({ message, context, logger, say, client }) {
 // 				if (isBase64(key)) {
 // 					const decodedPointGiven = decode(key);
 // 					hubotishUser.reasons.set(decodedPointGiven, value);
-// 					console.log(
+// 					logger.info(
 // 						'check each point given',
 // 						key,
 // 						decodedPointGiven,
@@ -196,7 +200,7 @@ async function mapSlackIdToEmail({ message, context, logger, say, client }) {
 // 					);
 // 					delete hubotishUser.pointsGiven[key];
 // 				} else {
-// 					console.log('point given not base 64', key);
+// 					logger.info('point given not base 64', key);
 // 				}
 // 			}
 // 			await say(`Decoding the reasons and the points given finished for ${Md.user(hubotishUser.slackId)}`);
@@ -222,12 +226,12 @@ async function joinAllPointdPalChannels({ say, logger, message, client, context 
 
 	try {
 		result = await client.conversations.list({ team_id: teamId });
-	} catch (e: any | unknown) {
+	} catch (e: unknown) {
 		// logger.error(e)
-		console.error('Error getting list of conversations', e.message);
+		logger.error('Error getting list of conversations', e.message);
 	}
 	if (!result || !result.channels) {
-		console.log('could not find conversation list in migration');
+		logger.info('could not find conversation list in migration');
 		return;
 	}
 
@@ -238,7 +242,8 @@ async function joinAllPointdPalChannels({ say, logger, message, client, context 
 				client.conversations.join({ channel: channel.id as string });
 			}
 		} catch (e) {
-			console.error(`There was an error looking up members and joining the channel ${channel.id}`);
+			logger.error(`There was an error looking up members and joining the channel ${channel.id}`);
 		}
 	}
 }
+/* eslint-enable */

@@ -1,32 +1,48 @@
-import tsParser from '@typescript-eslint/parser';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import js from '@eslint/js';
-import { FlatCompat } from '@eslint/eslintrc';
+import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+import jestPlugin from 'eslint-plugin-jest';
+import tseslint from 'typescript-eslint';
+import eslint from '@eslint/js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const compat = new FlatCompat({
-	baseDirectory: __dirname,
-	recommendedConfig: js.configs.recommended,
-	allConfig: js.configs.all,
-});
-
-export default [
-	...compat.extends('plugin:@typescript-eslint/recommended', 'plugin:prettier/recommended'),
+export default tseslint.config(
 	{
-		ignores: ['node_modules', 'dist'],
+		ignores: ['**/node_modules/**', '**/dist/**'],
 	},
+	eslint.configs.recommended,
+	tseslint.configs.recommendedTypeChecked,
+	tseslint.configs.stylistic,
+	eslintPluginPrettierRecommended,
 	{
+		plugins: {
+			'@typescript-eslint': tseslint.plugin,
+			jest: jestPlugin,
+		},
 		languageOptions: {
-			parser: tsParser,
-			ecmaVersion: 2020,
-			sourceType: 'module',
-		},
-
-		rules: {
-			'@typescript-eslint/no-explicit-any': 'warn',
-			'@typescript-eslint/no-unused-vars': 'warn',
+			parser: tseslint.parser,
+			parserOptions: {
+				projectService: true,
+			},
 		},
 	},
-];
+	{
+		// disable type-aware linting on JS files
+		files: ['**/*.js'],
+		extends: [tseslint.configs.disableTypeChecked],
+	},
+	{
+		// enable jest rules on test files
+		files: ['test/**', '**/*.test.ts', '**/*.spec.ts'],
+		extends: [jestPlugin.configs['flat/recommended']],
+	},
+	{
+		// ignore unused vars if they are prefixed with _
+		rules: {
+			'@typescript-eslint/no-unused-vars': [
+				'error',
+				{
+					argsIgnorePattern: '^_',
+					varsIgnorePattern: '^_',
+				},
+			],
+		},
+	},
+);

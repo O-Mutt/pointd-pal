@@ -1,8 +1,10 @@
+import { IScoreLog } from '@/entities/scoreLog';
 import { getConnection } from './databaseService';
+import { IUser } from '@/entities/user';
 
 export async function getTopScores(teamId: string, amount: number) {
 	const connection = await getConnection(teamId);
-	const result = await connection.query(
+	const result = await connection.query<Pick<IUser, 'score'>>(
 		`
     SELECT score
       FROM users
@@ -20,7 +22,7 @@ export async function getTopScores(teamId: string, amount: number) {
 
 export async function getBottomScores(teamId: string, amount: number) {
 	const connection = await getConnection(teamId);
-	const result = await connection.query(
+	const result = await connection.query<Pick<IUser, 'score'>>(
 		`
     SELECT score
       FROM users
@@ -38,7 +40,7 @@ export async function getBottomScores(teamId: string, amount: number) {
 
 export async function getTopTokens(teamId: string, amount: number) {
 	const connection = await getConnection(teamId);
-	const result = await connection.query(
+	const result = await connection.query<Pick<IUser, 'score'>>(
 		`
     SELECT score
       FROM users
@@ -57,7 +59,7 @@ export async function getTopTokens(teamId: string, amount: number) {
 
 export async function getBottomTokens(teamId: string, amount: number) {
 	const connection = await getConnection(teamId);
-	const result = await connection.query(
+	const result = await connection.query<Pick<IUser, 'score'>>(
 		`
     SELECT score
       FROM users
@@ -76,7 +78,7 @@ export async function getBottomTokens(teamId: string, amount: number) {
 
 export async function getTopSender(teamId: string, amount: number) {
 	const connection = await getConnection(teamId);
-	const result = await connection.query(
+	const result = await connection.query<Pick<IUser, 'totalPointsGiven'>>(
 		`
     SELECT total_points_given
       FROM users
@@ -94,7 +96,7 @@ export async function getTopSender(teamId: string, amount: number) {
 
 export async function getBottomSender(teamId: string, amount: number) {
 	const connection = await getConnection(teamId);
-	const result = await connection.query(
+	const result = await connection.query<Pick<IUser, 'totalPointsGiven'>>(
 		`
     SELECT total_points_given
       FROM users
@@ -110,9 +112,9 @@ export async function getBottomSender(teamId: string, amount: number) {
 	return result.rows;
 }
 
-export async function getTopSenderInDuration(teamId: string, amount: number = 10, days: number = 7) {
+export async function getTopSenderInDuration(teamId: string, amount = 10, days = 7) {
 	const connection = await getConnection(teamId);
-	const result = await connection.query(
+	const result = await connection.query<Pick<IScoreLog, 'from'> & { sumOfScoreChange: number }>(
 		`
     SELECT from, sum(score_change) as total_points_given
       FROM score_logs
@@ -131,9 +133,9 @@ export async function getTopSenderInDuration(teamId: string, amount: number = 10
 	return result.rows;
 }
 
-export async function getTopReceiverInDuration(teamId: string, amount: number = 10, days: number = 7) {
+export async function getTopReceiverInDuration(teamId: string, amount = 10, days = 7) {
 	const connection = await getConnection(teamId);
-	const result = await connection.query(
+	const result = await connection.query<Pick<IScoreLog, 'to'> & { sumOfScoreChange: number }>(
 		`
     SELECT to, sum(score_change) as total_points_given
       FROM score_logs
@@ -152,16 +154,16 @@ export async function getTopReceiverInDuration(teamId: string, amount: number = 
 	return result.rows;
 }
 
-export async function getTopRoomInDuration(teamId: string, amount: number = 3, days: number = 7) {
+export async function getTopRoomInDuration(teamId: string, amount = 3, days = 7) {
 	const connection = await getConnection(teamId);
-	const result = await connection.query(
+	const result = await connection.query<Pick<IScoreLog, 'channelId' | 'channelName'> & { sumOfScoreChange: number }>(
 		`
-    SELECT channel, sum(score_change) as total_points_given
+    SELECT channel_id, channel_name, sum(score_change) as total_points_given
       FROM score_logs
       WHERE
         date > NOW() - INTERVAL '$1 days'
       GROUP BY
-        channel
+        channel_id
       ORDER BY
         total_points_given desc
         LIMIT $2`,

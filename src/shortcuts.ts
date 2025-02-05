@@ -22,6 +22,8 @@ import { blocks } from '@/lib/types/BlockIds';
 import { DirectionEnum } from '@/lib/types/Enums';
 import { PPEvent, PPEventName } from '@/lib/types/Events';
 import { regExpCreator } from '@/lib/regexpCreator';
+import { withNamespace } from '@/logger';
+const logger = withNamespace('shortcuts');
 
 app.command('/plusplus', handleSlashCommand);
 app.shortcut(actions.shortcuts.message, handleShortcut);
@@ -31,13 +33,15 @@ async function handleSlashCommand({ ack, body, command, client }: SlackCommandMi
 		await ack();
 		const singleUser = regExpCreator.createUpDownVoteRegExp();
 		const multiUser = regExpCreator.createMultiUserVoteRegExp();
-		let userIds, operator, reason;
+		let userIds: string[] = [];
+		let operator: string | undefined;
+		let reason: string | undefined;
 		if (body.text) {
 			const isSingleUser = singleUser.test(body.text);
 			const isMultiUser = multiUser.test(body.text);
 			if (isSingleUser) {
 				const matches = body.text.match(singleUser)?.groups;
-				console.log(matches);
+				logger.log(matches);
 				if (matches) {
 					userIds = [matches['userId']];
 					operator = matches['operator'];
@@ -59,10 +63,10 @@ async function handleSlashCommand({ ack, body, command, client }: SlackCommandMi
 				}
 			}
 		}
-		console.log(command, body);
+		logger.log(command, body);
 		const channel = body.channel_id;
 
-		const json: any = {
+		const json: PrivateViewMetaDataJson = {
 			channel,
 		};
 
@@ -73,12 +77,12 @@ async function handleSlashCommand({ ack, body, command, client }: SlackCommandMi
 		};
 
 		const modalView = buildMessagePlusPlusModal(json, localOptions);
-		const result = await client.views.open({
+		await client.views.open({
 			trigger_id: command.trigger_id,
 			view: modalView,
 		});
-	} catch (e: any | unknown) {
-		console.log('slash err', e);
+	} catch (e: unknown) {
+		logger.log('slash err', e);
 	}
 }
 
@@ -90,35 +94,38 @@ async function handleShortcut({
 }: SlackShortcutMiddlewareArgs<MessageShortcut> & AllMiddlewareArgs) {
 	try {
 		await ack();
-		console.log(body);
+		logger.log(body);
 		const channel = body.channel.id;
 		const messageTs = body.message.ts;
 		const userId = body.message.user;
 		const { permalink }: ChatGetPermalinkResponse = await client.chat.getPermalink({ channel, message_ts: messageTs });
 
-		const json: any = {
+		const json: { channel: string; messageTs: string; permalink: string | undefined } = {
 			channel,
 			messageTs,
 			permalink,
 		};
-		const localOptions = {
+		const localOptions: PrivateViewLocalOptions = {
 			userIds: [userId],
 			permalink,
 		};
 
 		const modalView = buildMessagePlusPlusModal(json, localOptions);
-		const result = await client.views.open({
+		await client.views.open({
 			trigger_id: shortcut.trigger_id,
 			view: modalView,
 		});
-	} catch (e: any | unknown) {
-		console.log('shortcut err', e);
+	} catch (e: unknown) {
+		logger.log('shortcut err', e);
 	}
 }
 
-function buildMessagePlusPlusModal(privateViewMetadataJson: any, localOptions: any): SlackModalDto {
-	const permlink = localOptions.permalink ? `${Md.link(localOptions.permalink, 'this message')}` : undefined;
-	const initialReason = localOptions.reason || permlink;
+function buildMessagePlusPlusModal(
+	privateViewMetadataJson: PrivateViewMetaDataJson,
+	localOptions: PrivateViewLocalOptions,
+): SlackModalDto {
+	const permalink = localOptions.permalink ? `${Md.link(localOptions.permalink, 'this message')}` : undefined;
+	const initialReason = localOptions.reason || permalink;
 	return Modal({
 		title: `${Md.emoji('rocket')} Send a PlusPlus`,
 		submit: 'Send',
@@ -181,11 +188,11 @@ app.view(
 		let idArray: string[] = [];
 		let operator: DirectionEnum = DirectionEnum.PLUS;
 		let reason: string | null | undefined;
-		const errors: { [blockId: string]: string } = {};
+		const errors: Record<string, string> = {};
 		for (const option in view.state.values) {
 			for (const key in view.state.values[option]) {
 				const state = view.state.values[option][key];
-				console.log('each key state:', state);
+				logger.info('each key state:', state);
 				switch (key) {
 					case blocks.shortcuts.message.recipients: {
 						idArray = state.selected_users as string[];
@@ -216,7 +223,7 @@ app.view(
 			let response: { toUser: IUser; fromUser: IUser };
 			try {
 				response = await scorekeeperService.incrementScore(teamId, toUserId, from, channel, increment, cleanReason);
-			} catch (e: any) {
+			} catch (e: unknown) {
 				const ephemeral: ChatPostEphemeralArguments = {
 					text: e.message,
 					channel,
@@ -253,7 +260,7 @@ app.view(
 				postArgs.thread_ts = messageTs;
 			}
 			const postResp = await client.chat.postMessage(postArgs);
-			console.log('the message post response', postResp);
+			logger.info('the message post response', postResp);
 			const plusPlusEvent: PPEvent = {
 				notificationMessage: notificationMessage.join('\n'),
 				sender: sender as IUser,
@@ -271,3 +278,15 @@ app.view(
 		}
 	},
 );
+
+interface PrivateViewMetaDataJson {
+	channel: string;
+	messageTs?: string;
+	permalink?: string;
+}
+interface PrivateViewLocalOptions {
+	userIds: (string | undefined)[];
+	operator?: string;
+	reason?: string;
+	permalink?: string;
+}

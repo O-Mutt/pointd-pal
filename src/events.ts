@@ -13,10 +13,25 @@ import {
 	PPSpamEvent,
 	PPSpamEventName,
 } from '@/lib/types/Events';
+import { withNamespace } from '@/logger';
 
-eventBus.on(PPEventName, sendPlusPlusNotification);
-eventBus.on(PPFailureEventName, sendPlusPlusFalsePositiveNotification);
-eventBus.on(PPSpamEventName, logAndNotifySpam);
+const logger = withNamespace('events');
+
+eventBus.on(PPEventName, (eve: PPEvent) => {
+	sendPlusPlusNotification(eve).catch((e) => {
+		logger.error('There was an error when posting the `++` event to the notifications room', (e as Error).message);
+	});
+});
+eventBus.on(PPFailureEventName, (eve: PPFailureEvent) => {
+	sendPlusPlusFalsePositiveNotification(eve).catch((e) => {
+		logger.error('There was an error when posting the `++` event to the notifications room', (e as Error).message);
+	});
+});
+eventBus.on(PPSpamEventName, (eve: PPSpamEvent) => {
+	logAndNotifySpam(eve).catch((e) => {
+		logger.error('There was an error when posting the `++` event to the notifications room', (e as Error).message);
+	});
+});
 
 async function sendPlusPlusNotification(ppEvent: PPEvent) {
 	const config = await configService.findOneOrCreate(ppEvent.teamId);
@@ -39,15 +54,14 @@ async function sendPlusPlusNotification(ppEvent: PPEvent) {
 	}
 
 	try {
-		const result = await app.client.chat.postMessage({
+		await app.client.chat.postMessage({
 			token: botToken,
 			channel: channelId,
 			text: ppEvent.notificationMessage,
 			attachments: [],
 		});
-	} catch (error: any | unknown) {
-		console.error('There was an error when posting the `++` event to the notifications room', error.message);
-		// logger.error(error);
+	} catch (e: unknown) {
+		logger.error('There was an error when posting the `++` event to the notifications room', (e as Error).message);
 	}
 }
 
@@ -69,17 +83,17 @@ async function sendPlusPlusFalsePositiveNotification(ppEvent: PPFailureEvent) {
 	}
 
 	try {
-		const result = await app.client.chat.postMessage({
+		await app.client.chat.postMessage({
 			token: botToken,
 			channel: channelId,
 			text: ppEvent.notificationMessage,
 		});
-	} catch (error) {
-		// logger.error(error);
+	} catch (e: unknown) {
+		logger.error('There was an error when posting the `++` event to the notifications room', (e as Error).message);
 	}
 }
 
-async function logAndNotifySpam({ sender, recipient, notificationMessage, reason, teamId }: PPSpamEvent) {
+async function logAndNotifySpam({ sender, notificationMessage, reason, teamId }: PPSpamEvent) {
 	//Logger.error(`A spam event has been detected: ${notificationObject.message}. ${notificationObject.reason}`);
 	if (!sender.slackId) {
 		return;
@@ -92,27 +106,26 @@ async function logAndNotifySpam({ sender, recipient, notificationMessage, reason
 	const botToken = teamInstallConfig.installation.bot.token;
 
 	try {
-		const result = await app.client.chat.postMessage({
+		await app.client.chat.postMessage({
 			token: botToken,
 			channel: sender.slackId,
 			text: spamMessage,
 		});
-	} catch (e: any | unknown) {
-		console.error(e);
-		// logger.error(error);
+	} catch (e: unknown) {
+		logger.error('There was an error when posting the `++` event to the notifications room', (e as Error).message);
 	}
 }
 
-async function getPermalinkToMessage(botToken, channelId, ts): Promise<string | undefined> {
+async function getPermalinkToMessage(botToken: string, channelId: string, ts: string): Promise<string | undefined> {
 	try {
-		console.log('look up the permalink', channelId, ts);
+		logger.info('look up the permalink', channelId, ts);
 		const { permalink } = await app.client.chat.getPermalink({
 			token: botToken,
 			channel: channelId,
 			message_ts: ts,
 		});
 		return permalink;
-	} catch (e: any | unknown) {
-		console.error('There was an error getting the permalink', e.message);
+	} catch (e: unknown) {
+		logger.error('There was an error getting the permalink', (e as Error).message);
 	}
 }

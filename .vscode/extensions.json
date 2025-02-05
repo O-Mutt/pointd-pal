@@ -6,7 +6,6 @@
 		"esbenp.prettier-vscode",
 		"davidanson.vscode-markdownlint",
 		"dbaeumer.vscode-eslint",
-		"eg2.vscode-npm-script",
 		"streetsidesoftware.code-spell-checker",
 		"mike-co.import-sorter"
 	],

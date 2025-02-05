@@ -1,6 +1,7 @@
 import { Md } from 'slack-block-builder';
 import { IUser } from '../entities/user';
 import { regExpCreator } from './regexpCreator';
+import { KnownEventFromType } from '@slack/bolt';
 
 export class SlackMessage {
 	static getMessageForTokenTransfer(to: IUser, from: IUser, number: number, reason: string | undefined) {
@@ -55,28 +56,33 @@ export class SlackMessage {
 		return falsePositive;
 	}
 
-	static getSayMessageArgs(message: any, text: string): any {
+	static getSayMessageArgs(message: unknown, text: string): { text: string; thread_ts?: string } {
 		if (SlackMessage.isMessageInThread(message)) {
+			// @ts-expect-error just shut up
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			return { text, thread_ts: message.thread_ts };
 		}
 		return { text };
 	}
 
-	static getMessageTs(message: any): string {
+	static getMessageTs(message: unknown): string {
 		if (SlackMessage.isMessageInThread(message)) {
+			// @ts-expect-error just shut up
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return message.thread_ts;
 		}
-		return message.ts;
+		return (message as KnownEventFromType<'message'>).ts;
 	}
 
-	static getMessageParentTs(message: any): string | undefined {
+	static getMessageParentTs(message: unknown): string | undefined {
 		if (SlackMessage.isMessageInThread(message)) {
-			return message.ts;
+			return (message as KnownEventFromType<'message'>).ts;
 		}
 		return;
 	}
 
-	static isMessageInThread(message): boolean {
+	static isMessageInThread(message: unknown): boolean {
+		// @ts-expect-error just shut up
 		if (message.thread_ts) {
 			return true;
 		}

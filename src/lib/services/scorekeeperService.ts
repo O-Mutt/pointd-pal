@@ -84,7 +84,7 @@ export async function incrementScore(
 			} as IScoreLog;
 			await scoreLogService.create(teamId, scoreLog);
 		} catch (e) {
-			console.error(
+			logger.error(
 				`failed saving spam log for user ${toUser.name} from ${fromUser.name} in channel ${channel} because ${reason}`,
 				e,
 			);
@@ -103,7 +103,7 @@ export async function incrementScore(
 
 		return { toUser, fromUser };
 	} catch (e) {
-		console.error(
+		logger.error(
 			`failed to ${incrementValue > 0 ? 'add' : 'subtract'} point to [${toId}] from [${fromId}] because [${
 				reason ? reason : 'no reason'
 			}]`,
@@ -159,7 +159,7 @@ export async function transferTokens(
 				scoreChange: numberOfTokens,
 			});
 		} catch (e) {
-			console.error(
+			logger.error(
 				`failed saving spam log for user ${toUser.name} from ${fromUser.name} in channel ${channel} because ${
 					reason ? reason : 'no reason'
 				}`,
@@ -173,7 +173,7 @@ export async function transferTokens(
 			fromUser,
 		};
 	} catch (e) {
-		console.error(
+		logger.error(
 			`failed to transfer tokens to [${toId}] from [${fromId}] because [${reason ? reason : 'no reason'}]`,
 			e,
 		);

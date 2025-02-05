@@ -6,11 +6,12 @@ import { LogLevel } from '@slack/logger';
 import { PointdPalInstallStore } from './src/lib/services/installStore';
 
 import { config } from '@/config';
-require('newrelic');
+import 'newrelic';
 
 import { healthEndpoint } from './src/lib/routes/health';
+import { logger as customLogger } from '@/logger';
 
-export let app = new App({
+export const app = new App({
 	signingSecret: config.get('slack.signingSecret'),
 	clientId: config.get('slack.signingSecret'),
 	clientSecret: config.get('slack.clientSecret'),
@@ -44,6 +45,15 @@ export let app = new App({
 		'usergroups:read',
 	],
 	customRoutes: [healthEndpoint],
+	logger: {
+		getLevel: () => config.get('logLevel') as LogLevel,
+		setLevel: (level: LogLevel) => config.set('logLevel', level),
+		debug: (...msg) => customLogger.debug(msg),
+		info: (...msg) => customLogger.info(msg),
+		warn: (...msg) => customLogger.warn(msg),
+		error: (...msg) => customLogger.error(msg),
+		setName: (name: string) => customLogger.label(name),
+	},
 });
 
 // messages
@@ -64,6 +74,7 @@ import './src/hometab.views';
 
 //shortcuts
 import './src/shortcuts';
+import logger from '@/logger';
 
 app.action('button_click', async ({ body, ack, respond }) => {
 	// Acknowledge the action
@@ -76,7 +87,7 @@ app.message(/.*/, async ({ message, context, logger }) => {
 	//await say(context.matches.input);
 });
 
-(async () => {
+await (async () => {
 	// Start your app
 	let port = 5000;
 	if (process.env.PORT) {
@@ -84,5 +95,5 @@ app.message(/.*/, async ({ message, context, logger }) => {
 	}
 	await app.start(port);
 
-	console.log(`⚡️ Bolt app is running at localhost:${port}!`);
+	logger.info(`⚡️ Bolt app is running at localhost:${port}!`);
 })();

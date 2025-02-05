@@ -29,7 +29,7 @@ app.action(
 			admins.map((a) => a.slackId),
 		).buildToObject();
 
-		const result = await client.views.open({
+		await client.views.open({
 			trigger_id: body.trigger_id,
 			view: adminSettingsModal,
 		});
@@ -38,7 +38,7 @@ app.action(
 
 app.action(
 	actions.hometab.user_settings,
-	async ({ ack, client, context, body }: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
+	async ({ ack, client, context, body, logger }: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
 		await ack();
 		const teamId = context.teamId as string;
 		const userId = body.user.id;
@@ -49,14 +49,14 @@ app.action(
 			return;
 		}
 
-		console.log('user for user settings', user);
+		logger.info('user for user settings', user);
 		const userSettingsModal = Modal({
 			title: `${Md.emoji('gear')} PointdPal Settings`,
 			submit: 'Update Settings',
 			callbackId: actions.hometab.user_settings_submit,
 		}).blocks(...buildCryptoUserBlocks(pointdPalConfig, user));
 
-		const result = await client.views.open({
+		await client.views.open({
 			trigger_id: body.trigger_id,
 			view: userSettingsModal.buildToObject() as View,
 		});
@@ -70,7 +70,7 @@ app.action(
 		const teamId = context.teamId as string;
 		const userId = body.user.id;
 		const user = await userService.findOneBySlackIdOrCreate(teamId, userId);
-		const pointdPalConfig = await configService.findOneOrCreate(teamId);
+		const _pointdPalConfig = await configService.findOneOrCreate(teamId);
 
 		if (!user.isAdmin) {
 			return;
@@ -92,11 +92,7 @@ app.action(
 	},
 );
 
-function buildAdminModal(
-	pointdPalConfig: IPointdPalConfig,
-	admins: string[],
-	enabledOverride: boolean = false,
-): ModalBuilder {
+function buildAdminModal(pointdPalConfig: IPointdPalConfig, admins: string[], _enabledOverride = false): ModalBuilder {
 	return Modal({
 		title: `${Md.emoji('gear')} PointdPal Settings`,
 		submit: 'Update Settings',

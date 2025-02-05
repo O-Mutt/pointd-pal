@@ -3,17 +3,16 @@ import pluralize from 'pluralize';
 
 const logger = withNamespace('StringUtil');
 export class StringUtil {
-	static pluralize(countable: any, noun: string) {
+	static pluralize(noun: string, countable: unknown, includeNumberPrefix = false): string {
 		if (Array.isArray(countable)) {
-			return pluralize(countable.length, noun);
+			return pluralize(noun, countable.length, includeNumberPrefix);
 		} else if (typeof countable === 'number') {
-			return pluralize(countable, noun);
+			return pluralize(noun, countable, includeNumberPrefix);
 		} else if (typeof countable === 'object') {
-			return pluralize(Object.keys(countable).length, noun);
-		} else {
-			logger.error('pluralize expects an array or a number');
-			return '';
+			return pluralize(noun, Object.keys(countable ?? {}).length, includeNumberPrefix);
 		}
+		logger.error('pluralize expects an array or a number');
+		return '';
 	}
 
 	static cleanAndEncode(str: string | null | undefined): string | undefined {
@@ -22,7 +21,7 @@ export class StringUtil {
 		}
 
 		// this should fix a dumb issue with mac quotes
-		const trimmed = JSON.parse(JSON.stringify(str.trim().toLowerCase()));
+		const trimmed = JSON.parse(JSON.stringify(str.trim().toLowerCase())) as string;
 		const buff = Buffer.from(trimmed);
 		const base64data = buff.toString('base64');
 		return base64data;
@@ -38,7 +37,7 @@ export class StringUtil {
 		return text;
 	}
 
-	static obfuscate(str: string, amountToLeaveUnobfuscated: number = 3): string {
+	static obfuscate(str: string, amountToLeaveUnobfuscated = 3): string {
 		if (!str) {
 			return str ?? '';
 		}
@@ -70,7 +69,7 @@ export class StringUtil {
 
 declare global {
 	interface String {
-		pluralize(countable: any): string;
+		pluralize(countable: unknown, includeNumberPrefix?: boolean): string;
 		cleanAndEncode(): string | undefined;
 		decode(): string | undefined;
 		obfuscate(amountToLeaveUnobfuscated?: number): string;
@@ -80,8 +79,8 @@ declare global {
 	}
 }
 
-String.prototype.pluralize = function (countable: any): string {
-	return StringUtil.pluralize(countable, this.toString());
+String.prototype.pluralize = function (countable: unknown, includeNumberPrefix = false): string {
+	return StringUtil.pluralize(this.toString(), countable, includeNumberPrefix);
 };
 String.prototype.cleanAndEncode = function (): string {
 	return StringUtil.cleanAndEncode(this.toString()) ?? '';
@@ -91,7 +90,7 @@ String.prototype.decode = function (): string {
 	return StringUtil.decode(this.toString()) ?? '';
 };
 
-String.prototype.obfuscate = function (amountToLeaveUnobfuscated: number = 3): string {
+String.prototype.obfuscate = function (amountToLeaveUnobfuscated = 3): string {
 	return StringUtil.obfuscate(this.toString(), amountToLeaveUnobfuscated);
 };
 
