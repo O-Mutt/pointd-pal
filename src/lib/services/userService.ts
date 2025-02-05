@@ -9,7 +9,7 @@ import { app } from '@/app';
  */
 export async function getAllUsersByTeam(teamId: string): Promise<IUser[]> {
 	const connection = await getConnection(teamId);
-	const result = await connection.query(`SELECT * FROM users`);
+	const result = await connection.query<IUser>(`SELECT * FROM users`);
 	return result.rows;
 }
 
@@ -53,7 +53,9 @@ export async function findOneBySlackIdOrCreate(teamId: string, slackId: string):
 
 export async function setUserAsAdmin(teamId: string, slackId: string): Promise<IUser> {
 	const connection = await getConnection(teamId);
-	const result = await connection.query(`UPDATE users SET is_admin = true WHERE slack_id = $1 RETURNING *`, [slackId]);
+	const result = await connection.query<IUser>(`UPDATE users SET is_admin = true WHERE slack_id = $1 RETURNING *`, [
+		slackId,
+	]);
 	return result.rows[0];
 }
 
@@ -63,19 +65,20 @@ export async function update(teamId: string, user: IUser) {
 		.map((key, index) => `${key} = $${index + 2}`)
 		.join(', ');
 	const values = Object.values(user);
-	const result = await connection.query(
+	const result = await connection.query<IUser>(
 		`
 		UPDATE users
 			SET ${fields}
 			WHERE id = $1
 			RETURNING *`,
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		[user.id, ...values],
 	);
-	return result.rows[0] || null;
+	return result.rows[0];
 }
 
 export async function getAllByPredicate(teamId: string, predicate: string): Promise<IUser[]> {
 	const connection = await getConnection(teamId);
-	const result = await connection.query(`SELECT * FROM users WHERE ${predicate}`);
+	const result = await connection.query<IUser>(`SELECT * FROM users WHERE ${predicate}`);
 	return result.rows;
 }

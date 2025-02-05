@@ -22,6 +22,7 @@ app.message(new RegExp('how much .*point.*', 'i'), tellHowMuchPointsAreWorth);
 async function respondWithHelpGuidance({
 	client,
 	message,
+	logger,
 }: AllMiddlewareArgs & SlackEventMiddlewareArgs<'message'> & StringIndexed) {
 	const helpMessage = ''
 		.concat('`< name > ++[<reason>]` - Increment score for a name (for a reason)\n')
@@ -49,8 +50,7 @@ async function respondWithHelpGuidance({
 	try {
 		await client.chat.postMessage(theMessage.buildToObject() as ChatPostMessageArguments);
 	} catch (e: unknown) {
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-expect-error
+		// @ts-expect-error loud noise because of responses
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		logger.error('error', e?.data?.response_metadata?.message, theMessage.printPreviewUrl());
 	}
