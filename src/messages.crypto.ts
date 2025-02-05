@@ -14,10 +14,10 @@ import { app } from '@/app';
 import { regExpCreator } from '@/lib/regexpCreator';
 import { actions } from '@/lib/types/Actions';
 import { ConfirmOrCancel } from '@/lib/types/Enums';
-import * as userService from '@/lib/services/userService';
-import * as databaseService from '@/lib/services/databaseService';
+import * as userService from '@/services/userService';
+import * as databaseService from '@/services/databaseService';
 import { SlackMessage } from './lib/slackMessage';
-import * as botTokenService from '@/lib/services/botTokenService';
+import * as botTokenService from '@/services/botTokenService';
 
 app.message(regExpCreator.getBotWallet(), directMention, botWalletCount);
 

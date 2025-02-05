@@ -8,8 +8,8 @@ import { IUser } from '@//entities/user';
 import { actions } from '@/lib/types/Actions';
 import { IPointdPalConfig } from '@/entities/pointdPalConfig';
 import { blocks } from '@/lib/types/BlockIds';
-import * as userService from '@/lib/services/userService';
-import * as configService from '@/lib/services/configService';
+import * as userService from '@/services/userService';
+import * as configService from '@/services/configService';
 
 app.action(
 	actions.hometab.admin_settings,

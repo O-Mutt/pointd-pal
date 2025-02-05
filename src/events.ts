@@ -1,10 +1,10 @@
 import { Md } from 'slack-block-builder';
 
 import { app } from '../app';
-import { eventBus } from '@/lib/services/eventBus';
-import * as configService from '@/lib/services/configService';
-import * as installService from '@/lib/services/installService';
-import * as slackService from '@/lib/services/slack';
+import { eventBus } from '@/services/eventBus';
+import * as configService from '@/services/configService';
+import * as installService from '@/services/installService';
+import * as slackService from '@/services/slack';
 import {
 	PPEvent,
 	PPEventName,

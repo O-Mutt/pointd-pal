@@ -1,7 +1,7 @@
 ci/cd:
   - changed-files:
       - any-glob-to-any-file:
-          - .github/workflows/*
+          - .github/**/*
           - Dockerfile
           - opslevel.yml
 
@@ -21,58 +21,65 @@ Tests:
   - changed-files:
       - any-glob-to-any-file:
           - test/**
-          - '**/*Tests.cs'
+          - '**/*.test.*'
+          - '**/*.tests.*'
+          - '**/*.spec.*'
 
-Solution:
-  - changed-files:
-      - any-glob-to-any-file:
-          - '**/*.sln'
-
-Project:
-  - changed-files:
-      - any-glob-to-any-file:
-          - '**/*.csproj'
-
-Freyja:
+Pointd-Pal:
   - changed-files:
       - any-glob-to-any-file:
           - '**/*.*/**'
 
-LibComponents:
-  - changed-files:
-      - any-glob-to-any-file:
-          - 'lib-components/**'
 
-API:
+Services:
   - changed-files:
       - any-glob-to-any-file:
-          - 'src/api**'
+          - 'src/lib/services/**'
 
-Style:
+WebRoutes:
   - changed-files:
       - any-glob-to-any-file:
-          - '**/*.css'
+          - 'src/lib/routes/**'
 
-Vue:
+Types:
   - changed-files:
       - any-glob-to-any-file:
-          - '**/*.vue'
+          - 'src/lib/types/**'
 
-DAL:
+Util:
   - changed-files:
       - any-glob-to-any-file:
-          - '**/*.Data/**'
-          - '**/*.DAL/**'
+          - 'src/lib/*.*'
 
-DTO:
+Messages:
   - changed-files:
       - any-glob-to-any-file:
-          - '**/*.DTO/**'
+          - 'src/messages.*'
 
-Logic:
+Menu:
   - changed-files:
       - any-glob-to-any-file:
-          - '**/*.Logic/**'
+          - 'src/hometab*'
+
+Events:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/events*'
+
+Cron:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/cron/**'
+
+Config:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/config/**'
+
+Entities:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/entities/**'
 
 XXL:
   - changed-files:

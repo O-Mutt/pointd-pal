@@ -4,7 +4,7 @@ import { PointdPalConfig } from './config.schema';
 const config = convict<PointdPalConfig>({
 	env: {
 		doc: 'The application environment.',
-		format: ['production', 'development', 'test'],
+		format: ['development', 'test', 'production'],
 		default: 'development',
 		env: 'NODE_ENV',
 	},

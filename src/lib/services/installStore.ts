@@ -1,6 +1,6 @@
 import { app } from '@/app';
 import { IInstallation } from '@/entities/installation';
-import * as installService from '@/lib/services/installService';
+import * as installService from '@/services/installService';
 import { withNamespace } from '@/logger';
 import { Installation, InstallationQuery, InstallationStore } from '@slack/bolt';
 

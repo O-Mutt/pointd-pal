@@ -3,8 +3,8 @@ import { AllMiddlewareArgs, SlackViewMiddlewareArgs, ViewSubmitAction } from '@s
 import { app } from '../app';
 import { actions } from '@/lib/types/Actions';
 import { blocks } from '@/lib/types/BlockIds';
-import * as userService from '@/lib/services/userService';
-import * as configService from '@/lib/services/configService';
+import * as userService from '@/services/userService';
+import * as configService from '@/services/configService';
 
 app.view(
 	actions.hometab.admin_settings_submit,
