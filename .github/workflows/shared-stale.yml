@@ -1,0 +1,10 @@
+name: Run shared stale checks
+
+on:
+  schedule:
+    - cron: '30 1 * * *'
+
+jobs:
+  stale-prs:
+    uses: DEMGroup/.github/.github/workflows/stale-prs.yml@main
+    secrets: inherit

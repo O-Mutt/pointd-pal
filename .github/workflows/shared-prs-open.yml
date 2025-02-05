@@ -1,0 +1,13 @@
+name: Run PR checks for open prs
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - ready_for_review
+
+jobs:
+  pr-stats:
+    uses: DEMGroup/.github/.github/workflows/pr-stats.yml@main
+    secrets: inherit

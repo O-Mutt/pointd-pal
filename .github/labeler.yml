@@ -1,0 +1,97 @@
+ci/cd:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/workflows/*
+          - Dockerfile
+          - opslevel.yml
+
+Developer-Experience:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/**
+          - .vscode/**
+          - .*
+          - swagger.json
+          - '*.json'
+          - '*.yml'
+          - '*.yaml'
+          - CODEOWNERS
+
+Tests:
+  - changed-files:
+      - any-glob-to-any-file:
+          - test/**
+          - '**/*Tests.cs'
+
+Solution:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.sln'
+
+Project:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.csproj'
+
+Freyja:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.*/**'
+
+LibComponents:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'lib-components/**'
+
+API:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/api**'
+
+Style:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.css'
+
+Vue:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.vue'
+
+DAL:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.Data/**'
+          - '**/*.DAL/**'
+
+DTO:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.DTO/**'
+
+Logic:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.Logic/**'
+
+XXL:
+  - changed-files:
+      - any-glob-to-any-file: ['file.xxl.never']
+XL:
+  - changed-files:
+      - any-glob-to-any-file: ['file.xl.never']
+L:
+  - changed-files:
+      - any-glob-to-any-file: ['file.l.never']
+M:
+  - changed-files:
+      - any-glob-to-any-file: ['file.m.never']
+S:
+  - changed-files:
+      - any-glob-to-any-file: ['file.s.never']
+XS:
+  - changed-files:
+      - any-glob-to-any-file: ['file.xs.never']
+XXS:
+  - changed-files:
+      - any-glob-to-any-file: ['file.xxs.never']
