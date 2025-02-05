@@ -8,13 +8,7 @@ import { IUser } from '@/entities/user';
 import { regExpCreator } from '@/lib/regexpCreator';
 import * as scoreboardService from '@/lib/services/scoreboardService';
 import * as userService from '@/lib/services/userService';
-import {
-	AllMiddlewareArgs,
-	directMention,
-	EventTypePattern,
-	SlackEventMiddlewareArgs,
-	StringIndexed,
-} from '@slack/bolt';
+import { AllMiddlewareArgs, directMention, SlackEventMiddlewareArgs, StringIndexed } from '@slack/bolt';
 import { ChatPostMessageArguments } from '@slack/web-api';
 
 import { SlackMessage } from './lib/slackMessage';
@@ -79,7 +73,7 @@ async function respondWithLeaderLoserBoard({
 	context,
 	logger,
 	say,
-}: AllMiddlewareArgs & SlackEventMiddlewareArgs<'message'> & StringIndexed & EventTypePattern) {
+}: AllMiddlewareArgs & SlackEventMiddlewareArgs<'message'> & StringIndexed) {
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 	const { topOrBottom, digits }: { topOrBottom: string; digits: number } = context.matches.groups;
 	const teamId = context.teamId as string;
