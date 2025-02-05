@@ -183,12 +183,15 @@ app.view(
 		await ack();
 		const teamId = context.teamId as string;
 		const from = body.user.id;
-		const { channel, messageTs, permalink } = JSON.parse(view.private_metadata);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const { channel, messageTs, _permalink }: { channel: string; messageTs: string; _permalink: string } = JSON.parse(
+			view.private_metadata,
+		);
 
 		let idArray: string[] = [];
 		let operator: DirectionEnum = DirectionEnum.PLUS;
 		let reason: string | null | undefined;
-		const errors: Record<string, string> = {};
+		// const errors: Record<string, string> = {};
 		for (const option in view.state.values) {
 			for (const key in view.state.values[option]) {
 				const state = view.state.values[option][key];
@@ -225,7 +228,7 @@ app.view(
 				response = await scorekeeperService.incrementScore(teamId, toUserId, from, channel, increment, cleanReason);
 			} catch (e: unknown) {
 				const ephemeral: ChatPostEphemeralArguments = {
-					text: e.message,
+					text: (e as Error).message,
 					channel,
 					user: from,
 				};

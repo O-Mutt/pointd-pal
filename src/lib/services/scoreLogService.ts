@@ -3,12 +3,13 @@ import { getConnection } from '@/lib/services/databaseService';
 
 export async function create(teamId: string, scoreLog: IScoreLog): Promise<IScoreLog> {
 	const connection = await getConnection(teamId);
-	return connection.query(
+	const result = await connection.query<IScoreLog>(
 		`
-    INSERT INTO score_log (from, to, date, channel, reason, score_change)
+    INSERT INTO score_log (from, to, date, channel_id, reason, score_change)
     VALUES ($1, $2, $3, $4, $5, $6)
     RETURNING *;
   `,
-		[scoreLog.from, scoreLog.to, scoreLog.date, scoreLog.channel, scoreLog.reason, scoreLog.scoreChange],
+		[scoreLog.from, scoreLog.to, scoreLog.date, scoreLog.channelId, scoreLog.reason, scoreLog.scoreChange],
 	);
+	return result.rows[0];
 }

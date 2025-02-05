@@ -183,7 +183,7 @@ async function mapSlackIdToEmail({ message, context, logger, say, client }) {
 
 // 		for (const hubotishUser of hubotishUsers) {
 // 			logger.debug('Map this member', hubotishUser.slackId, hubotishUser.name);
-// 			hubotishUser.pointdPalToken = hubotishUser.token || hubotishUser.pointdPalToken;
+// 			hubotishUser.token = hubotishUser.token || hubotishUser.token;
 // 			delete hubotishUser.token;
 // 			hubotishUser.email = hubotishUser.slackEmail || hubotishUser.email;
 // 			delete hubotishUser.slackEmail;
@@ -228,7 +228,7 @@ async function joinAllPointdPalChannels({ say, logger, message, client, context 
 		result = await client.conversations.list({ team_id: teamId });
 	} catch (e: unknown) {
 		// logger.error(e)
-		logger.error('Error getting list of conversations', e.message);
+		logger.error('Error getting list of conversations', (e as Error).message);
 	}
 	if (!result || !result.channels) {
 		logger.info('could not find conversation list in migration');

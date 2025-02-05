@@ -61,7 +61,7 @@ export class MessageBuilder {
 
 	private static getCryptoScore(user: IUser) {
 		if (user.accountLevel && user.accountLevel > 1) {
-			const str = ` (${user.pointdPalToken} PointdPal ${'Token'.pluralize(user.pointdPalToken)})`;
+			const str = ` (${'PointdPal Token'.pluralize(user.token, true)})`;
 			return Md.bold(str);
 		}
 		return '';

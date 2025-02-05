@@ -1,12 +1,14 @@
 import { IScoreLog } from '@/entities/scoreLog';
 import { getConnection } from './databaseService';
 import { IUser } from '@/entities/user';
+import { withNamespace } from '@/logger';
+const logger = withNamespace('scoreboardService');
 
 export async function getTopScores(teamId: string, amount: number) {
 	const connection = await getConnection(teamId);
-	const result = await connection.query<Pick<IUser, 'score'>>(
+	const result = await connection.query<Pick<IUser, 'id' | 'score' | 'token' | 'slackId' | 'accountLevel'>>(
 		`
-    SELECT score
+    SELECT id, score, token, slack_id, account_level
       FROM users
       ORDER BY
         score DESC
@@ -15,16 +17,16 @@ export async function getTopScores(teamId: string, amount: number) {
 		[amount],
 	);
 
-	//Logger.debug('Trying to find top scores');
+	logger.debug('Trying to find top scores');
 
 	return result.rows;
 }
 
 export async function getBottomScores(teamId: string, amount: number) {
 	const connection = await getConnection(teamId);
-	const result = await connection.query<Pick<IUser, 'score'>>(
+	const result = await connection.query<Pick<IUser, 'id' | 'score' | 'token' | 'slackId' | 'accountLevel'>>(
 		`
-    SELECT score
+    SELECT id, score, token, slack_id, account_level
       FROM users
       ORDER BY
         score ASC
@@ -33,16 +35,16 @@ export async function getBottomScores(teamId: string, amount: number) {
 		[amount],
 	);
 
-	//Logger.debug('Trying to find bottom ${amount} scores');
+	logger.debug('Trying to find bottom ${amount} scores');
 
 	return result.rows;
 }
 
 export async function getTopTokens(teamId: string, amount: number) {
 	const connection = await getConnection(teamId);
-	const result = await connection.query<Pick<IUser, 'score'>>(
+	const result = await connection.query<Pick<IUser, 'id' | 'score' | 'token' | 'slackId' | 'accountLevel'>>(
 		`
-    SELECT score
+    SELECT id, score, token, slack_id, account_level
       FROM users
       WHERE account_level >= 2
       ORDER BY
@@ -52,16 +54,16 @@ export async function getTopTokens(teamId: string, amount: number) {
 		[amount],
 	);
 
-	//Logger.debug('Trying to find top ${amount} tokens');
+	logger.debug('Trying to find top ${amount} tokens');
 
 	return result.rows;
 }
 
 export async function getBottomTokens(teamId: string, amount: number) {
 	const connection = await getConnection(teamId);
-	const result = await connection.query<Pick<IUser, 'score'>>(
+	const result = await connection.query<Pick<IUser, 'id' | 'score' | 'token' | 'slackId' | 'accountLevel'>>(
 		`
-    SELECT score
+    SELECT id, score, token, slack_id, account_level
       FROM users
       WHERE account_level >= 2
       ORDER BY
@@ -71,16 +73,16 @@ export async function getBottomTokens(teamId: string, amount: number) {
 		[amount],
 	);
 
-	//Logger.debug('Trying to find top ${amount} tokens');
+	logger.debug('Trying to find top ${amount} tokens');
 
 	return result.rows;
 }
 
 export async function getTopSender(teamId: string, amount: number) {
 	const connection = await getConnection(teamId);
-	const result = await connection.query<Pick<IUser, 'totalPointsGiven'>>(
+	const result = await connection.query<Pick<IUser, 'id' | 'totalPointsGiven' | 'slackId'>>(
 		`
-    SELECT total_points_given
+    SELECT id, slack_id, total_points_given
       FROM users
       ORDER BY
         total_points_given DESC
@@ -89,16 +91,16 @@ export async function getTopSender(teamId: string, amount: number) {
 		[amount],
 	);
 
-	//Logger.debug('Trying to find top scores');
+	logger.debug('Trying to find top scores');
 
 	return result.rows;
 }
 
 export async function getBottomSender(teamId: string, amount: number) {
 	const connection = await getConnection(teamId);
-	const result = await connection.query<Pick<IUser, 'totalPointsGiven'>>(
+	const result = await connection.query<Pick<IUser, 'id' | 'totalPointsGiven' | 'slackId'>>(
 		`
-    SELECT total_points_given
+    SELECT slack_id, total_points_given
       FROM users
       ORDER BY
         total_points_given ASC
@@ -107,7 +109,7 @@ export async function getBottomSender(teamId: string, amount: number) {
 		[amount],
 	);
 
-	//Logger.debug('Trying to find top scores');
+	logger.debug('Trying to find top scores');
 
 	return result.rows;
 }
@@ -128,7 +130,7 @@ export async function getTopSenderInDuration(teamId: string, amount = 10, days =
 		[days, amount],
 	);
 
-	//Logger.debug('Trying to find top scores');
+	logger.debug('Trying to find top scores');
 
 	return result.rows;
 }
@@ -149,7 +151,7 @@ export async function getTopReceiverInDuration(teamId: string, amount = 10, days
 		[days, amount],
 	);
 
-	//Logger.debug('Trying to find top scores');
+	logger.debug('Trying to find top scores');
 
 	return result.rows;
 }

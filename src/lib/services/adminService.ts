@@ -5,9 +5,9 @@ export async function erase(teamId: string, toBeErased: IUser, reason?: string):
 	const connection = await getConnection(teamId);
 
 	if (reason) {
-		const reasons = await connection.query(`SELECT reasons FROM users WHERE slackId = $1`, [toBeErased.slackId]);
-		const reasonScore = reasons.rows[0].reasons[reason];
-		const filteredReasons = reasons.rows[0].reasons.filter((k, v) => k !== reason);
+		const reasons = await connection.query<IUser>(`SELECT reasons FROM users WHERE slackId = $1`, [toBeErased.slackId]);
+		const reasonScore = reasons.rows[0].reasons.get(reason);
+		const filteredReasons = Object.fromEntries(Object.entries(reasons.rows[0].reasons).filter(([k]) => k !== reason));
 
 		await connection.query(`UPDATE users SET reasons = $1, score = score - $2 WHERE id = $3`, [
 			filteredReasons,

@@ -73,11 +73,11 @@ export async function isSpam(teamId: string, to: IUser, from: IUser) {
 }
 
 export async function updateAccountLevelToTwo(user: IUser): Promise<void> {
-	user.pointdPalToken = user.score;
+	user.token = user.score;
 	user.accountLevel = 2;
 	await userService.update(user.teamId, user);
 
-	await botTokenService.subtractTokens(user.pointdPalToken);
+	await botTokenService.subtractTokens(user.token);
 	eventBus.emit('plusplus-tokens');
 	return;
 }
@@ -90,8 +90,8 @@ export async function updateAccountLevelToTwo(user: IUser): Promise<void> {
  * @returns {object} the user who received the points updated value
  */
 export async function transferTokens(teamId: string, user: IUser, from: IUser, scoreChange: number): Promise<void> {
-	user.pointdPalToken = user.pointdPalToken || 0 + scoreChange;
-	from.pointdPalToken = from.pointdPalToken || 0 - scoreChange;
+	user.token = user.token || 0 + scoreChange;
+	from.token = from.token || 0 - scoreChange;
 	await userService.update(teamId, user);
 	await userService.update(teamId, from);
 	return;

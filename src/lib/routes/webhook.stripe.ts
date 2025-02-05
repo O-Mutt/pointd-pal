@@ -6,18 +6,21 @@ export const stripeEndpoint: CustomRoute = {
 	method: ['POST'],
 	handler: (req: IncomingMessage, res: ServerResponse) => {
 		let body;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment
 		req.on('data', (chunk) => (body ? (body += chunk) : (body = chunk)));
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		req.on('end', async () => {
 			await handleStripeEvent(body, req, res);
 		});
 	},
 };
 
-async function handleStripeEvent(body: any, req: IncomingMessage, res: ServerResponse) {
-	const sig = req.headers['stripe-signature'] as string | string[];
+// eslint-disable-next-line @typescript-eslint/require-await
+async function handleStripeEvent(body: unknown, req: IncomingMessage, res: ServerResponse) {
+	const _sig = req.headers['stripe-signature'] as string | string[];
 
-	let type;
-	let value;
+	let _type;
+	let _value;
 	try {
 		// const stripe = new StripeService();
 		// ({
@@ -70,9 +73,9 @@ async function handleStripeEvent(body: any, req: IncomingMessage, res: ServerRes
 		res.writeHead(200);
 		res.end();
 		return;
-	} catch (err: any | unknown) {
+	} catch (err: unknown) {
 		res.writeHead(400);
-		res.write(`Webhook Error: ${err.message}`);
+		res.write(`Webhook Error: ${(err as Error).message}`);
 		res.end();
 		return;
 	}

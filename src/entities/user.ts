@@ -12,7 +12,7 @@ export interface IUser extends AuditTags {
 	totalPointsGiven: number;
 	isAdmin: boolean;
 	isBot: boolean;
-	pointdPalToken: number;
+	token: number;
 	email?: string;
 	name?: string;
 	walletAddress?: string;

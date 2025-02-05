@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import ImageCharts from 'image-charts';
-import { sampleSize, map, take } from 'lodash';
+import { map, sampleSize, take } from 'lodash';
 import { Blocks, Md, Message } from 'slack-block-builder';
 
 import { app } from '@/app';
@@ -39,7 +39,7 @@ async function respondWithScore({
 
 	let tokenString = '.';
 	if (user.accountLevel > 1) {
-		const partialTokenStr = `${user.pointdPalToken} PointdPal ${'Token'.pluralize(user.pointdPalToken)}`;
+		const partialTokenStr = `${'PointdPal Token'.pluralize(user.token, true)}`;
 		tokenString = ` (${Md.bold(partialTokenStr)}).`;
 	}
 
@@ -70,7 +70,7 @@ async function respondWithScore({
 	}
 
 	const sayArgs = SlackMessage.getSayMessageArgs(message, `${baseString}${reasonsStr}`);
-	const sayResponse = await say(sayArgs);
+	await say(sayArgs);
 }
 
 async function respondWithLeaderLoserBoard({
@@ -78,24 +78,23 @@ async function respondWithLeaderLoserBoard({
 	message,
 	context,
 	logger,
-	_say,
+	say,
 }: AllMiddlewareArgs & SlackEventMiddlewareArgs<'message'> & StringIndexed & EventTypePattern) {
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 	const { topOrBottom, digits }: { topOrBottom: string; digits: number } = context.matches.groups;
 	const teamId = context.teamId as string;
 	const topOrBottomString = topOrBottom.capitalizeFirstLetter();
-	const methodName = `get${topOrBottomString}Scores`;
+	const methodName = `get${topOrBottomString}Scores` as 'getTopScores' | 'getBottomScores';
 	const tops = await scoreboardService[methodName](teamId, digits);
 
 	const messages: string[] = [];
 	if (tops.length > 0) {
 		for (let i = 0, end = tops.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
 			if (tops[i].accountLevel && tops[i].accountLevel > 1) {
-				const tokenStr = tops[i].pointdPalToken > 1 ? 'Tokens' : 'Token';
 				messages.push(
 					`${i + 1}. ${Md.user(tops[i].slackId)}: ${tops[i].score} (*${
-						tops[i].pointdPalToken
-					} ${'pointdPal'.capitalizeFirstLetter()} ${tokenStr}*)`,
+						tops[i].token
+					} ${'pointdPal'.capitalizeFirstLetter()} ${'Token'.pluralize(tops[i].token)}*)`,
 				);
 			} else {
 				messages.push(`${i + 1}. ${Md.user(tops[i].slackId)}: ${tops[i].score}`);
@@ -128,6 +127,7 @@ async function respondWithLeaderLoserBoard({
 
 	try {
 		await client.chat.postMessage(theMessage.buildToObject() as ChatPostMessageArguments);
+		await say('welp, there you go');
 	} catch (e: unknown) {
 		logger.error('error', e, theMessage.printPreviewUrl());
 	}
@@ -143,18 +143,16 @@ async function respondWithLeaderLoserTokenBoard({
 	const { topOrBottom, digits }: { topOrBottom: string; digits: number } = context.matches.groups;
 	const teamId = context.teamId as string;
 	const topOrBottomString = topOrBottom.capitalizeFirstLetter();
-	const methodName = `get${topOrBottomString}Tokens`;
+	const methodName = `get${topOrBottomString}Tokens` as 'getTopTokens' | 'getBottomTokens';
 	const tops = await scoreboardService[methodName](teamId, digits);
 
 	const messages: string[] = [];
 	if (tops.length > 0) {
 		for (let i = 0, end = tops.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
-			const tokenStr = tops[i].pointdPalToken > 1 ? 'Tokens' : 'Token';
-			const pointStr = tops[i].score > 1 ? 'points' : 'point';
 			messages.push(
-				`${i + 1}. ${Md.user(tops[i].slackId)}: *${tops[i].pointdPalToken} PointdPal ${tokenStr}* (${
+				`${i + 1}. ${Md.user(tops[i].slackId)}: *${tops[i].token} PointdPal ${'Token'.pluralize(tops[i].token)}* (${
 					tops[i].score
-				} ${pointStr})`,
+				} ${'points'.pluralize(tops[i].score)})`,
 			);
 		}
 	} else {
@@ -164,7 +162,7 @@ async function respondWithLeaderLoserTokenBoard({
 	const chartText = `PointdPal ${topOrBottomString} ${digits} Token(s)`;
 	const graphSize = Math.min(tops.length, Math.min(digits, 20));
 	const topNNames = take(map(tops, 'name'), graphSize).join('|');
-	const topNTokens = take(map(tops, 'pointdPalToken'), graphSize).join(',');
+	const topNTokens = take(map(tops, 'token'), graphSize).join(',');
 	const chartUrl = new ImageCharts()
 		.cht('bvg')
 		.chs('999x200')
@@ -199,7 +197,8 @@ async function getTopPointSenders({
 	const { topOrBottom, digits }: { topOrBottom: string; digits: number } = context.matches.groups;
 	const teamId = context.teamId as string;
 	const topOrBottomString = topOrBottom.capitalizeFirstLetter();
-	const methodName = `get${topOrBottomString}Sender`;
+
+	const methodName = `get${topOrBottomString}Sender` as 'getTopSender' | 'getBottomSender';
 	const tops = await scoreboardService[methodName](teamId, digits);
 
 	const messages: string[] = [];

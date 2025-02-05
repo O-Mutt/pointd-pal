@@ -9,7 +9,7 @@ export class SlackMessage {
 			return '';
 		}
 
-		const scoreStr = `${Md.user(from.slackId)} transferred *${number}* Pointd Pal ${'Token'.pluralize(number)} to ${Md.user(to.slackId)}.\n${Md.user(to.slackId)} now has ${to.pointdPalToken} ${'token'.pluralize(to.pointdPalToken || 0)}`;
+		const scoreStr = `${Md.user(from.slackId)} transferred *${number}* Pointd Pal ${'Token'.pluralize(number)} to ${Md.user(to.slackId)}.\n${Md.user(to.slackId)} now has ${'token'.pluralize(to.token || 0, true)}`;
 		let reasonStr = '.';
 		let cakeDayStr = '';
 
@@ -32,9 +32,7 @@ export class SlackMessage {
 			const yearsAsString = to.pointdPalDay.getYearsAsString();
 			cakeDayStr = `\n:birthday: Today is ${Md.user(to.slackId)}'s ${yearsAsString} Pointd Pal day! :birthday:`;
 		}
-		return `${scoreStr}${reasonStr}${cakeDayStr}\n_${Md.user(from.slackId)} has ${
-			from.pointdPalToken
-		} ${'token'.pluralize(from.pointdPalToken || 0)}_`;
+		return `${scoreStr}${reasonStr}${cakeDayStr}\n_${Md.user(from.slackId)} has ${'token'.pluralize(from.token || 0, true)}_`;
 	}
 
 	/*

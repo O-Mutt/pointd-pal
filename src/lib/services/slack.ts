@@ -1,5 +1,7 @@
 import { ConversationsListResponse } from '@slack/web-api';
 import { app } from '../../../app';
+import { withNamespace } from '@/logger';
+const logger = withNamespace('slackService');
 
 export async function findOrCreateConversation(
 	token?: string,
@@ -14,7 +16,7 @@ export async function findOrCreateConversation(
 		result = await app.client.conversations.list({ token: token, team_id: teamId });
 	} catch (e: unknown) {
 		// logger.error(e)
-		logger.error('Error getting list of conversations', e.message);
+		logger.error('Error getting list of conversations', (e as Error).message);
 	}
 
 	if (!result || !result.channels) {
@@ -34,7 +36,7 @@ export async function findOrCreateConversation(
 			// logger.error(e)
 			logger.error(
 				"This may be a known error and we should probably check for the e.warning === 'already_in_channel' but:",
-				e.message,
+				(e as Error).message,
 			);
 			return;
 		}
@@ -46,7 +48,7 @@ export async function findOrCreateConversation(
 		return channel?.id;
 	} catch (e: unknown) {
 		// logger.error(e)
-		logger.error('Error creating the conversation for notifications', e.message);
+		logger.error('Error creating the conversation for notifications', (e as Error).message);
 		return;
 	}
 }

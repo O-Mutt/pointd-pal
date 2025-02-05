@@ -1,20 +1,20 @@
-import { IUser } from '@/entities/user';
-import { config } from '@/config';
-import { PPSpamEvent, PPSpamEventName } from '../types/Events';
-import { eventBus } from './eventBus';
 import { Md } from 'slack-block-builder';
-import { ChatPostMessageArguments } from '@slack/web-api';
-import { app } from '../../../app';
-import * as installService from '@/lib/services/installService';
-import { IScoreLog } from '../../entities/scoreLog';
-import { getConnection } from './databaseService';
-import * as botTokenService from '@/lib/services/botTokenService';
-import * as userService from '@/lib/services/userService';
+
+import { app } from '@/app';
+import { config } from '@/config';
+import { IScoreLog } from '@/entities/scoreLog';
+import { IUser } from '@/entities/user';
 import * as adminService from '@/lib/services/adminService';
-import * as databaseService from '@/lib/services/databaseService';
-import { withNamespace } from '@/logger';
+import * as botTokenService from '@/lib/services/botTokenService';
 import * as configService from '@/lib/services/configService';
+import * as databaseService from '@/lib/services/databaseService';
+import { eventBus } from '@/lib/services/eventBus';
+import * as installService from '@/lib/services/installService';
 import * as scoreLogService from '@/lib/services/scoreLogService';
+import * as userService from '@/lib/services/userService';
+import { PPSpamEvent, PPSpamEventName } from '@/lib/types/Events';
+import { withNamespace } from '@/logger';
+import { ChatPostMessageArguments } from '@slack/web-api';
 
 const logger = withNamespace('scorekeeperService');
 /**
@@ -30,12 +30,11 @@ export async function incrementScore(
 	teamId: string,
 	toId: string,
 	fromId: string,
-	channel: string,
+	channelId: string,
 	incrementValue: number,
 	reason?: string,
 ): Promise<{ toUser: IUser; fromUser: IUser }> {
 	try {
-		const connection = await getConnection(teamId);
 		const toUser = await userService.findOneBySlackIdOrCreate(teamId, toId);
 		const fromUser = await userService.findOneBySlackIdOrCreate(teamId, fromId);
 		const bot = await botTokenService.find();
@@ -78,14 +77,14 @@ export async function incrementScore(
 				from: fromUser.slackId,
 				to: toUser.slackId,
 				date: new Date(),
-				channel,
+				channelId,
 				reason,
 				scoreChange: incrementValue,
 			} as IScoreLog;
 			await scoreLogService.create(teamId, scoreLog);
 		} catch (e) {
 			logger.error(
-				`failed saving spam log for user ${toUser.name} from ${fromUser.name} in channel ${channel} because ${reason}`,
+				`failed saving spam log for user ${toUser.name} from ${fromUser.name} in channel ${channelId} because ${reason}`,
 				e,
 			);
 		}
@@ -94,7 +93,7 @@ export async function incrementScore(
 			if (bot) {
 				bot.token = bot.token - incrementValue;
 			}
-			toUser.pointdPalToken = toUser.pointdPalToken + incrementValue;
+			toUser.token = toUser.token + incrementValue;
 			//saveResponse = await this.databaseService.transferScoreFromBotToUser(toUser, incrementValue, fromUser);
 		}
 		await userService.update(teamId, toUser);
@@ -117,12 +116,11 @@ export async function transferTokens(
 	teamId: string,
 	toId: string,
 	fromId: string,
-	channel: string,
+	channelId: string,
 	numberOfTokens: number,
 	reason?: string,
 ): Promise<{ toUser: IUser; fromUser: IUser }> {
 	try {
-		const connection = await getConnection(teamId);
 		const toUser = await userService.findOneBySlackIdOrCreate(teamId, toId);
 		const fromUser = await userService.findOneBySlackIdOrCreate(teamId, fromId);
 		if (toUser.accountLevel < 2 && fromUser.accountLevel < 2) {
@@ -130,7 +128,7 @@ export async function transferTokens(
 			throw new Error(`In order to send tokens to ${Md.user(toUser.slackId)} you both must be, at least, level 2.`);
 		}
 
-		if (fromUser.pointdPalToken && fromUser.pointdPalToken < numberOfTokens) {
+		if (fromUser.token && fromUser.token < numberOfTokens) {
 			// from has too few tokens to send that many
 			throw new Error(`You don't have enough tokens to send ${numberOfTokens} to ${Md.user(toUser.slackId)}`);
 		}
@@ -139,8 +137,8 @@ export async function transferTokens(
 			throw new Error(`I'm sorry ${Md.user(fromUser.slackId)}, I'm afraid I can't do that.`);
 		}
 
-		fromUser.pointdPalToken = (fromUser.pointdPalToken ?? 0) - numberOfTokens;
-		toUser.pointdPalToken = (toUser.pointdPalToken ?? 0) + numberOfTokens;
+		fromUser.token = (fromUser.token ?? 0) - numberOfTokens;
+		toUser.token = (toUser.token ?? 0) + numberOfTokens;
 		if (reason) {
 			const newReasonScore = (toUser.reasons.get(reason) ?? 0) + numberOfTokens;
 			toUser.reasons.set(reason, newReasonScore);
@@ -154,13 +152,13 @@ export async function transferTokens(
 				from: fromUser.slackId,
 				to: toUser.slackId,
 				date: new Date(),
-				channel,
+				channelId,
 				reason,
 				scoreChange: numberOfTokens,
 			});
 		} catch (e) {
 			logger.error(
-				`failed saving spam log for user ${toUser.name} from ${fromUser.name} in channel ${channel} because ${
+				`failed saving spam log for user ${toUser.name} from ${fromUser.name} in channel ${channelId} because ${
 					reason ? reason : 'no reason'
 				}`,
 				e,
@@ -182,7 +180,7 @@ export async function transferTokens(
 }
 
 export async function erase(teamId: string, toBeErased: IUser, admin: IUser, channel: string, reason?: string) {
-	logger.error(`Erasing all scores for ${toBeErased} by ${admin}`);
+	logger.error(`Erasing all scores for ${toBeErased.name} by ${admin.name}`);
 	await adminService.erase(teamId, toBeErased, reason);
 
 	return true;

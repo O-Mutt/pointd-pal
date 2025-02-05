@@ -10,10 +10,11 @@ CREATE TABLE bot_tokens (
 
 CREATE TABLE installation (
   id UUID PRIMARY KEY,
-  team_id NOT NULL string,
-  customer_id NOT NULL string,
-  is_enterprise: boolean NOT NULL DEFAULT false,
-  is_enabled: boolean NOT NULL DEFAULT true,
+  team_id VARCHAR(255) NOT NULL,
+  team_name VARCHAR(255) NULL,
+  customer_id VARCHAR(255) NOT NULL,
+  is_enterprise: BOOLEAN NOT NULL DEFAULT false,
+  is_enabled: BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now,
   created_by UUID NULL,
   updated_at TIMESTAMPTZ NOT NULL default now,
@@ -36,5 +37,6 @@ CREATE TABLE config(
   reasonsKeyword VARCHAR(255) NULL,
   companyName VARCHAR(255) NULL,
   -- admins used to be here
-  pointdPalAdmins tokenLedgerBalance INTEGER NOT NULL DEFAULT 0,
+  -- pointdPalAdmins
+  tokenLedgerBalance INTEGER NOT NULL DEFAULT 0,
 );
