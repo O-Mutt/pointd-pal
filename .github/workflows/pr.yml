@@ -20,7 +20,9 @@ jobs:
         run: npm ci
 
       - name: tar to preserve perms
-        run: tar -czf pointd-checkout-${{ github.run_id }}.tar.gz .
+        run: |
+          mkdir tar
+          tar -czf ./tar/pointd-checkout-${{ github.run_id }}.tar.gz . --exclude=./tar
 
       - uses: actions/upload-artifact@v4
         with:
