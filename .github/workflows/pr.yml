@@ -21,8 +21,7 @@ jobs:
 
       - name: tar to preserve perms
         run: |
-          mkdir tar
-          tar -czf ./tar/pointd-checkout-${{ github.run_id }}.tar.gz . --exclude=./tar
+          tar -czf ../pointd-checkout-${{ github.run_id }}.tar.gz .
 
       - uses: actions/upload-artifact@v4
         with:
