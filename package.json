@@ -44,7 +44,7 @@
 		"@slack/types": "^2.14.0",
 		"@types/convict": "^6.1.6",
 		"@types/lodash": "^4.17.15",
-		"@types/node": "^22.13.0",
+		"@types/node": "^22.13.1",
 		"@types/pluralize": "^0.0.33",
 		"eslint": "^9.19.0",
 		"eslint-config-prettier": "^10.0.1",
