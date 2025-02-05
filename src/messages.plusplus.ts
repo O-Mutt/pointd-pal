@@ -382,4 +382,6 @@ async function eraseUserScore({
 			: `Erased points for ${Md.user(userId)} `;
 
 		const sayArgs = SlackMessage.getSayMessageArgs(message, messageText);
-		await say(sayArgs);from
+		await say(sayArgs);
+	}
+}
