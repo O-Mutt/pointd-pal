@@ -22,15 +22,21 @@ npm install
 ### 2. Setup environment variables
 
 ```bash
-cp .env.example .env
+cp src/config/example.json src/config/development.json
 ```
 
 Replace variables with ones from your "local" setup
 
-### 3. Start servers
+### 3. Start your supporting docker containers
 
 ```bash
-npm run start:dev
+docker compose up -d
+```
+
+### 4. Start Pointd-Pal
+
+```bash
+npm run start
 ```
 
 ## Contributing
