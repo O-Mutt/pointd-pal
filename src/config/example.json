@@ -1,0 +1,23 @@
+{
+	"port": 3000,
+	"logLevel": "info",
+	"postgres": {
+		"host": "localhost",
+		"port": 5432,
+		"database": "pointdpal",
+		"username": "pointdpal",
+		"password": "test123"
+	},
+	"cryptoRpcProvider": "",
+	"magicNumber": "",
+	"magicIv": "",
+	"furtherHelpMessage": "",
+	"monthlyScoreboardCron": "",
+	"monthlyScoreboardDayOfWeek": 1,
+	"slack": {
+		"signingSecret": "",
+		"clientId": "",
+		"clientSecret": "",
+		"stateSecret": ""
+	}
+}

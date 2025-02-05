@@ -1,0 +1,16 @@
+name: lint
+on: workflow_call
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Cached Checkout
+        uses: actions/download-artifact@v4
+        with:
+          name: pointd-checkout-${{ github.run_id }}
+
+      - name: untar
+        run: tar -xzf ${{ github.workspace }}/pointd-checkout-${{ github.run_id }}.tar.gz
+
+      - name: build
+        run: npm run build

@@ -1,0 +1,41 @@
+name: PR Lint, Test, Build
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  cache_checkout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: tar to preserve perms
+        run: |
+          tar -czf ${{ github.workspace }}/pointd-checkout-${{ github.run_id }}.tar.gz .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pointd-checkout-${{ github.run_id }}
+          path: ${{ github.workspace }}/pointd-checkout-${{ github.run_id }}.tar.gz
+
+  lint:
+    needs: cache_checkout
+    uses: ./.github/workflows/lint.yml
+
+  test:
+    needs: cache_checkout
+    uses: ./.github/workflows/test.yml
+
+  build:
+    needs: cache_checkout
+    uses: ./.github/workflows/build.yml
