@@ -26,7 +26,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: pointd-checkout-${{ github.run_id }}
-          path: ${{ github.workspace }}/pointd-checkout-${{ github.run_id }}.tar.gz
+          path: ../pointd-checkout-${{ github.run_id }}.tar.gz
 
   lint:
     needs: cache_checkout
