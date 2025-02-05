@@ -6,8 +6,8 @@ import { Blocks, Md, Message } from 'slack-block-builder';
 import { app } from '@/app';
 import { IUser } from '@/entities/user';
 import { regExpCreator } from '@/lib/regexpCreator';
-import * as scoreboardService from '@/lib/services/scoreboardService';
-import * as userService from '@/lib/services/userService';
+import * as scoreboardService from '@/services/scoreboardService';
+import * as userService from '@/services/userService';
 import { AllMiddlewareArgs, directMention, SlackEventMiddlewareArgs, StringIndexed } from '@slack/bolt';
 import { ChatPostMessageArguments } from '@slack/web-api';
 

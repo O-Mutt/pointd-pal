@@ -1,0 +1,104 @@
+ci/cd:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/**/*
+          - Dockerfile
+          - opslevel.yml
+
+Developer-Experience:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/**
+          - .vscode/**
+          - .*
+          - swagger.json
+          - '*.json'
+          - '*.yml'
+          - '*.yaml'
+          - CODEOWNERS
+
+Tests:
+  - changed-files:
+      - any-glob-to-any-file:
+          - test/**
+          - '**/*.test.*'
+          - '**/*.tests.*'
+          - '**/*.spec.*'
+
+Pointd-Pal:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/*.*/**'
+
+
+Services:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/lib/services/**'
+
+WebRoutes:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/lib/routes/**'
+
+Types:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/lib/types/**'
+
+Util:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/lib/*.*'
+
+Messages:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/messages.*'
+
+Menu:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/hometab*'
+
+Events:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/events*'
+
+Cron:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/cron/**'
+
+Config:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/config/**'
+
+Entities:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'src/entities/**'
+
+XXL:
+  - changed-files:
+      - any-glob-to-any-file: ['file.xxl.never']
+XL:
+  - changed-files:
+      - any-glob-to-any-file: ['file.xl.never']
+L:
+  - changed-files:
+      - any-glob-to-any-file: ['file.l.never']
+M:
+  - changed-files:
+      - any-glob-to-any-file: ['file.m.never']
+S:
+  - changed-files:
+      - any-glob-to-any-file: ['file.s.never']
+XS:
+  - changed-files:
+      - any-glob-to-any-file: ['file.xs.never']
+XXS:
+  - changed-files:
+      - any-glob-to-any-file: ['file.xxs.never']

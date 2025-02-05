@@ -8,8 +8,8 @@ import { IPointdPalConfig } from './entities/pointdPalConfig';
 import { IUser } from './entities/user';
 import { actions } from '@/lib/types/Actions';
 import { Appendable } from 'slack-block-builder/dist/internal';
-import * as configService from '@/lib/services/configService';
-import * as userService from '@/lib/services/userService';
+import * as configService from '@/services/configService';
+import * as userService from '@/services/userService';
 
 app.event('app_home_opened', updateHomeTab);
 

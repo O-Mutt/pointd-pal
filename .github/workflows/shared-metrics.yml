@@ -1,0 +1,10 @@
+name: Run metrics
+
+on:
+  schedule:
+    - cron: '0 10 1 * *'
+
+jobs:
+  metrics:
+    uses: DEMGroup/.github/.github/workflows/metrics.yml@main
+    secrets: inherit

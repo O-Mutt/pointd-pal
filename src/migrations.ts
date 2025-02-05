@@ -3,7 +3,7 @@ import { Md } from 'slack-block-builder';
 
 import { app } from '@/app';
 import { IUser } from '@/entities/user';
-import * as userService from '@/lib/services/userService';
+import * as userService from '@/services/userService';
 import { withNamespace } from '@/logger';
 import { directMention } from '@slack/bolt';
 import { ConversationsListResponse } from '@slack/web-api';

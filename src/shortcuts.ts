@@ -15,8 +15,8 @@ import { ChatGetPermalinkResponse, ChatPostEphemeralArguments, ChatPostMessageAr
 import { app } from '../app';
 import { MessageBuilder as Builder } from '@/lib/messageBuilder';
 import { IUser } from '@/entities/user';
-import { eventBus } from '@/lib/services/eventBus';
-import * as scorekeeperService from '@/lib/services/scorekeeperService';
+import { eventBus } from '@/services/eventBus';
+import * as scorekeeperService from '@/services/scorekeeperService';
 import { actions } from '@/lib/types/Actions';
 import { blocks } from '@/lib/types/BlockIds';
 import { DirectionEnum } from '@/lib/types/Enums';

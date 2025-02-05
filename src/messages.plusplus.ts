@@ -5,11 +5,11 @@ import { app } from '@/app';
 import { IUser } from '@/entities/user';
 import { MessageBuilder as Builder } from '@/lib/messageBuilder';
 import { regExpCreator } from '@/lib/regexpCreator';
-import * as botTokenService from '@/lib/services/botTokenService';
-import { decrypt } from '@/lib/services/decrypt';
-import { eventBus } from '@/lib/services/eventBus';
-import * as scorekeeperService from '@/lib/services/scorekeeperService';
-import * as userService from '@/lib/services/userService';
+import * as botTokenService from '@/services/botTokenService';
+import { decrypt } from '@/services/decrypt';
+import { eventBus } from '@/services/eventBus';
+import * as scorekeeperService from '@/services/scorekeeperService';
+import * as userService from '@/services/userService';
 import { SlackMessage } from '@/lib/slackMessage';
 import { StringUtil } from '@/lib/string';
 // this may need to move or be generic...er
