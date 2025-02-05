@@ -7,8 +7,10 @@ jobs:
       - name: Get Cached Checkout
         uses: actions/download-artifact@v4
         with:
-          name: my-checkout-${{ github.run_id }}
+          name: pointd-checkout-${{ github.run_id }}
+
+      - name: untar
+        run: tar -xzf pointd-checkout-${{ github.run_id }}.tar.gz
+
       - name: lint
-        run: |
-          npm ci
-          npm run lint
+        run: npm run lint
