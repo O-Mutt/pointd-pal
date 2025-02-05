@@ -10,7 +10,7 @@ jobs:
           name: pointd-checkout-${{ github.run_id }}
 
       - name: untar
-        run: tar -xzf ../pointd-checkout-${{ github.run_id }}.tar.gz
+        run: tar -xzf ${{ github.workspace }}/pointd-checkout-${{ github.run_id }}.tar.gz
 
       - name: build
         run: npm run build

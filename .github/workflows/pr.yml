@@ -21,12 +21,12 @@ jobs:
 
       - name: tar to preserve perms
         run: |
-          tar -czf ../pointd-checkout-${{ github.run_id }}.tar.gz .
+          tar -czf ${{ github.workspace }}/pointd-checkout-${{ github.run_id }}.tar.gz .
 
       - uses: actions/upload-artifact@v4
         with:
           name: pointd-checkout-${{ github.run_id }}
-          path: ../pointd-checkout-${{ github.run_id }}.tar.gz
+          path: ${{ github.workspace }}/pointd-checkout-${{ github.run_id }}.tar.gz
 
   lint:
     needs: cache_checkout
