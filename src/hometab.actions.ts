@@ -3,13 +3,14 @@ import { AllMiddlewareArgs, BlockButtonAction, SlackActionMiddlewareArgs } from 
 import { View } from '@slack/types';
 import { Appendable } from 'slack-block-builder/dist/internal';
 
-import { app } from '@/app';
-import { IUser } from '@//entities/user';
+import { app } from '$/app';
+import { IUser } from '@/entities/user';
 import { actions } from '@/lib/types/Actions';
 import { IPointdPalConfig } from '@/entities/pointdPalConfig';
 import { blocks } from '@/lib/types/BlockIds';
-import * as userService from '@/services/userService';
-import * as configService from '@/services/configService';
+import * as userService from './src/lib/services/userService';
+import * as configService from './src/lib/services/configService';
+import { Member } from '@slack/web-api/dist/types/response/UsersListResponse';
 
 app.action(
 	actions.hometab.admin_settings,
@@ -65,30 +66,44 @@ app.action(
 
 app.action(
 	actions.hometab.sync_admins,
-	async ({ ack, body, context }: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
-		await ack();
-		const teamId = context.teamId as string;
-		const userId = body.user.id;
-		const user = await userService.findOneBySlackIdOrCreate(teamId, userId);
-		const _pointdPalConfig = await configService.findOneOrCreate(teamId);
+	async ({ ack, body, context, logger }: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
+		try {
+			await ack();
+			const teamId = context.teamId as string;
+			const userId = body.user.id;
+			const user = await userService.findOneBySlackIdOrCreate(teamId, userId);
+			const _pointdPalConfig = await configService.findOneOrCreate(teamId);
 
-		if (!user.isAdmin) {
+			if (!user.isAdmin) {
+				return;
+			}
+
+			const userList = await app.client.users.list({ team_id: teamId });
+			if (!userList.ok) {
+				logger.error('error getting user list for sync admins action', userList.error);
+			}
+			const adminIds =
+				userList.members
+					?.filter((user: Member) => {
+						return user.is_admin === true && user.id;
+					})
+					.map((admin) => admin.id!) ?? [];
+
+			// get our db admins
+			const users = await userService.getAllByPredicate(teamId, 'is_admin = true');
+			const adminUsers = users.map((admin) => admin.slackId);
+
+			// concat the two lists together
+			adminUsers.concat(adminIds);
+			const updateAll: Promise<IUser>[] = [];
+			for (const admin of adminUsers) {
+				updateAll.push(userService.setUserAsAdmin(teamId, admin));
+			}
+			await Promise.all(updateAll);
 			return;
+		} catch (e: unknown) {
+			logger.error('sync admin action failed', e);
 		}
-
-		const { members } = await app.client.users.list({ team_id: teamId });
-		const admins: string[] = members
-			?.filter((user) => user.is_admin === true)
-			.map((admin) => admin.id as string) as string[];
-		const users = await userService.getAllByPredicate(teamId, 'is_admin = true');
-		const adminUsers = users.map((admin) => admin.slackId);
-		adminUsers.concat(admins);
-		const updateAll: Promise<IUser>[] = [];
-		for (const admin of adminUsers) {
-			updateAll.push(userService.setUserAsAdmin(teamId, admin));
-		}
-		await Promise.all(updateAll);
-		return;
 	},
 );
 

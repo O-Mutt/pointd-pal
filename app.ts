@@ -3,13 +3,11 @@ import { Md } from 'slack-block-builder';
 import { App } from '@slack/bolt';
 import { LogLevel } from '@slack/logger';
 
-import { PointdPalInstallStore } from './src/lib/services/installStore';
-
-import { config } from '@/config';
+import { config } from './src/config';
 import 'newrelic';
 
 import { healthEndpoint } from './src/lib/routes/health';
-import { logger as customLogger } from '@/logger';
+import { logger as customLogger } from './src/logger';
 
 export const app = new App({
 	signingSecret: config.get('slack.signingSecret'),
@@ -82,18 +80,19 @@ app.action('button_click', async ({ body, ack, respond }) => {
 	await respond(`${Md.user(body.user.id)} clicked the button`);
 });
 
-app.message(/.*/, async ({ message, context, logger }) => {
+app.message(/.*/, async ({ message, context, logger, say }) => {
 	logger.debug('This is for logging all the things!', message, context);
-	//await say(context.matches.input);
+	if (config.get('env') === 'development') {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
+		await say(context.matches.input);
+	}
 });
 
 await (async () => {
 	// Start your app
-	let port = 5000;
-	if (process.env.PORT) {
-		port = parseInt(process.env.PORT, 10);
-	}
-	await app.start(port);
+	await app.start(config.get('port'));
 
-	logger.info(`⚡️ Bolt app is running at localhost:${port}!`);
+	logger.info(`⚡️ Bolt app is running at localhost:${config.get('port')}!`);
 })();
+
+import { PointdPalInstallStore } from './src/lib/services/installStore';
