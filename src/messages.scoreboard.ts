@@ -3,20 +3,21 @@ import ImageCharts from 'image-charts';
 import { map, sampleSize, take } from 'lodash';
 import { Blocks, Md, Message } from 'slack-block-builder';
 
-import { app } from '@/app';
 import { IUser } from '@/entities/user';
 import { regExpCreator } from '@/lib/regexpCreator';
-import * as scoreboardService from '@/services/scoreboardService';
-import * as userService from '@/services/userService';
-import { AllMiddlewareArgs, directMention, SlackEventMiddlewareArgs, StringIndexed } from '@slack/bolt';
+import * as scoreboardService from '@/lib/services/scoreboardService';
+import * as userService from '@/lib/services/userService';
+import { AllMiddlewareArgs, App, directMention, SlackEventMiddlewareArgs, StringIndexed } from '@slack/bolt';
 import { ChatPostMessageArguments } from '@slack/web-api';
 
 import { SlackMessage } from './lib/slackMessage';
 
-app.message(regExpCreator.createAskForScoreRegExp(), directMention, respondWithScore);
-app.message(regExpCreator.createTopBottomRegExp(), directMention, respondWithLeaderLoserBoard);
-app.message(regExpCreator.createTopBottomTokenRegExp(), directMention, respondWithLeaderLoserTokenBoard);
-app.message(regExpCreator.createTopPointGiversRegExp(), directMention, getTopPointSenders);
+export function register(app: App): void {
+	app.message(regExpCreator.createAskForScoreRegExp(), directMention, respondWithScore);
+	app.message(regExpCreator.createTopBottomRegExp(), directMention, respondWithLeaderLoserBoard);
+	app.message(regExpCreator.createTopBottomTokenRegExp(), directMention, respondWithLeaderLoserTokenBoard);
+	app.message(regExpCreator.createTopPointGiversRegExp(), directMention, getTopPointSenders);
+}
 
 async function respondWithScore({
 	message,

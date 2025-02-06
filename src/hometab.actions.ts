@@ -1,111 +1,118 @@
-import { Blocks, Elements, Md, Modal, ModalBuilder, ViewBlockBuilder } from 'slack-block-builder';
-import { AllMiddlewareArgs, BlockButtonAction, SlackActionMiddlewareArgs } from '@slack/bolt';
-import { View } from '@slack/types';
-import { Appendable } from 'slack-block-builder/dist/internal';
+import { Blocks, Elements, Md, Modal, type ModalBuilder, type ViewBlockBuilder } from 'slack-block-builder';
+import { type AllMiddlewareArgs, App, type BlockButtonAction, type SlackActionMiddlewareArgs } from '@slack/bolt';
+import { type View } from '@slack/types';
+import { type Appendable } from 'slack-block-builder/dist/internal';
 
-import { app } from '$/app';
-import { IUser } from '@/entities/user';
+import { type IUser } from '@/entities/user';
 import { actions } from '@/lib/types/Actions';
-import { IPointdPalConfig } from '@/entities/pointdPalConfig';
+import { type IPointdPalConfig } from '@/entities/pointdPalConfig';
 import { blocks } from '@/lib/types/BlockIds';
-import * as userService from './src/lib/services/userService';
-import * as configService from './src/lib/services/configService';
-import { Member } from '@slack/web-api/dist/types/response/UsersListResponse';
+import * as userService from '@/lib/services/userService';
+import * as configService from '@/lib/services/configService';
+import { type Member } from '@slack/web-api/dist/types/response/UsersListResponse';
 
-app.action(
-	actions.hometab.admin_settings,
-	async ({ ack, client, context, body }: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
-		await ack();
-		const teamId = context.teamId as string;
-		const userId = body.user.id;
-		const user = await userService.findOneBySlackIdOrCreate(teamId, userId);
-		const admins = await userService.getAllByPredicate(teamId, 'is_admin = true');
-		const pointdPalConfig = await configService.findOneOrCreate(teamId);
-
-		if (!user.isAdmin || !pointdPalConfig) {
-			return; //empty section because the user isn't an admin
-		}
-		const adminSettingsModal = buildAdminModal(
-			pointdPalConfig,
-			admins.map((a) => a.slackId),
-		).buildToObject();
-
-		await client.views.open({
-			trigger_id: body.trigger_id,
-			view: adminSettingsModal,
-		});
-	},
-);
-
-app.action(
-	actions.hometab.user_settings,
-	async ({ ack, client, context, body, logger }: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
-		await ack();
-		const teamId = context.teamId as string;
-		const userId = body.user.id;
-		const pointdPalConfig = await configService.findOneOrCreate(teamId);
-		const user = await userService.findOneBySlackIdOrCreate(teamId, userId);
-
-		if (!user || !pointdPalConfig) {
-			return;
-		}
-
-		logger.info('user for user settings', user);
-		const userSettingsModal = Modal({
-			title: `${Md.emoji('gear')} PointdPal Settings`,
-			submit: 'Update Settings',
-			callbackId: actions.hometab.user_settings_submit,
-		}).blocks(...buildCryptoUserBlocks(pointdPalConfig, user));
-
-		await client.views.open({
-			trigger_id: body.trigger_id,
-			view: userSettingsModal.buildToObject() as View,
-		});
-	},
-);
-
-app.action(
-	actions.hometab.sync_admins,
-	async ({ ack, body, context, logger }: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
-		try {
+export function register(app: App): void {
+	app.action(
+		actions.hometab.admin_settings,
+		async ({ ack, client, context, body }: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
 			await ack();
 			const teamId = context.teamId as string;
 			const userId = body.user.id;
 			const user = await userService.findOneBySlackIdOrCreate(teamId, userId);
-			const _pointdPalConfig = await configService.findOneOrCreate(teamId);
+			const admins = await userService.getAllByPredicate(teamId, 'is_admin = true');
+			const pointdPalConfig = await configService.findOneOrCreate(teamId);
 
-			if (!user.isAdmin) {
+			if (!user.isAdmin || !pointdPalConfig) {
+				return; //empty section because the user isn't an admin
+			}
+			const adminSettingsModal = buildAdminModal(
+				pointdPalConfig,
+				admins.map((a) => a.slackId),
+			).buildToObject();
+
+			await client.views.open({
+				trigger_id: body.trigger_id,
+				view: adminSettingsModal,
+			});
+		},
+	);
+
+	app.action(
+		actions.hometab.user_settings,
+		async ({
+			ack,
+			client,
+			context,
+			body,
+			logger,
+		}: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
+			await ack();
+			const teamId = context.teamId as string;
+			const userId = body.user.id;
+			const pointdPalConfig = await configService.findOneOrCreate(teamId);
+			const user = await userService.findOneBySlackIdOrCreate(teamId, userId);
+
+			if (!user || !pointdPalConfig) {
 				return;
 			}
 
-			const userList = await app.client.users.list({ team_id: teamId });
-			if (!userList.ok) {
-				logger.error('error getting user list for sync admins action', userList.error);
-			}
-			const adminIds =
-				userList.members
-					?.filter((user: Member) => {
-						return user.is_admin === true && user.id;
-					})
-					.map((admin) => admin.id!) ?? [];
+			logger.info('user for user settings', user);
+			const userSettingsModal = Modal({
+				title: `${Md.emoji('gear')} PointdPal Settings`,
+				submit: 'Update Settings',
+				callbackId: actions.hometab.user_settings_submit,
+			}).blocks(...buildCryptoUserBlocks(pointdPalConfig, user));
 
-			// get our db admins
-			const users = await userService.getAllByPredicate(teamId, 'is_admin = true');
-			const adminUsers = users.map((admin) => admin.slackId);
+			await client.views.open({
+				trigger_id: body.trigger_id,
+				view: userSettingsModal.buildToObject() as View,
+			});
+		},
+	);
 
-			// concat the two lists together
-			adminUsers.concat(adminIds);
-			const updateAll: Promise<IUser>[] = [];
-			for (const admin of adminUsers) {
-				updateAll.push(userService.setUserAsAdmin(teamId, admin));
+	app.action(
+		actions.hometab.sync_admins,
+		async ({ ack, body, context, logger }: SlackActionMiddlewareArgs<BlockButtonAction> & AllMiddlewareArgs) => {
+			try {
+				await ack();
+				const teamId = context.teamId as string;
+				const userId = body.user.id;
+				const user = await userService.findOneBySlackIdOrCreate(teamId, userId);
+				const _pointdPalConfig = await configService.findOneOrCreate(teamId);
+
+				if (!user.isAdmin) {
+					return;
+				}
+
+				const userList = await app.client.users.list({ team_id: teamId });
+				if (!userList.ok) {
+					logger.error('error getting user list for sync admins action', userList.error);
+				}
+				const adminIds =
+					userList.members
+						?.filter((user: Member) => {
+							return user.is_admin === true && user.id;
+						})
+						.map((admin) => admin.id!) ?? [];
+
+				// get our db admins
+				const users = await userService.getAllByPredicate(teamId, 'is_admin = true');
+				const adminUsers = users.map((admin) => admin.slackId);
+
+				// concat the two lists together
+				adminUsers.concat(adminIds);
+				const updateAll: Promise<IUser>[] = [];
+				for (const admin of adminUsers) {
+					updateAll.push(userService.setUserAsAdmin(teamId, admin));
+				}
+				await Promise.all(updateAll);
+				return;
+			} catch (e: unknown) {
+				logger.error('sync admin action failed', e);
 			}
-			await Promise.all(updateAll);
-			return;
-		} catch (e: unknown) {
-			logger.error('sync admin action failed', e);
-		}
-	},
-);
+		},
+	);
+}
 
 function buildAdminModal(pointdPalConfig: IPointdPalConfig, admins: string[], _enabledOverride = false): ModalBuilder {
 	return Modal({

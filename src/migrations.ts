@@ -1,23 +1,24 @@
 /* eslint-disable */
 import { Md } from 'slack-block-builder';
 
-import { app } from '@/app';
-import { IUser } from '@/entities/user';
-import * as userService from '@/services/userService';
+import type { IUser } from '@/entities/user';
+import * as userService from '@/lib/services/userService';
 import { withNamespace } from '@/logger';
-import { directMention } from '@slack/bolt';
-import { ConversationsListResponse } from '@slack/web-api';
-import { Member } from '@slack/web-api/dist/types/response/UsersListResponse';
+import { App, directMention } from '@slack/bolt';
+import { type ConversationsListResponse } from '@slack/web-api';
+import { type Member } from '@slack/web-api/dist/types/response/UsersListResponse';
 
 const logger = withNamespace('migrations');
 
-app.message('try to map all slack users to db users', directMention, mapUsersToDb);
-app.message('try to map more data to all slack users to db users', directMention, mapMoreUserFieldsBySlackId);
-app.message('try to map @.* to db users', directMention, mapSingleUserToDb);
-// app.message('unmap all users', directMention, unmapUsersToDb);
-app.message('map all slackIds to slackEmail', directMention, mapSlackIdToEmail);
-// app.message('hubot to bolt', directMention, migrateFromHubotToBolt);
-app.message('join all old pointdPal channels', directMention, joinAllPointdPalChannels);
+export function register(app: App): void {
+	app.message('try to map all slack users to db users', directMention, mapUsersToDb);
+	app.message('try to map more data to all slack users to db users', directMention, mapMoreUserFieldsBySlackId);
+	app.message('try to map @.* to db users', directMention, mapSingleUserToDb);
+	// app.message('unmap all users', directMention, unmapUsersToDb);
+	app.message('map all slackIds to slackEmail', directMention, mapSlackIdToEmail);
+	// app.message('hubot to bolt', directMention, migrateFromHubotToBolt);
+	app.message('join all old pointdPal channels', directMention, joinAllPointdPalChannels);
+}
 
 async function mapUsersToDb({ message, context, client, say }) {
 	const teamId = context.teamId as string;

@@ -1,5 +1,5 @@
 import { IScoreLog } from '@/entities/scoreLog';
-import { getConnection } from '@/services/databaseService';
+import { getConnection } from '@/lib/services/databaseService';
 
 export async function create(teamId: string, scoreLog: IScoreLog): Promise<IScoreLog> {
 	const connection = await getConnection(teamId);

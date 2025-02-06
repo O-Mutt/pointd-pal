@@ -1,5 +1,5 @@
-import adze, { Level, setup } from 'adze';
-import { config } from '@/config';
+import { config } from '../config';
+import adze, { setup, Level } from 'adze';
 
 setup({
 	activeLevel: config.get('logLevel') as Level | number,
@@ -15,4 +15,5 @@ export const logger = adze.seal();
 export const withNamespace = (namespace: string) => {
 	return logger.ns(namespace).seal();
 };
+
 export default logger;

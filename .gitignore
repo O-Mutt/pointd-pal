@@ -106,3 +106,10 @@ dist
 
 .DS_Store
 nohup.out
+
+
+src/config/*
+!src/config/example.ts
+!src/config/index.ts
+!src/config/config.schema.ts
+!src/config/example.json

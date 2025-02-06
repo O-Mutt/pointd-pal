@@ -1,17 +1,39 @@
+import { PointdPalInstallStore } from '@/lib/services/installStore';
 import { Md } from 'slack-block-builder';
 
 import { App } from '@slack/bolt';
 import { LogLevel } from '@slack/logger';
 
-import { config } from './src/config';
-import 'newrelic';
+import { config } from '@/config';
+import { healthEndpoint } from '@/lib/routes/health';
+import { logger as customLogger } from '@/logger';
 
-import { healthEndpoint } from './src/lib/routes/health';
-import { logger as customLogger } from './src/logger';
+// messages
+import { register as messagesCryptoRegister } from '@/messages.crypto';
+import { register as messagesScoreboardRegister } from '@/messages.scoreboard';
+import { register as messagesHelpRegister } from '@/messages.help';
+import { register as messagesPlusPlusRegister } from '@/messages.plusplus';
 
-export const app = new App({
+// etc
+import { register as migrationsRegister } from '@/migrations';
+
+// cron job
+import './src/monthlyScoreboardCron';
+
+// event handlers
+import './src/events';
+
+// hometab
+import { register as hometabRegister } from '@/hometab';
+import { register as hometabActionsRegister } from '@/hometab.actions';
+import { register as hometabViewsRegister } from '@/hometab.views';
+
+//shortcuts
+import { register as shortcutsRegister } from '@/shortcuts';
+
+const app = new App({
 	signingSecret: config.get('slack.signingSecret'),
-	clientId: config.get('slack.signingSecret'),
+	clientId: config.get('slack.clientId'),
 	clientSecret: config.get('slack.clientSecret'),
 	stateSecret: config.get('slack.stateSecret'),
 	logLevel: config.get('logLevel') as LogLevel,
@@ -54,26 +76,6 @@ export const app = new App({
 	},
 });
 
-// messages
-import './src/messages.crypto';
-import './src/messages.scoreboard';
-import './src/messages.help';
-import './src/messages.plusplus';
-
-// etc
-import './src/events';
-import './src/migrations';
-import './src/monthlyScoreboardCron';
-
-// hometab
-import './src/hometab';
-import './src/hometab.actions';
-import './src/hometab.views';
-
-//shortcuts
-import './src/shortcuts';
-import logger from '@/logger';
-
 app.action('button_click', async ({ body, ack, respond }) => {
 	// Acknowledge the action
 	await ack();
@@ -88,11 +90,21 @@ app.message(/.*/, async ({ message, context, logger, say }) => {
 	}
 });
 
-await (async () => {
+void (async () => {
 	// Start your app
-	await app.start(config.get('port'));
+	await app.start({ port: config.get('port') });
 
-	logger.info(`⚡️ Bolt app is running at localhost:${config.get('port')}!`);
+	customLogger.info(`⚡️ Bolt app is running at localhost:${config.get('port')}!`);
 })();
 
-import { PointdPalInstallStore } from './src/lib/services/installStore';
+messagesCryptoRegister(app);
+messagesScoreboardRegister(app);
+messagesHelpRegister(app);
+messagesPlusPlusRegister(app);
+migrationsRegister(app);
+shortcutsRegister(app);
+hometabRegister(app);
+hometabActionsRegister(app);
+hometabViewsRegister(app);
+
+export { app };

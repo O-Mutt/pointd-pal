@@ -2,31 +2,38 @@ import { Bits, Blocks, Elements, Md, Modal } from 'slack-block-builder';
 import { SlackModalDto } from 'slack-block-builder/dist/internal/dto';
 
 import {
-	AllMiddlewareArgs,
-	MessageShortcut,
-	SlackCommandMiddlewareArgs,
-	SlackShortcutMiddlewareArgs,
-	SlackViewMiddlewareArgs,
-	ViewSubmitAction,
+	type AllMiddlewareArgs,
+	App,
+	type MessageShortcut,
+	type SlackCommandMiddlewareArgs,
+	type SlackShortcutMiddlewareArgs,
+	type SlackViewMiddlewareArgs,
+	type ViewSubmitAction,
 } from '@slack/bolt';
 
-import { ChatGetPermalinkResponse, ChatPostEphemeralArguments, ChatPostMessageArguments } from '@slack/web-api';
+import {
+	type ChatGetPermalinkResponse,
+	type ChatPostEphemeralArguments,
+	type ChatPostMessageArguments,
+} from '@slack/web-api';
 
-import { app } from '../app';
 import { MessageBuilder as Builder } from '@/lib/messageBuilder';
-import { IUser } from '@/entities/user';
-import { eventBus } from '@/services/eventBus';
-import * as scorekeeperService from '@/services/scorekeeperService';
+import { type IUser } from '@/entities/user';
+import { eventBus } from '@/lib/services/eventBus';
+import * as scorekeeperService from '@/lib/services/scorekeeperService';
 import { actions } from '@/lib/types/Actions';
 import { blocks } from '@/lib/types/BlockIds';
 import { DirectionEnum } from '@/lib/types/Enums';
-import { PPEvent, PPEventName } from '@/lib/types/Events';
+import { type PPEvent, PPEventName } from '@/lib/types/Events';
 import { regExpCreator } from '@/lib/regexpCreator';
 import { withNamespace } from '@/logger';
 const logger = withNamespace('shortcuts');
 
-app.command('/plusplus', handleSlashCommand);
-app.shortcut(actions.shortcuts.message, handleShortcut);
+export function register(app: App): void {
+	app.command('/plusplus', handleSlashCommand);
+	app.shortcut(actions.shortcuts.message, handleShortcut);
+	app.view(actions.shortcuts.message, viewMessage);
+}
 
 async function handleSlashCommand({ ack, body, command, client }: SlackCommandMiddlewareArgs & AllMiddlewareArgs) {
 	try {
@@ -170,117 +177,114 @@ function buildMessagePlusPlusModal(
 		.buildToObject();
 }
 
-app.view(
-	actions.shortcuts.message,
-	async ({
-		ack,
-		context,
-		body,
-		logger,
-		view,
-		client,
-	}: SlackViewMiddlewareArgs<ViewSubmitAction> & AllMiddlewareArgs) => {
-		await ack();
-		const teamId = context.teamId as string;
-		const from = body.user.id;
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const { channel, messageTs, _permalink }: { channel: string; messageTs: string; _permalink: string } = JSON.parse(
-			view.private_metadata,
-		);
+async function viewMessage({
+	ack,
+	context,
+	body,
+	logger,
+	view,
+	client,
+}: SlackViewMiddlewareArgs<ViewSubmitAction> & AllMiddlewareArgs) {
+	await ack();
+	const teamId = context.teamId as string;
+	const from = body.user.id;
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+	const { channel, messageTs, _permalink }: { channel: string; messageTs: string; _permalink: string } = JSON.parse(
+		view.private_metadata,
+	);
 
-		let idArray: string[] = [];
-		let operator: DirectionEnum = DirectionEnum.PLUS;
-		let reason: string | null | undefined;
-		// const errors: Record<string, string> = {};
-		for (const option in view.state.values) {
-			for (const key in view.state.values[option]) {
-				const state = view.state.values[option][key];
-				logger.info('each key state:', state);
-				switch (key) {
-					case blocks.shortcuts.message.recipients: {
-						idArray = state.selected_users as string[];
-						break;
-					}
-					case blocks.shortcuts.message.operator: {
-						operator = state.selected_option?.value as DirectionEnum;
-						break;
-					}
-					case blocks.shortcuts.message.reason: {
-						reason = state.value;
-						break;
-					}
+	let idArray: string[] = [];
+	let operator: DirectionEnum = DirectionEnum.PLUS;
+	let reason: string | null | undefined;
+	// const errors: Record<string, string> = {};
+	for (const option in view.state.values) {
+		for (const key in view.state.values[option]) {
+			const state = view.state.values[option][key];
+			logger.info('each key state:', state);
+			switch (key) {
+				case blocks.shortcuts.message.recipients: {
+					idArray = state.selected_users as string[];
+					break;
+				}
+				case blocks.shortcuts.message.operator: {
+					operator = state.selected_option?.value as DirectionEnum;
+					break;
+				}
+				case blocks.shortcuts.message.reason: {
+					reason = state.value;
+					break;
 				}
 			}
 		}
+	}
 
-		idArray = idArray.filter((id) => id !== from);
-		const cleanReason = reason?.cleanAndEncode();
-		const increment: number = operator === DirectionEnum.PLUS ? 1 : -1;
+	idArray = idArray.filter((id) => id !== from);
+	const cleanReason = reason?.cleanAndEncode();
+	const increment: number = operator === DirectionEnum.PLUS ? 1 : -1;
 
-		logger.debug('We filtered out empty items and removed "self"', idArray.join(','));
-		let messages: string[] = [];
-		const notificationMessage: string[] = [];
-		let sender: IUser | undefined = undefined;
-		const recipients: IUser[] = [];
-		for (const toUserId of idArray) {
-			let response: { toUser: IUser; fromUser: IUser };
-			try {
-				response = await scorekeeperService.incrementScore(teamId, toUserId, from, channel, increment, cleanReason);
-			} catch (e: unknown) {
-				const ephemeral: ChatPostEphemeralArguments = {
-					text: (e as Error).message,
-					channel,
-					user: from,
-				};
-				await client.chat.postEphemeral(ephemeral);
-
-				continue;
-			}
-			sender = response.fromUser;
-			if (response.toUser) {
-				logger.debug(
-					`clean names map[${toUserId}]: ${response.toUser.score}, the reason ${
-						cleanReason ? response.toUser.reasons[cleanReason] : 'n/a'
-					} `,
-				);
-				messages.push(Builder.getMessageForNewScore(response.toUser, cleanReason));
-				recipients.push(response.toUser);
-				notificationMessage.push(
-					`${Md.user(response.fromUser.slackId)} ${increment === 1 ? 'sent' : 'removed'} a PointdPal point ${
-						increment === 1 ? 'to' : 'from'
-					} ${Md.user(response.toUser.slackId)} in ${Md.channel(channel)} `,
-				);
-			}
-		}
-		messages = messages.filter((message) => !!message); // de-dupe
-		if (messages) {
-			logger.debug(`These are the messages \n ${messages.join(' ')} `);
-			const postArgs: ChatPostMessageArguments = {
-				text: messages.join('\n'),
-				channel: channel,
-			};
-			if (messageTs) {
-				postArgs.thread_ts = messageTs;
-			}
-			const postResp = await client.chat.postMessage(postArgs);
-			logger.info('the message post response', postResp);
-			const plusPlusEvent: PPEvent = {
-				notificationMessage: notificationMessage.join('\n'),
-				sender: sender as IUser,
-				recipients: recipients,
-				direction: operator,
-				amount: 1,
+	logger.debug('We filtered out empty items and removed "self"', idArray.join(','));
+	let messages: string[] = [];
+	const notificationMessage: string[] = [];
+	let sender: IUser | undefined = undefined;
+	const recipients: IUser[] = [];
+	for (const toUserId of idArray) {
+		let response: { toUser: IUser; fromUser: IUser };
+		try {
+			response = await scorekeeperService.incrementScore(teamId, toUserId, from, channel, increment, cleanReason);
+		} catch (e: unknown) {
+			const ephemeral: ChatPostEphemeralArguments = {
+				text: (e as Error).message,
 				channel,
-				reason: cleanReason,
-				teamId: teamId,
-				originalMessageTs: postResp.message?.thread_ts as string,
-				originalMessageParentTs: postResp.ts as string,
+				user: from,
 			};
+			await client.chat.postEphemeral(ephemeral);
 
-			eventBus.emit(PPEventName, plusPlusEvent);
+			continue;
 		}
-	},
-);
+		sender = response.fromUser;
+		if (response.toUser) {
+			logger.debug(
+				`clean names map[${toUserId}]: ${response.toUser.score}, the reason ${
+					cleanReason ? response.toUser.reasons[cleanReason] : 'n/a'
+				} `,
+			);
+			messages.push(Builder.getMessageForNewScore(response.toUser, cleanReason));
+			recipients.push(response.toUser);
+			notificationMessage.push(
+				`${Md.user(response.fromUser.slackId)} ${increment === 1 ? 'sent' : 'removed'} a PointdPal point ${
+					increment === 1 ? 'to' : 'from'
+				} ${Md.user(response.toUser.slackId)} in ${Md.channel(channel)} `,
+			);
+		}
+	}
+	messages = messages.filter((message) => !!message); // de-dupe
+	if (messages) {
+		logger.debug(`These are the messages \n ${messages.join(' ')} `);
+		const postArgs: ChatPostMessageArguments = {
+			text: messages.join('\n'),
+			channel: channel,
+		};
+		if (messageTs) {
+			postArgs.thread_ts = messageTs;
+		}
+		const postResp = await client.chat.postMessage(postArgs);
+		logger.info('the message post response', postResp);
+		const plusPlusEvent: PPEvent = {
+			notificationMessage: notificationMessage.join('\n'),
+			sender: sender as IUser,
+			recipients: recipients,
+			direction: operator,
+			amount: 1,
+			channel,
+			reason: cleanReason,
+			teamId: teamId,
+			originalMessageTs: postResp.message?.thread_ts as string,
+			originalMessageParentTs: postResp.ts as string,
+		};
+
+		eventBus.emit(PPEventName, plusPlusEvent);
+	}
+}
 
 interface PrivateViewMetaDataJson {
 	channel: string;

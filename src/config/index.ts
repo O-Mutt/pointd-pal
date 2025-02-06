@@ -2,6 +2,12 @@ import convict from 'convict';
 import { PointdPalConfig } from './config.schema';
 
 const config = convict<PointdPalConfig>({
+	port: {
+		doc: 'The port to bind.',
+		format: 'port',
+		default: 5000,
+		env: 'PORT',
+	},
 	env: {
 		doc: 'The application environment.',
 		format: ['development', 'test', 'production'],
@@ -77,21 +83,21 @@ const config = convict<PointdPalConfig>({
 		rpcProvider: {
 			doc: 'Crypto RPC provider.',
 			format: String,
-			default: null,
+			default: '',
 			env: 'CRYPTO_RPC_PROVIDER',
 		},
 		magicNumber: {
 			doc: 'Magic number.',
 			format: String,
 			sensitive: true,
-			default: null,
+			default: '',
 			env: 'CRYPTO_MAGIC_NUMBER',
 		},
 		magicIv: {
 			doc: 'Magic IV.',
 			format: String,
 			sensitive: true,
-			default: null,
+			default: '',
 			env: 'CRYPTO_MAGIC_IV',
 		},
 		helpUrl: {
@@ -153,7 +159,7 @@ const config = convict<PointdPalConfig>({
 			env: 'SLACK_CLIENT_SECRET',
 		},
 		stateSecret: {
-			doc: 'Slack state secret.',
+			doc: 'Slack state secret. (This is simply a randomly generated string by us [thx slack?])',
 			format: String,
 			sensitive: true,
 			default: null,
@@ -164,7 +170,17 @@ const config = convict<PointdPalConfig>({
 
 // Load environment dependent configuration
 const env = config.get('env');
-config.loadFile('./config/' + env + '.json');
+try {
+	config.loadFile('./src/config/' + env + '.json');
+} catch (e: unknown) {
+	console.warn('No config file found for environment:[', env, ']\n', (e as Error).message, '\n');
+}
+import { config as devConfig } from './development';
+// import { config as testConfig } from './test';
+// import { config as prodConfig } from './production';
+config.load(devConfig);
+// config.load(testConfig);
+// config.load(prodConfig);
 
 // Perform validation
 config.validate({ allowed: 'strict' });

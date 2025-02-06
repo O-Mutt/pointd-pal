@@ -4,9 +4,9 @@ import { config } from '@/config';
 import { Client } from 'pg';
 import { subMinutes } from 'date-fns';
 import { withNamespace } from '@/logger';
-import * as userService from '@/services/userService';
-import * as botTokenService from '@/services/botTokenService';
-import { eventBus } from '@/services/eventBus';
+import * as userService from '@/lib/services/userService';
+import * as botTokenService from '@/lib/services/botTokenService';
+import { eventBus } from '@/lib/services/eventBus';
 
 const logger = withNamespace('databaseService');
 

@@ -1,17 +1,18 @@
-import { Blocks, Elements, HomeTab, Md, ViewBlockBuilder } from 'slack-block-builder';
+import { Blocks, Elements, HomeTab, Md, type ViewBlockBuilder } from 'slack-block-builder';
 
-import { AllMiddlewareArgs, SlackEventMiddlewareArgs } from '@slack/bolt';
-import { View } from '@slack/types';
+import { type AllMiddlewareArgs, App, type SlackEventMiddlewareArgs } from '@slack/bolt';
+import { type View } from '@slack/types';
 
-import { app } from '../app';
-import { IPointdPalConfig } from './entities/pointdPalConfig';
-import { IUser } from './entities/user';
+import { type IPointdPalConfig } from './entities/pointdPalConfig';
+import { type IUser } from './entities/user';
 import { actions } from '@/lib/types/Actions';
-import { Appendable } from 'slack-block-builder/dist/internal';
-import * as configService from '@/services/configService';
-import * as userService from '@/services/userService';
+import { type Appendable } from 'slack-block-builder/dist/internal';
+import * as configService from '@/lib/services/configService';
+import * as userService from '@/lib/services/userService';
 
-app.event('app_home_opened', updateHomeTab);
+export function register(app: App): void {
+	app.event('app_home_opened', updateHomeTab);
+}
 
 async function updateHomeTab({
 	event,

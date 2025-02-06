@@ -8,23 +8,25 @@ import {
 	AllMiddlewareArgs,
 	SlackEventMiddlewareArgs,
 	StringIndexed,
+	App,
 } from '@slack/bolt';
 
-import { app } from '@/app';
 import { regExpCreator } from '@/lib/regexpCreator';
 import { actions } from '@/lib/types/Actions';
 import { ConfirmOrCancel } from '@/lib/types/Enums';
-import * as userService from '@/services/userService';
-import * as databaseService from '@/services/databaseService';
+import * as userService from '@/lib/services/userService';
+import * as databaseService from '@/lib/services/databaseService';
 import { SlackMessage } from './lib/slackMessage';
-import * as botTokenService from '@/services/botTokenService';
+import * as botTokenService from '@/lib/services/botTokenService';
 
-app.message(regExpCreator.getBotWallet(), directMention, botWalletCount);
+export function register(app: App) {
+	app.message(regExpCreator.getBotWallet(), directMention, botWalletCount);
 
-// DM only
-app.message(regExpCreator.createLevelUpAccount(), directMention, levelUpAccount);
+	// DM only
+	app.message(regExpCreator.createLevelUpAccount(), directMention, levelUpAccount);
 
-app.action('confirm_levelup', levelUpToLevelThree);
+	app.action('confirm_levelup', levelUpToLevelThree);
+}
 
 async function levelUpAccount({
 	message,
@@ -105,7 +107,7 @@ async function botWalletCount({
 	}
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-expect-error
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-base-to-string, @typescript-eslint/restrict-template-expressions
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	logger.debug(`Get the bot wallet by user ${message.user.name}, ${botWallet}`);
 	let gas;
 	try {

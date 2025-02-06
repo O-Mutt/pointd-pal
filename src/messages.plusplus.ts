@@ -1,32 +1,37 @@
 import { Md } from 'slack-block-builder';
 import tokenBuddy from 'token-buddy';
 
-import { app } from '@/app';
-import { IUser } from '@/entities/user';
+import type { IUser } from '@/entities/user';
 import { MessageBuilder as Builder } from '@/lib/messageBuilder';
 import { regExpCreator } from '@/lib/regexpCreator';
-import * as botTokenService from '@/services/botTokenService';
-import { decrypt } from '@/services/decrypt';
-import { eventBus } from '@/services/eventBus';
-import * as scorekeeperService from '@/services/scorekeeperService';
-import * as userService from '@/services/userService';
+import * as botTokenService from '@/lib/services/botTokenService';
+import { decrypt } from '@/lib/services/decrypt';
+import { eventBus } from '@/lib/services/eventBus';
+import * as scorekeeperService from '@/lib/services/scorekeeperService';
+import * as userService from '@/lib/services/userService';
 import { SlackMessage } from '@/lib/slackMessage';
 import { StringUtil } from '@/lib/string';
 // this may need to move or be generic...er
 import * as token from '@/lib/token.json';
 import { DirectionEnum } from '@/lib/types/Enums';
-import { PPEvent, PPEventName, PPFailureEvent, PPFailureEventName } from '@/lib/types/Events';
+import { type PPEvent, PPEventName, type PPFailureEvent, PPFailureEventName } from '@/lib/types/Events';
 import { withNamespace } from '@/logger';
 import config from '@config';
-import { AllMiddlewareArgs, directMention, SlackEventMiddlewareArgs, StringIndexed } from '@slack/bolt';
-import { ChatPostMessageResponse } from '@slack/web-api';
+import {
+	type AllMiddlewareArgs,
+	App,
+	directMention,
+	type SlackEventMiddlewareArgs,
+	type StringIndexed,
+} from '@slack/bolt';
+import { type ChatPostMessageResponse } from '@slack/web-api';
 
 const logger = withNamespace('messages.plusplus');
 const cryptoConfig = config.get('crypto');
 if (cryptoConfig?.magicIv && cryptoConfig?.magicNumber) {
-	await (async () => {
+	void (async () => {
 		const dbMagicString = await botTokenService.getMagicSecretStringNumberValue();
-		const magicMnumber = decrypt(cryptoConfig.magicIv!, cryptoConfig.magicNumber!, dbMagicString);
+		const magicMnumber = decrypt(cryptoConfig.magicIv, cryptoConfig.magicNumber, dbMagicString);
 		if (magicMnumber) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 			await tokenBuddy.init({
@@ -45,16 +50,17 @@ if (cryptoConfig?.magicIv && cryptoConfig?.magicNumber) {
 	logger.debug('magicIv and magicNumber not set skipping init');
 }
 
-// listen to everything
-app.message(regExpCreator.createUpDownVoteRegExp(), upOrDownVote);
-app.message(regExpCreator.createMultiUserVoteRegExp(), multipleUsersVote);
+export function register(app: App): void {
+	// listen to everything
+	app.message(regExpCreator.createUpDownVoteRegExp(), upOrDownVote);
+	app.message(regExpCreator.createMultiUserVoteRegExp(), multipleUsersVote);
 
-// listen for bot tag/ping
-app.message(regExpCreator.createGiveTokenRegExp(), directMention, giveTokenBetweenUsers);
+	// listen for bot tag/ping
+	app.message(regExpCreator.createGiveTokenRegExp(), directMention, giveTokenBetweenUsers);
 
-// admin
-app.message(regExpCreator.createEraseUserScoreRegExp(), directMention, eraseUserScore);
-
+	// admin
+	app.message(regExpCreator.createEraseUserScoreRegExp(), directMention, eraseUserScore);
+}
 /**
  * Functions for responding to commands
  */

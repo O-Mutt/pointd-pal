@@ -1,7 +1,7 @@
 import { app } from '@/app';
 import { IPointdPalConfig } from '@/entities/pointdPalConfig';
-import { getConnection } from '@/services/databaseService';
-import * as installService from '@/services/installService';
+import { getConnection } from '@/lib/services/databaseService';
+import * as installService from '@/lib/services/installService';
 
 export async function findOneOrCreate(teamId: string): Promise<IPointdPalConfig> {
 	const connection = await getConnection(teamId);

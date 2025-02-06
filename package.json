@@ -4,17 +4,20 @@
 	"description": "",
 	"main": "app.js",
 	"engines": {
-		"node": "^22"
+		"node": ">=22"
 	},
 	"scripts": {
-		"ngrok": "ngrok http 3000",
-		"start": "node --max-old-space-size=4096 -- node_modules/ts-node/dist/bin -P tsconfig.json app.ts",
-		"start:dev": "ts-node-dev -P tsconfig.json app.ts",
 		"build": "tsc",
-		"lint": "eslint '*/**' --quiet",
+		"lint:ci": "eslint .",
+		"lint:commit": "commitlint --edit",
 		"lint:fix": "npm run lint -- --fix",
-		"test": "echo \"Error: no test specified\" && exit 0",
-		"migrate": "do the thing"
+		"lint:staged": "lint-staged",
+		"lint": "eslint .",
+		"migrate": "do the thing",
+		"ngrok": "ngrok http 5000",
+		"start:dev": "ts-node-dev -P tsconfig.json app.ts",
+		"start": "tsx app.ts",
+		"test": "echo \"Error: no test specified\" && exit 0"
 	},
 	"license": "MIT",
 	"dependencies": {
@@ -54,6 +57,7 @@
 		"ngrok": "^5.0.0-beta.2",
 		"prettier": "3.4.2",
 		"ts-node-dev": "^2.0.0",
+		"tsx": "^4.19.2",
 		"typescript": "^5.7.3",
 		"typescript-eslint": "^8.23.0"
 	}
