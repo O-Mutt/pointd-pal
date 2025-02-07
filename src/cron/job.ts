@@ -2,18 +2,18 @@ import { CronJob } from 'cron';
 import ImageCharts from 'image-charts';
 import { map, take } from 'lodash';
 import { Blocks, Md, Message } from 'slack-block-builder';
-import { Appendable, BlockBuilder } from 'slack-block-builder/dist/internal';
+import { type Appendable, type BlockBuilder } from 'slack-block-builder/dist/internal';
 
 import { app } from '@/app';
-import { IInstallation } from '@/entities/installation';
-import { IScoreLog } from '@/entities/scoreLog';
-import { DateUtil } from '@/lib/date';
+import { type IInstallation } from '@/entities/installation';
+import { type IScoreLog } from '@/entities/scoreLog';
+import { DateExtensions } from '@/lib/dateExtensions';
 import * as configService from '@/lib/services/configService';
 import * as scoreboardService from '@/lib/services/scoreboardService';
 import * as slackService from '@/lib/services/slack';
 import { withNamespace } from '@/logger';
 import config from '@config';
-import { ChatPostMessageArguments } from '@slack/web-api';
+import { type ChatPostMessageArguments } from '@slack/web-api';
 
 const logger = withNamespace('cron/job');
 
@@ -36,7 +36,7 @@ export function createCronJob(install: IInstallation) {
 			if (!channelId) {
 				return;
 			}
-			if (DateUtil.isScoreboardDayOfWeek()) {
+			if (DateExtensions.isScoreboardDayOfWeek()) {
 				logger.debug('running the cron job');
 
 				let rank = 0;

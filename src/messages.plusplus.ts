@@ -10,7 +10,6 @@ import { eventBus } from '@/lib/services/eventBus';
 import * as scorekeeperService from '@/lib/services/scorekeeperService';
 import * as userService from '@/lib/services/userService';
 import { SlackMessage } from '@/lib/slackMessage';
-import { StringUtil } from '@/lib/string';
 // this may need to move or be generic...er
 import * as token from '@/lib/token.json';
 import { DirectionEnum } from '@/lib/types/Enums';
@@ -96,8 +95,6 @@ async function upOrDownVote({
 		context.matches.groups;
 	/* eslint-enable @typescript-eslint/no-unsafe-assignment */
 
-	const cleanReason = reason?.cleanAndEncode();
-
 	if (userId.charAt(0).toLowerCase() === 's') {
 		const { users } = await client.usergroups.users.list({ team_id: teamId, usergroup: userId });
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -125,26 +122,19 @@ async function upOrDownVote({
 	const increment = operator.match(regExpCreator.positiveOperators) ? 1 : -1;
 
 	logger.debug(
-		`${increment} score for [${userId}] from [${from}]${cleanReason ? ` because ${cleanReason}` : ''} in [${channel}]`,
+		`${increment} score for [${userId}] from [${from}]${reason ? ` because ${reason}` : ''} in [${channel}]`,
 	);
 	let toUser: IUser;
 	let fromUser: IUser;
 	try {
-		({ toUser, fromUser } = await scorekeeperService.incrementScore(
-			teamId,
-			userId,
-			from,
-			channel,
-			increment,
-			cleanReason,
-		));
+		({ toUser, fromUser } = await scorekeeperService.incrementScore(teamId, userId, from, channel, increment, reason));
 	} catch (e: unknown) {
 		logger.warn('Error incrementing score', e);
 		await say((e as Error).message);
 		return;
 	}
 
-	const theMessage = Builder.getMessageForNewScore(toUser, cleanReason);
+	const theMessage = Builder.getMessageForNewScore(toUser, reason);
 
 	if (theMessage) {
 		const sayArgs = SlackMessage.getSayMessageArgs(message, theMessage);
@@ -161,7 +151,7 @@ async function upOrDownVote({
 			direction: operator.match(regExpCreator.positiveOperators) ? DirectionEnum.PLUS : DirectionEnum.MINUS,
 			amount: 1,
 			channel,
-			reason: cleanReason,
+			reason,
 			teamId: teamId,
 			originalMessageTs: SlackMessage.getMessageTs(sayResponse.message),
 			originalMessageParentTs: SlackMessage.getMessageParentTs(sayResponse.message),
@@ -190,7 +180,6 @@ async function giveTokenBetweenUsers({
 	}: { premessage: string; userId: string; amount: number; conjunction: string; reason: string } =
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		context.matches.groups;
-	const cleanReason = StringUtil.cleanAndEncode(reason);
 
 	const from: string = context.userId!;
 
@@ -212,18 +201,16 @@ async function giveTokenBetweenUsers({
 		return;
 	}
 
-	logger.debug(
-		`${amount} score for [${userId}] from [${from}]${cleanReason ? ` because ${cleanReason}` : ''} in [${channel}]`,
-	);
+	logger.debug(`${amount} score for [${userId}] from [${from}]${reason ? ` because ${reason}` : ''} in [${channel}]`);
 	let response: { toUser: IUser; fromUser: IUser };
 	try {
-		response = await scorekeeperService.transferTokens(teamId, userId, from, channel, amount, cleanReason);
+		response = await scorekeeperService.transferTokens(teamId, userId, from, channel, amount, reason);
 	} catch (e: unknown) {
 		await say((e as Error).message);
 		return;
 	}
 
-	const theMessage = SlackMessage.getMessageForTokenTransfer(response.toUser, response.fromUser, amount, cleanReason);
+	const theMessage = SlackMessage.getMessageForTokenTransfer(response.toUser, response.fromUser, amount, reason);
 
 	if (message) {
 		const sayArgs = SlackMessage.getSayMessageArgs(message, theMessage);
@@ -235,7 +222,7 @@ async function giveTokenBetweenUsers({
 			direction: DirectionEnum.PLUS,
 			amount: amount,
 			channel,
-			reason: cleanReason,
+			reason,
 			teamId: teamId,
 			originalMessageTs: SlackMessage.getMessageTs(sayResponse.message),
 			originalMessageParentTs: SlackMessage.getMessageParentTs(sayResponse.message),
@@ -269,7 +256,6 @@ async function multipleUsersVote({
 		reason?: string;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	} = context.matches.groups;
-	const cleanReason = reason?.cleanAndEncode();
 
 	const from = context.userId!;
 	const { channel } = message;
@@ -314,7 +300,7 @@ async function multipleUsersVote({
 	for (const toUserId of cleanedIdArray) {
 		let response: { toUser: IUser; fromUser: IUser };
 		try {
-			response = await scorekeeperService.incrementScore(teamId, toUserId, from, channel, increment, cleanReason);
+			response = await scorekeeperService.incrementScore(teamId, toUserId, from, channel, increment, reason);
 		} catch (e: unknown) {
 			await say((e as Error).message);
 			continue;
@@ -323,10 +309,10 @@ async function multipleUsersVote({
 		if (response.toUser) {
 			logger.debug(
 				`clean names map[${toUserId}]: ${response.toUser.score}, the reason ${
-					cleanReason ? response.toUser.reasons.get(cleanReason) : 'n/a'
+					reason ? response.toUser.reasons[reason] : 'n/a'
 				} `,
 			);
-			messages.push(Builder.getMessageForNewScore(response.toUser, cleanReason));
+			messages.push(Builder.getMessageForNewScore(response.toUser, reason));
 			recipients.push(response.toUser);
 			notificationMessage.push(
 				`${Md.user(response.fromUser.slackId)} ${
@@ -350,7 +336,7 @@ async function multipleUsersVote({
 			direction: operator.match(regExpCreator.positiveOperators) ? DirectionEnum.PLUS : DirectionEnum.MINUS,
 			amount: 1,
 			channel,
-			reason: cleanReason,
+			reason,
 			teamId: teamId,
 			originalMessageTs: SlackMessage.getMessageTs(sayResponse.message),
 			originalMessageParentTs: SlackMessage.getMessageParentTs(sayResponse.message),
@@ -372,7 +358,6 @@ async function eraseUserScore({
 	const { userId, reason }: { userId: string; reason: string | undefined } = context.matches.groups;
 	const from = context.userId!;
 	const { channel } = message;
-	const cleanReason = StringUtil.cleanAndEncode(reason);
 
 	const fromUser = await userService.findOneBySlackIdOrCreate(teamId, from);
 	const toBeErased = await userService.findOneBySlackIdOrCreate(teamId, userId);
@@ -382,7 +367,7 @@ async function eraseUserScore({
 		return;
 	}
 
-	const erased = await scorekeeperService.erase(teamId, toBeErased, fromUser, channel, cleanReason);
+	const erased = await scorekeeperService.erase(teamId, toBeErased, fromUser, channel, reason);
 
 	if (erased) {
 		const messageText = reason

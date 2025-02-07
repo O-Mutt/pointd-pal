@@ -5,8 +5,8 @@ export interface IUser extends AuditTags {
 	teamId: string;
 	slackId: string;
 	score: number;
-	reasons: Map<string, number>;
-	pointsGiven: Map<string, number>;
+	reasons: Record<string, number>;
+	pointsGiven: Record<string, number>;
 	pointdPalDay: Date;
 	accountLevel: number;
 	totalPointsGiven: number;

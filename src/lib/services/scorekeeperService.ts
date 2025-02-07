@@ -50,14 +50,14 @@ export async function incrementScore(
 		}
 		toUser.score = toUser.score + incrementValue;
 		if (reason) {
-			const newReasonScore = (toUser.reasons.get(reason) ?? 0) + incrementValue;
-			toUser.reasons.set(reason, newReasonScore);
+			const newReasonScore = (toUser.reasons[reason] ?? 0) + incrementValue;
+			toUser.reasons[reason] = newReasonScore;
 		}
 
 		//await this.databaseService.savePointsGiven(fromUser, toUser, incrementValue);
 		logger.debug(`Adding a points given to`, fromUser, Math.abs(incrementValue));
 		const newScore: number = (fromUser.pointsGiven?.[toUser.id] ?? 0) + Math.abs(incrementValue);
-		fromUser.pointsGiven.set(toUser.slackId, newScore);
+		fromUser.pointsGiven[toUser.id] = newScore;
 		fromUser.totalPointsGiven = fromUser.totalPointsGiven + incrementValue;
 		if (
 			pointdPalConfig.formalFeedbackUrl &&

@@ -1,7 +1,7 @@
 import { withNamespace } from '@/logger';
 
 const logger = withNamespace('NumberUtil');
-export class NumberUtil {
+export class NumberExtensions {
 	static randomInt(min = 1, max = 0): number {
 		logger.debug('randomInt', { min, max });
 		const lower = Math.ceil(Math.min(min, max));

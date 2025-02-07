@@ -1,5 +1,5 @@
 import { Md } from 'slack-block-builder';
-import { IUser } from '@/entities/user';
+import { type IUser } from '@/entities/user';
 
 export class MessageBuilder {
 	static getMessageForNewScore(user: IUser, reason: string | undefined): string {
@@ -29,17 +29,21 @@ export class MessageBuilder {
 			return reasonMessage;
 		}
 
-		const decodedReason = reason.decode();
-		if (user.reasons.get(reason) === 1 || user.reasons.get(reason) === -1) {
-			if (user.score === 1 || user.score === -1) {
-				reasonMessage = ` for ${decodedReason}`;
-			} else {
-				reasonMessage = `, ${user.reasons.get(reason)} of which is for ${decodedReason}`;
-			}
-		} else if (user.reasons.get(reason) === 0) {
-			reasonMessage = `, none of which are for ${decodedReason}`;
-		} else {
-			reasonMessage = `, ${user.reasons.get(reason)} of which are for ${decodedReason}`;
+		const reasonScore = user.reasons[reason];
+		switch (Math.abs(reasonScore)) {
+			case 1:
+				if (user.score === 1 || user.score === -1) {
+					reasonMessage = ` for ${reason}`;
+				} else {
+					reasonMessage = `, ${reasonScore} of which is for ${reason}`;
+				}
+				break;
+			case 0:
+				reasonMessage = `, none of which are for ${reason}`;
+				break;
+			default:
+				reasonMessage = `, ${reasonScore} of which are for ${reason}`;
+				break;
 		}
 		if (!reasonMessage.endsWithPunctuation()) {
 			reasonMessage += '.';

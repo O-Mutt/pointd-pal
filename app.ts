@@ -8,6 +8,10 @@ import { config } from '@/config';
 import { healthEndpoint } from '@/lib/routes/health';
 import { logger as customLogger } from '@/logger';
 
+import '@/lib/stringExtensions';
+import '@/lib/dateExtensions';
+import '@/lib/numberExtensions';
+
 // messages
 import { register as messagesCryptoRegister } from '@/messages.crypto';
 import { register as messagesScoreboardRegister } from '@/messages.scoreboard';

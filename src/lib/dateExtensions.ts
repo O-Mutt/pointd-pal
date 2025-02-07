@@ -3,7 +3,7 @@ import config from '@config';
 import { differenceInYears, getDayOfYear } from 'date-fns';
 
 const logger = withNamespace('DateUtil');
-export class DateUtil {
+export class DateExtensions {
 	static isCakeDay(dateObject: Date): boolean {
 		try {
 			const pointdPalDay = getDayOfYear(dateObject);
@@ -53,9 +53,9 @@ declare global {
 	}
 }
 Date.prototype.isCakeDay = function (): boolean {
-	return DateUtil.isCakeDay(this);
+	return DateExtensions.isCakeDay(this);
 };
 
 Date.prototype.getYearsAsString = function (): string {
-	return DateUtil.getYearsAsString(this);
+	return DateExtensions.getYearsAsString(this);
 };
