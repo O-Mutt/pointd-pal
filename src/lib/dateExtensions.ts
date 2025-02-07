@@ -19,7 +19,7 @@ export class DateExtensions {
 
 	static getYearsAsString(pointdPalDay: Date): string {
 		const today = new Date();
-		const years = differenceInYears(today, pointdPalDay);
+		const years = differenceInYears(today, pointdPalDay) + 1;
 		return this.getOrdinalSuffix(years);
 	}
 

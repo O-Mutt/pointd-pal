@@ -1,4 +1,4 @@
-import { AuditTags } from './auditTags';
+import { type AuditTags } from './auditTags';
 
 export interface IPointdPalConfig extends AuditTags {
 	id: string;
@@ -10,6 +10,7 @@ export interface IPointdPalConfig extends AuditTags {
 	companyName?: string;
 	// pointdPalAdmins?: string[];
 	tokenLedgerBalance: number;
+	enableAprilFoolsDay: boolean;
 }
 
 export interface IPointdPalAdmins {

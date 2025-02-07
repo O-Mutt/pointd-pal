@@ -86,20 +86,6 @@ const app = new App({
 	},
 });
 
-app.action('button_click', async ({ body, ack, respond }) => {
-	// Acknowledge the action
-	await ack();
-	await respond(`${Md.user(body.user.id)} clicked the button`);
-});
-
-app.message(/.*/, async ({ message, context, logger, say }) => {
-	logger.debug('This is for logging all the things!', message, context);
-	if (config.get('env') === 'development') {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
-		await say(context.matches.input);
-	}
-});
-
 void (async () => {
 	customLogger.info(
 		'Before we start the apps we will validate that all installations are up to date by running migrations. Please hold on...',
