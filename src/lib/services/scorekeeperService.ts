@@ -55,7 +55,8 @@ export async function incrementScore(
 		}
 
 		//await this.databaseService.savePointsGiven(fromUser, toUser, incrementValue);
-		const newScore: number = (fromUser.pointsGiven.get(toUser.slackId) || 0) + Math.abs(incrementValue);
+		logger.debug(`Adding a points given to`, fromUser, Math.abs(incrementValue));
+		const newScore: number = (fromUser.pointsGiven?.[toUser.id] ?? 0) + Math.abs(incrementValue);
 		fromUser.pointsGiven.set(toUser.slackId, newScore);
 		fromUser.totalPointsGiven = fromUser.totalPointsGiven + incrementValue;
 		if (
@@ -144,7 +145,7 @@ export async function transferTokens(
 			toUser.reasons.set(reason, newReasonScore);
 		}
 
-		const newScore: number = (fromUser.pointsGiven.get(toUser.slackId) || 0) + Math.abs(numberOfTokens);
+		const newScore: number = (fromUser.pointsGiven[toUser.slackId] ?? 0) + Math.abs(numberOfTokens);
 		fromUser.pointsGiven.set(toUser.slackId, newScore);
 		fromUser.totalPointsGiven = fromUser.totalPointsGiven + numberOfTokens;
 		try {
@@ -203,8 +204,10 @@ export async function isSpam(teamId: string, recipient: IUser, sender: IUser) {
 }
 
 export function isSendingToSelf(teamId: string, recipient: IUser, sender: IUser) {
-	//Logger.debug(`Checking if is to self. To [${to.name}] From [${from.name}], Valid: ${to.name !== from.name}`);
-	const isToSelf = recipient.slackId === sender.slackId;
+	logger.debug(
+		`Checking if is to self. To [${recipient.name}] From [${sender.name}], Valid: ${recipient.id !== sender.id}`,
+	);
+	const isToSelf = recipient.id === sender.id;
 	if (isToSelf) {
 		const spamEvent: PPSpamEvent = {
 			recipient,

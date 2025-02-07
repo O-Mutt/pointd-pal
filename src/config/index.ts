@@ -2,10 +2,16 @@ import convict from 'convict';
 import { PointdPalConfig } from './config.schema';
 
 const config = convict<PointdPalConfig>({
+	baseUrl: {
+		doc: 'The base URL of the application.',
+		format: String,
+		default: 'https://pointdpal.okeefe.dev',
+		env: 'BASE_URL',
+	},
 	port: {
 		doc: 'The port to bind.',
 		format: 'port',
-		default: 5000,
+		default: 3000,
 		env: 'PORT',
 	},
 	env: {
@@ -77,6 +83,12 @@ const config = convict<PointdPalConfig>({
 			format: String,
 			default: 'pointdpal',
 			env: 'POSTGRES_DB',
+		},
+		schema: {
+			doc: 'Postgres schema.',
+			format: String,
+			default: 'pointd_pal',
+			env: 'POSTGRES_SCHEMA',
 		},
 	},
 	crypto: {
@@ -164,6 +176,13 @@ const config = convict<PointdPalConfig>({
 			sensitive: true,
 			default: null,
 			env: 'SLACK_STATE_SECRET',
+		},
+		appToken: {
+			doc: 'Slack app token.',
+			format: String,
+			sensitive: true,
+			default: null,
+			env: 'SLACK_APP_TOKEN',
 		},
 	},
 });

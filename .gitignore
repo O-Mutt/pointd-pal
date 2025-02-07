@@ -112,4 +112,6 @@ src/config/*
 !src/config/example.ts
 !src/config/index.ts
 !src/config/config.schema.ts
-!src/config/example.json
+!src/config/example.jsonreport.*
+
+report.*

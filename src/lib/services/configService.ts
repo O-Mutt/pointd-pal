@@ -18,7 +18,7 @@ export async function findOneOrCreate(teamId: string): Promise<IPointdPalConfig>
 	const _admins = members?.filter((user) => user.is_admin === true).map((admin) => admin.id);
 	// this is not done
 	// await connection.query('INSERT INTO admins ');
-	result = await connection.query<IPointdPalConfig>('INSERT INTO configs (team_id) VALUES ($1) RETURNING *', [teamId]);
+	result = await connection.query<IPointdPalConfig>('INSERT INTO configs DEFAULT VALUES RETURNING *', []);
 	return result.rows[0];
 }
 

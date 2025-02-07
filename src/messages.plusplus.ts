@@ -82,6 +82,8 @@ async function upOrDownVote({
 	const from: string = context.userId!;
 	const channel = payload.channel;
 
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+	logger.error('found these groups', context.matches.groups, context.matches.groups['userId']);
 	/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 	const {
 		premessage,
@@ -89,12 +91,12 @@ async function upOrDownVote({
 		operator,
 		conjunction,
 		reason,
-	}: { premessage: string; userId: string; operator: `${DirectionEnum}`; conjunction: string; reason: string } =
+	}: { premessage: string; userId: string; operator: `${DirectionEnum}`; conjunction: string; reason?: string } =
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		context.matches.groups;
 	/* eslint-enable @typescript-eslint/no-unsafe-assignment */
 
-	const cleanReason = reason.cleanAndEncode();
+	const cleanReason = reason?.cleanAndEncode();
 
 	if (userId.charAt(0).toLowerCase() === 's') {
 		const { users } = await client.usergroups.users.list({ team_id: teamId, usergroup: userId });
@@ -103,7 +105,7 @@ async function upOrDownVote({
 		return await multipleUsersVote({ message, context, logger, say, client, payload, body, ...rest });
 	}
 
-	if (SlackMessage.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
+	if (SlackMessage.isKnownFalsePositive(premessage, conjunction, operator, reason)) {
 		// circuit break a plus plus
 		const failureEvent: PPFailureEvent = {
 			sender: from,
@@ -123,7 +125,7 @@ async function upOrDownVote({
 	const increment = operator.match(regExpCreator.positiveOperators) ? 1 : -1;
 
 	logger.debug(
-		`${increment} score for [${userId}] from[${from}]${cleanReason ? ` because ${cleanReason}` : ''} in [${channel}]`,
+		`${increment} score for [${userId}] from [${from}]${cleanReason ? ` because ${cleanReason}` : ''} in [${channel}]`,
 	);
 	let toUser: IUser;
 	let fromUser: IUser;
@@ -211,7 +213,7 @@ async function giveTokenBetweenUsers({
 	}
 
 	logger.debug(
-		`${amount} score for [${userId}] from[${from}]${cleanReason ? ` because ${cleanReason}` : ''} in [${channel}]`,
+		`${amount} score for [${userId}] from [${from}]${cleanReason ? ` because ${cleanReason}` : ''} in [${channel}]`,
 	);
 	let response: { toUser: IUser; fromUser: IUser };
 	try {
@@ -264,17 +266,17 @@ async function multipleUsersVote({
 		allUsers: string;
 		operator: `${DirectionEnum}`;
 		conjunction: string;
-		reason: string;
+		reason?: string;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	} = context.matches.groups;
-	const cleanReason = StringUtil.cleanAndEncode(reason);
+	const cleanReason = reason?.cleanAndEncode();
 
 	const from = context.userId!;
 	const { channel } = message;
 	if (!allUsers) {
 		return;
 	}
-	if (SlackMessage.isKnownFalsePositive(premessage, conjunction, reason, operator)) {
+	if (SlackMessage.isKnownFalsePositive(premessage, conjunction, operator, reason)) {
 		// circuit break a plus plus
 		const failureEvent: PPFailureEvent = {
 			sender: from,

@@ -30,17 +30,23 @@ import { register as hometabViewsRegister } from '@/hometab.views';
 
 //shortcuts
 import { register as shortcutsRegister } from '@/shortcuts';
+import * as installService from '@/lib/services/installService';
 
 const app = new App({
 	signingSecret: config.get('slack.signingSecret'),
 	clientId: config.get('slack.clientId'),
 	clientSecret: config.get('slack.clientSecret'),
 	stateSecret: config.get('slack.stateSecret'),
+	appToken: config.get('slack.appToken'),
 	logLevel: config.get('logLevel') as LogLevel,
+	socketMode: true,
 	installationStore: PointdPalInstallStore,
 	tokenVerificationEnabled: true,
+	redirectUri: `${config.get('baseUrl')}/slack/oauth_redirect`,
 	installerOptions: {
 		directInstall: true,
+		// stateVerification: false,
+		redirectUriPath: '/slack/oauth_redirect',
 	},
 	scopes: [
 		'app_mentions:read',
@@ -91,6 +97,10 @@ app.message(/.*/, async ({ message, context, logger, say }) => {
 });
 
 void (async () => {
+	customLogger.info(
+		'Before we start the apps we will validate that all installations are up to date by running migrations. Please hold on...',
+	);
+	await installService.migrateAll();
 	// Start your app
 	await app.start({ port: config.get('port') });
 

@@ -1,12 +1,18 @@
-/* eslint-disable */
 import { Md } from 'slack-block-builder';
 
 import type { IUser } from '@/entities/user';
 import * as userService from '@/lib/services/userService';
 import { withNamespace } from '@/logger';
-import { App, directMention } from '@slack/bolt';
+import {
+	App,
+	directMention,
+	type AllMiddlewareArgs,
+	type SlackEventMiddlewareArgs,
+	type StringIndexed,
+} from '@slack/bolt';
 import { type ConversationsListResponse } from '@slack/web-api';
 import { type Member } from '@slack/web-api/dist/types/response/UsersListResponse';
+import type { User } from '@slack/web-api/dist/types/response/UsersInfoResponse';
 
 const logger = withNamespace('migrations');
 
@@ -20,21 +26,29 @@ export function register(app: App): void {
 	app.message('join all old pointdPal channels', directMention, joinAllPointdPalChannels);
 }
 
-async function mapUsersToDb({ message, context, client, say }) {
+async function mapUsersToDb({
+	message,
+	context,
+	client,
+	say,
+}: AllMiddlewareArgs & SlackEventMiddlewareArgs<'message'> & StringIndexed) {
 	const teamId = context.teamId as string;
+
+	// @ts-expect-error just stawp
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const userId: string = message.user;
 
 	const { isAdmin } = await userService.findOneBySlackIdOrCreate(teamId, userId);
 	if (!isAdmin) {
 		logger.error("sorry, can't do that", message, context);
-		await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
+		await say(`Sorry, can't do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(userId)}`);
 		return;
 	}
 
-	const members: Member[] = (await client.users.list()).members;
+	const members = (await client.users.list({})).members;
 
 	const mappings: string[] = [];
-	for (const member of members) {
+	for (const member of members ?? []) {
 		try {
 			logger.debug('Map this member', JSON.stringify(member));
 			const localMember = await userService.findOneBySlackIdOrCreate(teamId, member.id as string);
@@ -47,19 +61,28 @@ async function mapUsersToDb({ message, context, client, say }) {
 	await say(`Ding fries are done. We mapped ${mappings.length} of ${members.length} users. \n${mappings.join('\n')}`);
 }
 
-async function mapMoreUserFieldsBySlackId({ message, context, client, logger, say }) {
+async function mapMoreUserFieldsBySlackId({
+	message,
+	context,
+	client,
+	logger,
+	say,
+}: AllMiddlewareArgs & SlackEventMiddlewareArgs<'message'> & StringIndexed) {
 	const teamId = context.teamId as string;
+
+	// @ts-expect-error just stawp
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const userId: string = message.user;
 
 	const { isAdmin } = await userService.findOneBySlackIdOrCreate(teamId, userId);
 	if (!isAdmin) {
 		logger.error("sorry, can't do that", message, context);
-		await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
+		await say(`Sorry, can't do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(userId)}`);
 		return;
 	}
 
-	const members: Member[] = (await client.users.list()).members;
-	for (const member of members) {
+	const members = (await client.users.list({})).members;
+	for (const member of members ?? []) {
 		if (member?.profile?.email) {
 			try {
 				logger.debug('Map this member', JSON.stringify(member));
@@ -76,14 +99,22 @@ async function mapMoreUserFieldsBySlackId({ message, context, client, logger, sa
 	await say('Ding fries are done.');
 }
 
-async function mapSingleUserToDb({ message, context, client, logger, say }) {
+async function mapSingleUserToDb({
+	message,
+	context,
+	client,
+	logger,
+	say,
+}: AllMiddlewareArgs & SlackEventMiddlewareArgs<'message'> & StringIndexed) {
 	const teamId = context.teamId as string;
+	// @ts-expect-error just stawp
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const userId: string = message.user;
 
 	const { isAdmin } = await userService.findOneBySlackIdOrCreate(teamId, userId);
 	if (!isAdmin) {
 		logger.error("sorry, can't do that", message, context);
-		await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
+		await say(`Sorry, can't do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(userId)}`);
 		return;
 	}
 
@@ -95,11 +126,11 @@ async function mapSingleUserToDb({ message, context, client, logger, say }) {
 	const { user } = await client.users.info({ user: to.slackId });
 	try {
 		logger.debug('Map this member', JSON.stringify(user));
-		const localMember = await userService.findOneBySlackIdOrCreate(teamId, user);
-		localMember.slackId = user.slackId;
+		const localMember = await userService.findOneBySlackIdOrCreate(teamId, to.slackId);
+		localMember.slackId = to.slackId;
 
 		if (localMember.id) {
-			userService.update(teamId, localMember);
+			await userService.update(teamId, localMember);
 			await say(
 				`Mapping completed for ${to.name}: { name: ${localMember.name}, slackId: ${localMember.slackId}, id: ${localMember.id} }`,
 			);
@@ -132,14 +163,22 @@ async function mapSingleUserToDb({ message, context, client, logger, say }) {
 // 	await say('Ding fries are done. We unmapped all users');
 // }
 
-async function mapSlackIdToEmail({ message, context, logger, say, client }) {
+async function mapSlackIdToEmail({
+	message,
+	context,
+	logger,
+	say,
+	client,
+}: AllMiddlewareArgs & SlackEventMiddlewareArgs<'message'> & StringIndexed) {
 	const teamId = context.teamId as string;
+	// @ts-expect-error just stawp
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const userId: string = message.user;
 
 	const { isAdmin } = await userService.findOneBySlackIdOrCreate(teamId, userId);
 	if (!isAdmin) {
 		logger.error("sorry, can't do that", message, context);
-		await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
+		await say(`Sorry, can't do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(userId)}`);
 		return;
 	}
 
@@ -148,13 +187,13 @@ async function mapSlackIdToEmail({ message, context, logger, say, client }) {
 
 		for (const user of missingEmailUsers) {
 			logger.debug('Map this member', user.slackId, user.name);
-			let slackUser;
+			let slackUser: User | undefined;
 			try {
 				slackUser = (await client.users.info({ user: user.slackId })).user;
-			} catch (e) {
-				logger.error(`error retrieving user: ${user.slackId} ${user.name}`);
+			} catch (e: unknown) {
+				logger.error(`error retrieving user: ${user.slackId} ${user.name}`, (e as Error).message);
 			}
-			if (slackUser.profile && slackUser.profile.email) {
+			if (slackUser?.profile?.email) {
 				user.email = slackUser.profile.email;
 				await userService.update(teamId, user);
 			}
@@ -212,16 +251,24 @@ async function mapSlackIdToEmail({ message, context, logger, say, client }) {
 // 	}
 // }
 
-async function joinAllPointdPalChannels({ say, logger, message, client, context }) {
+async function joinAllPointdPalChannels({
+	say,
+	logger,
+	message,
+	client,
+	context,
+}: AllMiddlewareArgs & SlackEventMiddlewareArgs<'message'> & StringIndexed) {
 	let result: ConversationsListResponse | undefined = undefined;
 	const teamId = context.teamId as string;
 	const oldPointdPal = 'U03HDRG36';
 
+	// @ts-expect-error just stawp
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const userId: string = message.user;
 	const { isAdmin } = await userService.findOneBySlackIdOrCreate(teamId, userId);
 	if (!isAdmin) {
 		logger.error("sorry, can't do that", message, context);
-		await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(message.user)}`);
+		await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(userId)}`);
 		return;
 	}
 
@@ -240,11 +287,10 @@ async function joinAllPointdPalChannels({ say, logger, message, client, context 
 		try {
 			const { members } = await client.conversations.members({ channel: channel.id as string });
 			if (members && members.includes(oldPointdPal)) {
-				client.conversations.join({ channel: channel.id as string });
+				await client.conversations.join({ channel: channel.id as string });
 			}
-		} catch (e) {
-			logger.error(`There was an error looking up members and joining the channel ${channel.id}`);
+		} catch (e: unknown) {
+			logger.error(`There was an error looking up members and joining the channel ${channel.id}`, (e as Error).message);
 		}
 	}
 }
-/* eslint-enable */

@@ -1,7 +1,9 @@
 import { PointdPalConfig } from './config.schema';
 
 const config: PointdPalConfig = {
-	port: 5000, // web port
+	baseUrl: 'https://pointdpal.okeefe.dev', // base url
+	env: 'development', // environment
+	port: 3000, // web port
 	logLevel: 'info', // log level
 	scoreKeywords: ['score', 'points', 'point', 'scores'], // keywords to check for score e.g. "how many points does @Xuser have?"
 	reasonConjunctions: ['for', 'because', 'due to', 'as a result of'], // conjunctions to check for reason e.g. "@XUser++ for being amazing"
@@ -15,6 +17,7 @@ const config: PointdPalConfig = {
 		database: 'pointdpal', // the root database to use for installations and baseline config (tenants will get their own)
 		username: 'pointdpal', // postgres username
 		password: 'test123', // postgres password
+		schema: 'pointdpal', // postgres schema
 	},
 	// this whole section is optional
 	crypto: {
@@ -34,6 +37,7 @@ const config: PointdPalConfig = {
 		clientId: '',
 		clientSecret: '',
 		stateSecret: '',
+		appToken: '',
 	},
 };
 

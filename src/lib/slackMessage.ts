@@ -44,14 +44,9 @@ export class SlackMessage {
 		return channel[0] === 'D' || channel === 'Shell';
 	}
 
-	static isKnownFalsePositive(
-		premessage: string,
-		conjunction: string,
-		reason: string,
-		operator: string,
-	): false | '' | RegExpMatchArray | null {
+	static isKnownFalsePositive(premessage: string, conjunction: string, operator: string, reason?: string): boolean {
 		const falsePositive = premessage && !conjunction && reason && operator.match(regExpCreator.negativeOperators);
-		return falsePositive;
+		return !!falsePositive;
 	}
 
 	static getSayMessageArgs(message: unknown, text: string): { text: string; thread_ts?: string } {

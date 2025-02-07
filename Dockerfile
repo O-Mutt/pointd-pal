@@ -17,4 +17,4 @@ EXPOSE $PORT
 ENV NODE_ENV=${NODE_ENV}
 ENV PORT=${PORT}
 
-CMD ["npm", "run" "ngrok", "&&", "npm", "run", "start:dev"]
+CMD ["npm", "run" "ngrok", "&&", "npm", "run", "start"]
