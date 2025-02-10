@@ -26,7 +26,7 @@ export class SpamService {
 		);
 		const isSpam = result.rows[0].count > 0;
 
-		this.logger.debug('spam check result', isSpam);
+		this.logger.info('spam check result', isSpam, result.rows[0], result.rows[0].count);
 
 		if (isSpam) {
 			const spamEvent: PPSpamEvent = {

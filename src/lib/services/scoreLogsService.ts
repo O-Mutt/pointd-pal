@@ -26,7 +26,7 @@ export class ScoreLogsService {
 			reason,
 			score_change as "scoreChange";
   `,
-			[scoreLog.from, scoreLog.to, scoreLog.date, scoreLog.channelId, scoreLog.reason, scoreLog.scoreChange],
+			[scoreLog.from, scoreLog.to, 'now()', scoreLog.channelId, scoreLog.reason, scoreLog.scoreChange],
 		);
 		return result.rows[0];
 	}

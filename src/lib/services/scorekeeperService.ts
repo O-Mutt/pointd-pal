@@ -9,7 +9,6 @@ import {
 	configService,
 	installService,
 	scoreLogsService,
-	SpamService,
 	spamService,
 	userService,
 } from '@/lib/services';
@@ -79,14 +78,14 @@ export class ScorekeeperService {
 			}
 
 			try {
-				const scoreLog = {
-					from: fromUser.slackId,
-					to: toUser.slackId,
+				const scoreLog: IScoreLog = {
+					from: fromUser.id,
+					to: toUser.id,
 					date: new Date(),
 					channelId,
 					reason,
 					scoreChange: incrementValue,
-				} as IScoreLog;
+				};
 				await scoreLogsService.create(teamId, scoreLog);
 			} catch (e) {
 				this.logger.error(
@@ -154,14 +153,15 @@ export class ScorekeeperService {
 			fromUser.pointsGiven[toUser.slackId] = newScore;
 			fromUser.totalPointsGiven = fromUser.totalPointsGiven + numberOfTokens;
 			try {
-				await scoreLogsService.create(teamId, {
-					from: fromUser.slackId,
-					to: toUser.slackId,
+				const scoreLog: IScoreLog = {
+					from: fromUser.id,
+					to: toUser.id,
 					date: new Date(),
 					channelId,
 					reason,
 					scoreChange: numberOfTokens,
-				});
+				};
+				await scoreLogsService.create(teamId, scoreLog);
 			} catch (e) {
 				this.logger.error(
 					`failed saving spam log for user ${toUser.name} from ${fromUser.name} in channel ${channelId} because ${
