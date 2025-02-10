@@ -24,11 +24,11 @@ async function updateHomeTab({
 		const userId = event.user;
 		const teamId = context.teamId as string;
 
-		const user = await userService.findOneBySlackIdOrCreate(teamId, userId);
-		const pointdPalConfig = await configService.findOneOrCreate(teamId);
+		const _user = await userService.findOneBySlackIdOrCreate(teamId, userId);
+		const _pointdPalConfig = await configService.findOneOrCreate(teamId);
 
 		const hometab = HomeTab({ callbackId: 'hometab' }).blocks(
-			Blocks.Image({ altText: 'PointdPal!', imageUrl: 'https://okeefe.dev/cdn_images/pointdPal_header.png' }),
+			Blocks.Image({ altText: 'PointdPal!', imageUrl: 'https://pointdpal.com/images/backgrounds/new-hero-bg.png' }),
 			Blocks.Section({
 				text: `${Md.emoji('wave')} Hey ${Md.user(userId)}, I'm PointdPal.`,
 			}),
@@ -37,9 +37,9 @@ async function updateHomeTab({
 					Md.codeInline('++') + ' or ' + Md.codeInline('--')
 				} to your friends/coworkers via slack to show them that you appreciate all the work they do.`,
 			}),
-			Blocks.Divider(),
-			...getAdminConfigSection(user),
-			...getUserConfigSection(user, pointdPalConfig),
+			// Blocks.Divider(),
+			// ...getAdminConfigSection(user),
+			// ...getUserConfigSection(user, pointdPalConfig),
 		);
 		await client.views.publish({ token: context.botToken, view: hometab.buildToObject() as View, user_id: userId });
 	} catch (e) {
@@ -47,7 +47,7 @@ async function updateHomeTab({
 	}
 }
 
-function getAdminConfigSection(user: IUser): Appendable<ViewBlockBuilder> {
+function _getAdminConfigSection(user: IUser): Appendable<ViewBlockBuilder> {
 	const blocks: Appendable<ViewBlockBuilder> = [];
 	if (!user.isAdmin) {
 		return blocks;
@@ -68,7 +68,7 @@ function getAdminConfigSection(user: IUser): Appendable<ViewBlockBuilder> {
 	return blocks;
 }
 
-function getUserConfigSection(_user: IUser, _pointdPalConfig: IPointdPalConfig | null): Appendable<ViewBlockBuilder> {
+function _getUserConfigSection(_user: IUser, _pointdPalConfig: IPointdPalConfig | null): Appendable<ViewBlockBuilder> {
 	const blocks: Appendable<ViewBlockBuilder> = [];
 
 	blocks.push(
