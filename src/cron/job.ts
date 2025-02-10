@@ -5,12 +5,12 @@ import { Blocks, Md, Message } from 'slack-block-builder';
 import { type Appendable, type BlockBuilder } from 'slack-block-builder/dist/internal';
 
 import { app } from '@/app';
-import { type IInstallation } from '@/entities/installation';
-import { type IScoreLog } from '@/entities/scoreLog';
+import { type IInstallation } from '@/models/installation';
+import { type IScoreLog } from '@/models/scoreLog';
 import { DateExtensions } from '@/lib/dateExtensions';
-import * as configService from '@/lib/services/configService';
-import * as scoreboardService from '@/lib/services/scoreboardService';
-import * as slackService from '@/lib/services/slack';
+import { configService } from '@/lib/services/configService';
+import { scoreboardService } from '@/lib/services/scoreboardService';
+import { slackService } from '@/lib/services/slack';
 import { withNamespace } from '@/logger';
 import config from '@config';
 import { type ChatPostMessageArguments } from '@slack/web-api';

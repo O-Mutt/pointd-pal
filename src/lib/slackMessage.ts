@@ -1,7 +1,7 @@
 import { Md } from 'slack-block-builder';
-import { IUser } from '../entities/user';
-import { regExpCreator } from './regexpCreator';
-import { KnownEventFromType } from '@slack/bolt';
+import type { IUser } from '../models/user';
+import type { KnownEventFromType } from '@slack/bolt';
+import { negativeOperatorsRegexp } from './messageMatchers';
 
 export class SlackMessage {
 	static getMessageForTokenTransfer(to: IUser, from: IUser, number: number, reason: string | undefined) {
@@ -14,17 +14,16 @@ export class SlackMessage {
 		let cakeDayStr = '';
 
 		if (reason) {
-			const decodedReason = reason.decode();
-			if (to.reasons.get(reason) === 1 || to.reasons.get(reason) === -1) {
+			if (to.reasons[reason] === 1 || to.reasons[reason] === -1) {
 				if (to.score === 1 || to.score === -1) {
-					reasonStr = ` for ${decodedReason}.`;
+					reasonStr = ` for ${reason}.`;
 				} else {
-					reasonStr = `, ${to.reasons.get(reason)} of which is for ${decodedReason}.`;
+					reasonStr = `, ${to.reasons[reason]} of which is for ${reason}.`;
 				}
-			} else if (to.reasons.get(reason) === 0) {
-				reasonStr = `, none of which are for ${decodedReason}.`;
+			} else if (to.reasons[reason] === 0) {
+				reasonStr = `, none of which are for ${reason}.`;
 			} else {
-				reasonStr = `, ${to.reasons.get(reason)} of which are for ${decodedReason}.`;
+				reasonStr = `, ${to.reasons[reason]} of which are for ${reason}.`;
 			}
 		}
 
@@ -45,7 +44,7 @@ export class SlackMessage {
 	}
 
 	static isKnownFalsePositive(premessage: string, conjunction: string, operator: string, reason?: string): boolean {
-		const falsePositive = premessage && !conjunction && reason && operator.match(regExpCreator.negativeOperators);
+		const falsePositive = premessage && !conjunction && reason && operator.match(negativeOperatorsRegexp);
 		return !!falsePositive;
 	}
 

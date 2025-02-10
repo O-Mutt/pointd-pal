@@ -1,4 +1,4 @@
-import { CustomRoute } from '@slack/bolt/dist/receivers/custom-routes';
+import type { CustomRoute } from '@slack/bolt/dist/receivers/custom-routes';
 import { IncomingMessage, ServerResponse } from 'http';
 
 export const stripeEndpoint: CustomRoute = {

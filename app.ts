@@ -1,5 +1,4 @@
-import { PointdPalInstallStore } from '@/lib/services/installStore';
-import { Md } from 'slack-block-builder';
+import { installStore } from '@/lib/services';
 
 import { App } from '@slack/bolt';
 import { LogLevel } from '@slack/logger';
@@ -34,7 +33,8 @@ import { register as hometabViewsRegister } from '@/hometab.views';
 
 //shortcuts
 import { register as shortcutsRegister } from '@/shortcuts';
-import * as installService from '@/lib/services/installService';
+import { installService } from '@/lib/services';
+import { pointdPalInstallationStore } from '@/lib/installationStore';
 
 const app = new App({
 	signingSecret: config.get('slack.signingSecret'),
@@ -44,7 +44,7 @@ const app = new App({
 	appToken: config.get('slack.appToken'),
 	logLevel: config.get('logLevel') as LogLevel,
 	socketMode: true,
-	installationStore: PointdPalInstallStore,
+	installationStore: pointdPalInstallationStore,
 	tokenVerificationEnabled: true,
 	redirectUri: `${config.get('baseUrl')}/slack/oauth_redirect`,
 	installerOptions: {

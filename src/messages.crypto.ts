@@ -4,28 +4,27 @@ import tokenBuddy from 'token-buddy';
 
 import {
 	directMention,
-	SlackActionMiddlewareArgs,
-	AllMiddlewareArgs,
-	SlackEventMiddlewareArgs,
-	StringIndexed,
+	type SlackActionMiddlewareArgs,
+	type AllMiddlewareArgs,
+	type SlackEventMiddlewareArgs,
+	type StringIndexed,
 	App,
 } from '@slack/bolt';
 
-import { regExpCreator } from '@/lib/regexpCreator';
-import { actions } from '@/lib/types/Actions';
-import { ConfirmOrCancel } from '@/lib/types/Enums';
-import * as userService from '@/lib/services/userService';
-import * as databaseService from '@/lib/services/databaseService';
+import { levelUpAccountRegexp, botWalletRegexp } from '@/lib/messageMatchers';
+import { ConfirmOrCancel, actions } from '@/lib/types';
+import { userService } from '@/lib/services/userService';
+import { databaseService } from '@/lib/services/databaseService';
 import { SlackMessage } from './lib/slackMessage';
-import * as botTokenService from '@/lib/services/botTokenService';
+import { botTokenService } from '@/lib/services/botTokenService';
 
 export function register(app: App) {
-	app.message(regExpCreator.getBotWallet(), directMention, botWalletCount);
+	app.message(botWalletRegexp, directMention, botWalletCount);
 
 	// DM only
-	app.message(regExpCreator.createLevelUpAccount(), directMention, levelUpAccount);
+	app.message(levelUpAccountRegexp, directMention, levelUpAccount);
 
-	app.action('confirm_levelup', levelUpToLevelThree);
+	app.action(actions.message.confirmLevelUp, levelUpToLevelThree);
 }
 
 async function levelUpAccount({
@@ -101,18 +100,18 @@ async function botWalletCount({
 	say,
 }: AllMiddlewareArgs & SlackEventMiddlewareArgs<'message'> & StringIndexed) {
 	const _teamId = context.teamId!;
-	const botWallet = await botTokenService.find();
-	if (!botWallet) {
+	const botToken = await botTokenService.find();
+	if (!botToken) {
 		return;
 	}
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-expect-error
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-	logger.debug(`Get the bot wallet by user ${message.user.name}, ${botWallet}`);
+	logger.debug(`Get the bot wallet by user ${message.user.name}`, botToken);
 	let gas;
 	try {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-		gas = await tokenBuddy.getBalance(botWallet.publicWalletAddress);
+		gas = await tokenBuddy.getBalance(botToken.publicWalletAddress);
 	} catch (e) {
 		logger.error(e);
 		await say(`An error occurred getting PointdPal's gas amount`);
@@ -121,7 +120,7 @@ async function botWalletCount({
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-expect-error
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		`Get the bot wallet by user ${message.user.name}, ${_.pick(JSON.stringify(botWallet), [
+		`Get the bot wallet by user ${message.user.name}, ${_.pick(JSON.stringify(botToken), [
 			'publicWalletAddress',
 			'name',
 			'token',
@@ -132,8 +131,8 @@ async function botWalletCount({
 		.blocks(
 			Blocks.Section({ text: `PointdPal Token Wallet Info:` }),
 			Blocks.Divider(),
-			Blocks.Section({ text: `Public Wallet Address: ${botWallet.publicWalletAddress}` }),
-			Blocks.Section({ text: `Tokens In Wallet: ${botWallet.token.toLocaleString()}` }),
+			Blocks.Section({ text: `Public Wallet Address: ${botToken.publicWalletAddress}` }),
+			Blocks.Section({ text: `Tokens In Wallet: ${botToken.token.toLocaleString()}` }),
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 			Blocks.Section(gas ? { text: `Gas Available: ${gas.toLocaleString()}` } : undefined),
 		)

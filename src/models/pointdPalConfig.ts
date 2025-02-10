@@ -1,4 +1,4 @@
-import { type AuditTags } from './auditTags';
+import type { AuditTags } from './auditTags';
 
 export interface IPointdPalConfig extends AuditTags {
 	id: string;

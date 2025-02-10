@@ -1,4 +1,4 @@
-import { type AuditTags } from './auditTags';
+import type { AuditTags } from './auditTags';
 
 export interface IUser extends AuditTags {
 	id: string;

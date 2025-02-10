@@ -1,5 +1,6 @@
-import { type CustomRoute } from '@slack/bolt/dist/receivers/SocketModeReceiver';
 import { IncomingMessage, ServerResponse } from 'http';
+
+import type { CustomRoute } from '@slack/bolt/dist/receivers/SocketModeReceiver';
 
 export const healthEndpoint: CustomRoute = {
 	path: '/health',

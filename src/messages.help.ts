@@ -1,23 +1,27 @@
 import axios from 'axios';
 import { Blocks, Md, Message } from 'slack-block-builder';
 
-import { AllMiddlewareArgs, App, directMention, SlackEventMiddlewareArgs, StringIndexed } from '@slack/bolt';
-import { ChatPostMessageArguments } from '@slack/web-api';
+import {
+	type AllMiddlewareArgs,
+	App,
+	directMention,
+	type SlackEventMiddlewareArgs,
+	type StringIndexed,
+} from '@slack/bolt';
+import type { ChatPostMessageArguments } from '@slack/web-api';
 
 import * as pjson from '../package.json';
-import { regExpCreator } from '@/lib/regexpCreator';
 import config from '@config';
+import { helpRegexp, howMuchArePtsWorthRegexp, versionRegexp } from './lib/messageMatchers';
 
 export function register(app: App): void {
-	app.message(regExpCreator.getHelp(), directMention, respondWithHelpGuidance);
-	app.message(
-		RegExp(/(plusplus version|-v|--version)/, 'i'),
-		directMention,
-		async ({ say }: AllMiddlewareArgs & SlackEventMiddlewareArgs<'message'> & StringIndexed) => {
-			await say(`PointdPal Version: _${pjson.version}_`);
-		},
-	);
-	app.message(new RegExp('how much .*point.*', 'i'), tellHowMuchPointsAreWorth);
+	app.message(helpRegexp, directMention, respondWithHelpGuidance);
+
+	app.message(versionRegexp, directMention, async ({ say }: SlackEventMiddlewareArgs<'message'>) => {
+		await say(`PointdPal Version: _${pjson.version}_`);
+	});
+
+	app.message(howMuchArePtsWorthRegexp, tellHowMuchPointsAreWorth);
 }
 
 async function respondWithHelpGuidance({
@@ -43,7 +47,6 @@ async function respondWithHelpGuidance({
 			Blocks.Section({ text: `_Commands_:` }),
 			Blocks.Section({ text: helpMessage }),
 			Blocks.Section({
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 				text: `For further help please visit ${Md.link(config.get('helpUrl'), 'Help Page')}`,
 			}),
 		)

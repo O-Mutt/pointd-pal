@@ -3,12 +3,11 @@ import { Blocks, Elements, HomeTab, Md, type ViewBlockBuilder } from 'slack-bloc
 import { type AllMiddlewareArgs, App, type SlackEventMiddlewareArgs } from '@slack/bolt';
 import { type View } from '@slack/types';
 
-import { type IPointdPalConfig } from './entities/pointdPalConfig';
-import { type IUser } from './entities/user';
-import { actions } from '@/lib/types/Actions';
+import type { IUser, IPointdPalConfig } from '@/models';
+import { actions } from '@/lib/types';
 import { type Appendable } from 'slack-block-builder/dist/internal';
-import * as configService from '@/lib/services/configService';
-import * as userService from '@/lib/services/userService';
+import { configService } from '@/lib/services/configService';
+import { userService } from '@/lib/services/userService';
 
 export function register(app: App): void {
 	app.event('app_home_opened', updateHomeTab);
@@ -20,7 +19,7 @@ async function updateHomeTab({
 	client,
 	logger,
 }: SlackEventMiddlewareArgs<'app_home_opened'> & AllMiddlewareArgs) {
-	logger.debug('app home was opened!');
+	logger.debug('hometab: app home was opened!');
 	try {
 		const userId = event.user;
 		const teamId = context.teamId as string;
@@ -44,7 +43,7 @@ async function updateHomeTab({
 		);
 		await client.views.publish({ token: context.botToken, view: hometab.buildToObject() as View, user_id: userId });
 	} catch (e) {
-		logger.error('error publishing hometab', e);
+		logger.error('hometab: error publishing hometab', e);
 	}
 }
 

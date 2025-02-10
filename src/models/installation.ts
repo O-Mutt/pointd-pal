@@ -1,5 +1,5 @@
-import { AuditTags } from '@/entities/auditTags';
-import { Installation } from '@slack/bolt';
+import type { AuditTags } from '@/models/auditTags';
+import type { Installation } from '@slack/bolt';
 
 export interface IInstallation extends AuditTags {
 	id: string;

@@ -1,5 +1,5 @@
 import { Md } from 'slack-block-builder';
-import { type IUser } from '@/entities/user';
+import { type IUser } from '@/models/user';
 
 export class MessageBuilder {
 	static getMessageForNewScore(user: IUser, reason: string | undefined): string {

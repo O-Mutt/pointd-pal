@@ -1,49 +1,55 @@
-import { IScoreLog } from '@/entities/scoreLog';
-import { getConnection } from './databaseService';
-import { IUser } from '@/entities/user';
+import type { IUser, IScoreLog } from '@/models';
 import { withNamespace } from '@/logger';
+import { databaseService } from '@/lib/services';
+
 const logger = withNamespace('scoreboardService');
 
-export async function getTopScores(teamId: string, amount: number) {
-	const connection = await getConnection(teamId);
-	const result = await connection.query<Pick<IUser, 'id' | 'score' | 'token' | 'slackId' | 'accountLevel'>>(
-		`
+export class ScoreboardService {
+	constructor(private logger = withNamespace('scoreboardService')) {}
+
+	async getTopScores(teamId: string, amount: number) {
+		this.logger.info('Finding top scores', teamId, amount);
+		const connection = await databaseService.getConnection(teamId);
+		const result = await connection.query<Pick<IUser, 'id' | 'score' | 'token' | 'slackId' | 'accountLevel'>>(
+			`
     SELECT id, score, token, slack_id, account_level
       FROM users
       ORDER BY
         score DESC
         account_level DESC
         LIMIT $1`,
-		[amount],
-	);
+			[amount],
+		);
 
-	logger.debug('Trying to find top scores');
+		logger.debug('Trying to find top scores');
 
-	return result.rows;
-}
+		return result.rows;
+	}
 
-export async function getBottomScores(teamId: string, amount: number) {
-	const connection = await getConnection(teamId);
-	const result = await connection.query<Pick<IUser, 'id' | 'score' | 'token' | 'slackId' | 'accountLevel'>>(
-		`
+	async getBottomScores(teamId: string, amount: number) {
+		this.logger.info('Finding bottom scores', teamId, amount);
+		const connection = await databaseService.getConnection(teamId);
+		const result = await connection.query<Pick<IUser, 'id' | 'score' | 'token' | 'slackId' | 'accountLevel'>>(
+			`
     SELECT id, score, token, slack_id, account_level
       FROM users
       ORDER BY
         score ASC
         account_level DESC
         LIMIT $1`,
-		[amount],
-	);
+			[amount],
+		);
 
-	logger.debug('Trying to find bottom ${amount} scores');
+		logger.debug('Trying to find bottom ${amount} scores');
 
-	return result.rows;
-}
+		return result.rows;
+	}
 
-export async function getTopTokens(teamId: string, amount: number) {
-	const connection = await getConnection(teamId);
-	const result = await connection.query<Pick<IUser, 'id' | 'score' | 'token' | 'slackId' | 'accountLevel'>>(
-		`
+	async getTopTokens(teamId: string, amount: number) {
+		this.logger.info('Finding top tokens', teamId, amount);
+		const connection = await databaseService.getConnection(teamId);
+		const result = await connection.query<Pick<IUser, 'id' | 'score' | 'token' | 'slackId' | 'accountLevel'>>(
+			`
     SELECT id, score, token, slack_id, account_level
       FROM users
       WHERE account_level >= 2
@@ -51,18 +57,19 @@ export async function getTopTokens(teamId: string, amount: number) {
         token DESC
         score DESC
         LIMIT $1`,
-		[amount],
-	);
+			[amount],
+		);
 
-	logger.debug('Trying to find top ${amount} tokens');
+		logger.debug('Trying to find top ${amount} tokens');
 
-	return result.rows;
-}
+		return result.rows;
+	}
 
-export async function getBottomTokens(teamId: string, amount: number) {
-	const connection = await getConnection(teamId);
-	const result = await connection.query<Pick<IUser, 'id' | 'score' | 'token' | 'slackId' | 'accountLevel'>>(
-		`
+	async getBottomTokens(teamId: string, amount: number) {
+		this.logger.info('Finding bottom tokens', teamId, amount);
+		const connection = await databaseService.getConnection(teamId);
+		const result = await connection.query<Pick<IUser, 'id' | 'score' | 'token' | 'slackId' | 'accountLevel'>>(
+			`
     SELECT id, score, token, slack_id, account_level
       FROM users
       WHERE account_level >= 2
@@ -70,54 +77,57 @@ export async function getBottomTokens(teamId: string, amount: number) {
         token ASC
         score ASC
         LIMIT $1`,
-		[amount],
-	);
+			[amount],
+		);
 
-	logger.debug('Trying to find top ${amount} tokens');
+		logger.debug('Trying to find top ${amount} tokens');
 
-	return result.rows;
-}
+		return result.rows;
+	}
 
-export async function getTopSender(teamId: string, amount: number) {
-	const connection = await getConnection(teamId);
-	const result = await connection.query<Pick<IUser, 'id' | 'totalPointsGiven' | 'slackId'>>(
-		`
+	async getTopSender(teamId: string, amount: number) {
+		this.logger.info('Finding top senders', teamId, amount);
+		const connection = await databaseService.getConnection(teamId);
+		const result = await connection.query<Pick<IUser, 'id' | 'totalPointsGiven' | 'slackId'>>(
+			`
     SELECT id, slack_id, total_points_given
       FROM users
       ORDER BY
         total_points_given DESC
         account_level DESC
         LIMIT $1`,
-		[amount],
-	);
+			[amount],
+		);
 
-	logger.debug('Trying to find top scores');
+		logger.debug('Trying to find top scores');
 
-	return result.rows;
-}
+		return result.rows;
+	}
 
-export async function getBottomSender(teamId: string, amount: number) {
-	const connection = await getConnection(teamId);
-	const result = await connection.query<Pick<IUser, 'id' | 'totalPointsGiven' | 'slackId'>>(
-		`
+	async getBottomSender(teamId: string, amount: number) {
+		this.logger.info('Finding bottom senders', teamId, amount);
+		const connection = await databaseService.getConnection(teamId);
+		const result = await connection.query<Pick<IUser, 'id' | 'totalPointsGiven' | 'slackId'>>(
+			`
     SELECT slack_id, total_points_given
       FROM users
       ORDER BY
         total_points_given ASC
         account_level DESC
         LIMIT $1`,
-		[amount],
-	);
+			[amount],
+		);
 
-	logger.debug('Trying to find top scores');
+		logger.debug('Trying to find top scores');
 
-	return result.rows;
-}
+		return result.rows;
+	}
 
-export async function getTopSenderInDuration(teamId: string, amount = 10, days = 7) {
-	const connection = await getConnection(teamId);
-	const result = await connection.query<Pick<IScoreLog, 'from'> & { sumOfScoreChange: number }>(
-		`
+	async getTopSenderInDuration(teamId: string, amount = 10, days = 7) {
+		this.logger.info('Finding top senders in duration', teamId, amount, days);
+		const connection = await databaseService.getConnection(teamId);
+		const result = await connection.query<Pick<IScoreLog, 'from'> & { sumOfScoreChange: number }>(
+			`
     SELECT from, sum(score_change) as total_points_given
       FROM score_logs
       WHERE
@@ -127,18 +137,19 @@ export async function getTopSenderInDuration(teamId: string, amount = 10, days =
       ORDER BY
         total_points_given desc
         LIMIT $2`,
-		[days, amount],
-	);
+			[days, amount],
+		);
 
-	logger.debug('Trying to find top scores');
+		logger.debug('Trying to find top scores');
 
-	return result.rows;
-}
+		return result.rows;
+	}
 
-export async function getTopReceiverInDuration(teamId: string, amount = 10, days = 7) {
-	const connection = await getConnection(teamId);
-	const result = await connection.query<Pick<IScoreLog, 'to'> & { sumOfScoreChange: number }>(
-		`
+	async getTopReceiverInDuration(teamId: string, amount = 10, days = 7) {
+		this.logger.info('Finding top receivers in duration', teamId, amount, days);
+		const connection = await databaseService.getConnection(teamId);
+		const result = await connection.query<Pick<IScoreLog, 'to'> & { sumOfScoreChange: number }>(
+			`
     SELECT to, sum(score_change) as total_points_given
       FROM score_logs
       WHERE
@@ -148,18 +159,20 @@ export async function getTopReceiverInDuration(teamId: string, amount = 10, days
       ORDER BY
         total_points_given desc
         LIMIT $2`,
-		[days, amount],
-	);
+			[days, amount],
+		);
 
-	logger.debug('Trying to find top scores');
+		logger.debug('Trying to find top scores');
 
-	return result.rows;
-}
+		return result.rows;
+	}
 
-export async function getTopRoomInDuration(teamId: string, amount = 3, days = 7) {
-	const connection = await getConnection(teamId);
-	const result = await connection.query<Pick<IScoreLog, 'channelId' | 'channelName'> & { sumOfScoreChange: number }>(
-		`
+	async getTopRoomInDuration(teamId: string, amount = 3, days = 7) {
+		this.logger.info('Finding top room in duration', teamId, amount, days);
+
+		const connection = await databaseService.getConnection(teamId);
+		const result = await connection.query<Pick<IScoreLog, 'channelId' | 'channelName'> & { sumOfScoreChange: number }>(
+			`
     SELECT channel_id, channel_name, sum(score_change) as total_points_given
       FROM score_logs
       WHERE
@@ -169,7 +182,10 @@ export async function getTopRoomInDuration(teamId: string, amount = 3, days = 7)
       ORDER BY
         total_points_given desc
         LIMIT $2`,
-		[days, amount],
-	);
-	return result.rows;
+			[days, amount],
+		);
+		return result.rows;
+	}
 }
+
+export const scoreboardService = new ScoreboardService();

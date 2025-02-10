@@ -1,6 +1,12 @@
 import { Bits, Blocks, Elements, Md, Modal } from 'slack-block-builder';
 import { SlackModalDto } from 'slack-block-builder/dist/internal/dto';
 
+import { MessageBuilder as Builder } from '@/lib/messageBuilder';
+import { eventBus } from '@/lib/services/eventBus';
+import { scorekeeperService } from '@/lib/services/scorekeeperService';
+import { actions, blocks, DirectionEnum, type PPEvent, PPEventName } from '@/lib/types';
+import { withNamespace } from '@/logger';
+import { type IUser } from '@/models/user';
 import {
 	type AllMiddlewareArgs,
 	App,
@@ -10,23 +16,14 @@ import {
 	type SlackViewMiddlewareArgs,
 	type ViewSubmitAction,
 } from '@slack/bolt';
-
 import {
 	type ChatGetPermalinkResponse,
 	type ChatPostEphemeralArguments,
 	type ChatPostMessageArguments,
 } from '@slack/web-api';
 
-import { MessageBuilder as Builder } from '@/lib/messageBuilder';
-import { type IUser } from '@/entities/user';
-import { eventBus } from '@/lib/services/eventBus';
-import * as scorekeeperService from '@/lib/services/scorekeeperService';
-import { actions } from '@/lib/types/Actions';
-import { blocks } from '@/lib/types/BlockIds';
-import { DirectionEnum } from '@/lib/types/Enums';
-import { type PPEvent, PPEventName } from '@/lib/types/Events';
-import { regExpCreator } from '@/lib/regexpCreator';
-import { withNamespace } from '@/logger';
+import { multiUserSeparator, multiUserVoteRegexp, upANDDownVoteRegexp, userObject } from './lib/messageMatchers';
+
 const logger = withNamespace('shortcuts');
 
 export function register(app: App): void {
@@ -38,8 +35,8 @@ export function register(app: App): void {
 async function handleSlashCommand({ ack, body, command, client }: SlackCommandMiddlewareArgs & AllMiddlewareArgs) {
 	try {
 		await ack();
-		const singleUser = regExpCreator.createUpDownVoteRegExp();
-		const multiUser = regExpCreator.createMultiUserVoteRegExp();
+		const singleUser = upANDDownVoteRegexp;
+		const multiUser = multiUserVoteRegexp;
 		let userIds: string[] = [];
 		let operator: string | undefined;
 		let reason: string | undefined;
@@ -57,12 +54,12 @@ async function handleSlashCommand({ ack, body, command, client }: SlackCommandMi
 			} else if (isMultiUser) {
 				const matches = body.text.match(multiUser)?.groups;
 				if (matches) {
-					userIds = matches['allUsers'].trim().split(new RegExp(regExpCreator.multiUserSeparator)).filter(Boolean);
+					userIds = matches['allUsers'].trim().split(new RegExp(multiUserSeparator)).filter(Boolean);
 					userIds = userIds
 						// Remove empty ones: {,,,}++
 						.filter((id) => !!id.length)
 						// remove <@.....>
-						.map((id) => id.replace(new RegExp(regExpCreator.userObject), '$1'))
+						.map((id) => id.replace(new RegExp(userObject), '$1'))
 						// Remove duplicates: {user1,user1}++
 						.filter((id, pos, self) => self.indexOf(id) === pos);
 					operator = matches['operator'];
@@ -195,7 +192,7 @@ async function viewMessage({
 
 	let idArray: string[] = [];
 	let operator: DirectionEnum = DirectionEnum.PLUS;
-	let reason: string | null | undefined;
+	let reason: string | undefined;
 	// const errors: Record<string, string> = {};
 	for (const option in view.state.values) {
 		for (const key in view.state.values[option]) {
@@ -211,7 +208,7 @@ async function viewMessage({
 					break;
 				}
 				case blocks.shortcuts.message.reason: {
-					reason = state.value;
+					reason = state.value ?? undefined;
 					break;
 				}
 			}
@@ -219,7 +216,6 @@ async function viewMessage({
 	}
 
 	idArray = idArray.filter((id) => id !== from);
-	const cleanReason = reason?.cleanAndEncode();
 	const increment: number = operator === DirectionEnum.PLUS ? 1 : -1;
 
 	logger.debug('We filtered out empty items and removed "self"', idArray.join(','));
@@ -230,7 +226,7 @@ async function viewMessage({
 	for (const toUserId of idArray) {
 		let response: { toUser: IUser; fromUser: IUser };
 		try {
-			response = await scorekeeperService.incrementScore(teamId, toUserId, from, channel, increment, cleanReason);
+			response = await scorekeeperService.incrementScore(teamId, toUserId, from, channel, increment, reason);
 		} catch (e: unknown) {
 			const ephemeral: ChatPostEphemeralArguments = {
 				text: (e as Error).message,
@@ -245,10 +241,10 @@ async function viewMessage({
 		if (response.toUser) {
 			logger.debug(
 				`clean names map[${toUserId}]: ${response.toUser.score}, the reason ${
-					cleanReason ? response.toUser.reasons[cleanReason] : 'n/a'
+					reason ? response.toUser.reasons[reason] : 'n/a'
 				} `,
 			);
-			messages.push(Builder.getMessageForNewScore(response.toUser, cleanReason));
+			messages.push(Builder.getMessageForNewScore(response.toUser, reason));
 			recipients.push(response.toUser);
 			notificationMessage.push(
 				`${Md.user(response.fromUser.slackId)} ${increment === 1 ? 'sent' : 'removed'} a PointdPal point ${
@@ -272,12 +268,12 @@ async function viewMessage({
 		const plusPlusEvent: PPEvent = {
 			notificationMessage: notificationMessage.join('\n'),
 			sender: sender as IUser,
-			recipients: recipients,
+			recipients,
 			direction: operator,
 			amount: 1,
 			channel,
-			reason: cleanReason,
-			teamId: teamId,
+			reason,
+			teamId,
 			originalMessageTs: postResp.message?.thread_ts as string,
 			originalMessageParentTs: postResp.ts as string,
 		};
@@ -291,6 +287,7 @@ interface PrivateViewMetaDataJson {
 	messageTs?: string;
 	permalink?: string;
 }
+
 interface PrivateViewLocalOptions {
 	userIds: (string | undefined)[];
 	operator?: string;

@@ -1,4 +1,4 @@
-import * as installService from '@/lib/services/installService';
+import { installService } from '@/lib/services/installService';
 import { withNamespace } from '@/logger';
 import { createCronJob } from './cron';
 

@@ -1,19 +1,18 @@
 import { Md } from 'slack-block-builder';
 import tokenBuddy from 'token-buddy';
 
-import type { IUser } from '@/entities/user';
+import type { IUser } from '@/models/user';
 import { MessageBuilder as Builder } from '@/lib/messageBuilder';
-import { regExpCreator } from '@/lib/regexpCreator';
-import * as botTokenService from '@/lib/services/botTokenService';
+import { multiUserVoteRegexp, regExpCreator } from '@/lib/messageMatchers/multiUserUpVote';
+import { botTokenService } from '@/lib/services/botTokenService';
 import { decrypt } from '@/lib/services/decrypt';
 import { eventBus } from '@/lib/services/eventBus';
-import * as scorekeeperService from '@/lib/services/scorekeeperService';
-import * as userService from '@/lib/services/userService';
+import { scorekeeperService } from '@/lib/services/scorekeeperService';
+import { userService } from '@/lib/services/userService';
 import { SlackMessage } from '@/lib/slackMessage';
 // this may need to move or be generic...er
 import * as token from '@/lib/token.json';
-import { DirectionEnum } from '@/lib/types/Enums';
-import { type PPEvent, PPEventName, type PPFailureEvent, PPFailureEventName } from '@/lib/types/Events';
+import { type PPEvent, PPEventName, type PPFailureEvent, PPFailureEventName, DirectionEnum } from '@/lib/types';
 import { withNamespace } from '@/logger';
 import config from '@config';
 import {
@@ -24,13 +23,21 @@ import {
 	type StringIndexed,
 } from '@slack/bolt';
 import { type ChatPostMessageResponse } from '@slack/web-api';
+import { downVoteRegexp, upVoteRegexp } from './lib/messageMatchers/upOrDownVote';
+import {
+	eraseScoreRegexp,
+	giveTokenRegexp,
+	multiUserSeparator,
+	positiveOperatorsRegexp,
+	userObject,
+} from './lib/messageMatchers';
 
 const logger = withNamespace('messages.plusplus');
 const cryptoConfig = config.get('crypto');
 if (cryptoConfig?.magicIv && cryptoConfig?.magicNumber) {
 	void (async () => {
 		const dbMagicString = await botTokenService.getMagicSecretStringNumberValue();
-		const magicMnumber = decrypt(cryptoConfig.magicIv, cryptoConfig.magicNumber, dbMagicString);
+		const magicMnumber = decrypt(cryptoConfig.magicIv!, cryptoConfig.magicNumber!, dbMagicString);
 		if (magicMnumber) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 			await tokenBuddy.init({
@@ -51,19 +58,22 @@ if (cryptoConfig?.magicIv && cryptoConfig?.magicNumber) {
 
 export function register(app: App): void {
 	// listen to everything
-	app.message(regExpCreator.createUpDownVoteRegExp(), upOrDownVote);
-	app.message(regExpCreator.createMultiUserVoteRegExp(), multipleUsersVote);
+	app.message(upVoteRegexp, (rest) => upOrDownVote({ poop: 'up_poop', ...rest }));
+	app.message(downVoteRegexp, (rest) => upOrDownVote({ poop: 'down_poop', ...rest }));
+
+	app.message(multiUserVoteRegexp, multipleUsersVote);
 
 	// listen for bot tag/ping
-	app.message(regExpCreator.createGiveTokenRegExp(), directMention, giveTokenBetweenUsers);
+	app.message(giveTokenRegexp, directMention, giveTokenBetweenUsers);
 
 	// admin
-	app.message(regExpCreator.createEraseUserScoreRegExp(), directMention, eraseUserScore);
+	app.message(eraseScoreRegexp, directMention, eraseUserScore);
 }
 /**
  * Functions for responding to commands
  */
 async function upOrDownVote({
+	poop,
 	body,
 	client,
 	context,
@@ -72,7 +82,8 @@ async function upOrDownVote({
 	logger,
 	say,
 	...rest
-}: AllMiddlewareArgs & SlackEventMiddlewareArgs<'message'> & StringIndexed) {
+}: { poop: string } & AllMiddlewareArgs & SlackEventMiddlewareArgs<'message'> & StringIndexed) {
+	logger.error('hello world!!!', poop, body, context.matches);
 	// Ignoring types right now because the event is missing user -> : SlackEventMiddlewareArgs<'message'> & AllMiddlewareArgs) {
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 	const fullText = context.matches.input;
@@ -119,7 +130,7 @@ async function upOrDownVote({
 		eventBus.emit(PPFailureEventName, failureEvent);
 		return;
 	}
-	const increment = operator.match(regExpCreator.positiveOperators) ? 1 : -1;
+	const increment = operator.match(positiveOperatorsRegexp) ? 1 : -1;
 
 	logger.debug(
 		`${increment} score for [${userId}] from [${from}]${reason ? ` because ${reason}` : ''} in [${channel}]`,
@@ -140,15 +151,15 @@ async function upOrDownVote({
 		const sayArgs = SlackMessage.getSayMessageArgs(message, theMessage);
 		const sayResponse: ChatPostMessageResponse = await say(sayArgs);
 
-		const sentOrRemovedStr = operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed';
-		const toOrFromStf = operator.match(regExpCreator.positiveOperators) ? 'to' : 'from';
+		const sentOrRemovedStr = operator.match(positiveOperatorsRegexp) ? 'sent' : 'removed';
+		const toOrFromStf = operator.match(positiveOperatorsRegexp) ? 'to' : 'from';
 		const plusPlusEvent: PPEvent = {
 			notificationMessage: `${Md.user(fromUser.slackId)} ${sentOrRemovedStr} a PointdPal point ${toOrFromStf} ${Md.user(
 				toUser.slackId,
 			)} in ${Md.channel(channel)}`,
 			sender: fromUser,
 			recipients: [toUser],
-			direction: operator.match(regExpCreator.positiveOperators) ? DirectionEnum.PLUS : DirectionEnum.MINUS,
+			direction: operator.match(positiveOperatorsRegexp) ? DirectionEnum.PLUS : DirectionEnum.MINUS,
 			amount: 1,
 			channel,
 			reason,
@@ -279,16 +290,16 @@ async function multipleUsersVote({
 		return;
 	}
 
-	const idArray: string[] = allUsers.trim().split(new RegExp(regExpCreator.multiUserSeparator)).filter(Boolean);
+	const idArray: string[] = allUsers.trim().split(new RegExp(multiUserSeparator)).filter(Boolean);
 	logger.debug("We pulled all the user ids from the 'allUsers' regexp group", idArray.join(','));
 
-	const increment = operator.match(regExpCreator.positiveOperators) ? 1 : -1;
+	const increment = operator.match(positiveOperatorsRegexp) ? 1 : -1;
 
 	const cleanedIdArray = idArray
 		// Remove empty ones: {,,,}++
 		.filter((id) => !!id.length)
 		// remove <@.....>
-		.map((id) => id.replace(new RegExp(regExpCreator.userObject), '$1'))
+		.map((id) => id.replace(new RegExp(userObject), '$1'))
 		// Remove duplicates: {user1,user1}++
 		.filter((id, pos, self) => self.indexOf(id) === pos);
 
@@ -316,8 +327,8 @@ async function multipleUsersVote({
 			recipients.push(response.toUser);
 			notificationMessage.push(
 				`${Md.user(response.fromUser.slackId)} ${
-					operator.match(regExpCreator.positiveOperators) ? 'sent' : 'removed'
-				} a PointdPal point ${operator.match(regExpCreator.positiveOperators) ? 'to' : 'from'} ${Md.user(
+					operator.match(positiveOperatorsRegexp) ? 'sent' : 'removed'
+				} a PointdPal point ${operator.match(positiveOperatorsRegexp) ? 'to' : 'from'} ${Md.user(
 					response.toUser.slackId,
 				)} in ${Md.channel(channel)} `,
 			);
@@ -333,7 +344,7 @@ async function multipleUsersVote({
 			notificationMessage: notificationMessage.join('\n'),
 			sender: sender as IUser,
 			recipients,
-			direction: operator.match(regExpCreator.positiveOperators) ? DirectionEnum.PLUS : DirectionEnum.MINUS,
+			direction: operator.match(positiveOperatorsRegexp) ? DirectionEnum.PLUS : DirectionEnum.MINUS,
 			amount: 1,
 			channel,
 			reason,

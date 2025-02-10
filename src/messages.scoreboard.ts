@@ -3,20 +3,40 @@ import ImageCharts from 'image-charts';
 import { map, sampleSize, take } from 'lodash';
 import { Blocks, Md, Message } from 'slack-block-builder';
 
-import { IUser } from '@/entities/user';
-import { regExpCreator } from '@/lib/regexpCreator';
-import * as scoreboardService from '@/lib/services/scoreboardService';
-import * as userService from '@/lib/services/userService';
-import { AllMiddlewareArgs, App, directMention, SlackEventMiddlewareArgs, StringIndexed } from '@slack/bolt';
-import { ChatPostMessageArguments } from '@slack/web-api';
+import { type IUser } from '@/models/user';
+import { scoreboardService } from '@/lib/services/scoreboardService';
+import { userService } from '@/lib/services/userService';
+import {
+	type AllMiddlewareArgs,
+	App,
+	directMention,
+	type SlackEventMiddlewareArgs,
+	type StringIndexed,
+} from '@slack/bolt';
+import { type ChatPostMessageArguments } from '@slack/web-api';
 
 import { SlackMessage } from './lib/slackMessage';
+import {
+	askForUserScoreRegexp,
+	bottomGiversRegexp,
+	bottomRegexp,
+	bottomTokensRegexp,
+	topGiversRegexp,
+	topRegexp,
+	topTokensRegexp,
+} from './lib/messageMatchers';
 
 export function register(app: App): void {
-	app.message(regExpCreator.createAskForScoreRegExp(), directMention, respondWithScore);
-	app.message(regExpCreator.createTopBottomRegExp(), directMention, respondWithLeaderLoserBoard);
-	app.message(regExpCreator.createTopBottomTokenRegExp(), directMention, respondWithLeaderLoserTokenBoard);
-	app.message(regExpCreator.createTopPointGiversRegExp(), directMention, getTopPointSenders);
+	app.message(askForUserScoreRegexp, directMention, respondWithScore);
+
+	app.message(topRegexp, directMention, respondWithLeaderLoserBoard);
+	app.message(bottomRegexp, directMention, respondWithLeaderLoserBoard);
+
+	app.message(topTokensRegexp, directMention, respondWithLeaderLoserTokenBoard);
+	app.message(bottomTokensRegexp, directMention, respondWithLeaderLoserTokenBoard);
+
+	app.message(topGiversRegexp, directMention, getTopPointSenders);
+	app.message(bottomGiversRegexp, directMention, getTopPointSenders);
 }
 
 async function respondWithScore({
@@ -43,21 +63,21 @@ async function respondWithScore({
 	baseString += `\n${Md.italic('Total Points Given')}: ${user.totalPointsGiven}`;
 	if (user.pointdPalDay) {
 		const dateObj = new Date(user.pointdPalDay);
-		baseString += `\n:birthday: ${Md.bold('Pointd Pal day')} is ${Md.bold(format(dateObj, 'MM-DD-yyyy'))}`;
+		baseString += `\n:birthday: ${Md.bold('Pointd Pal day')} is ${Md.bold(format(dateObj, 'MM-dd-yyyy'))}`;
 	}
 
 	let reasonsStr = '';
 	// get all reasons and put them in a keys array
-	const keys: string[] = Array.from(user.reasons.keys());
+	const keys = Object.keys(user.reasons);
 
-	logger.debug('all the keys!', user.reasons.keys(), keys);
+	logger.debug('all the keys!', Object.keys(user.reasons));
 	if (keys.length > 0) {
 		// get n unique random reasons and their scores
-		const maxReasons = keys.length >= 5 ? 5 : keys.length;
-		const sampleReasons = sampleSize(user.reasons, maxReasons);
+		const maxReasons = Math.min(keys.length, 5);
+		const sampleReasons = sampleSize(Object.entries(user.reasons), maxReasons);
 
 		const reasonMessageArray: string[] = [];
-		sampleReasons.forEach((points, reason) => {
+		sampleReasons.forEach(([reason, points]) => {
 			reasonMessageArray.push(`_${reason}_: ${'point'.pluralize(points, true)}`);
 		});
 

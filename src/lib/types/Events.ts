@@ -1,5 +1,5 @@
-import { IUser } from '@/entities/user';
-import { DirectionEnum } from './Enums';
+import type { IUser } from '@/models/user';
+import { DirectionEnum } from '@/lib/types';
 
 interface EventWithTeamId {
 	teamId: string;

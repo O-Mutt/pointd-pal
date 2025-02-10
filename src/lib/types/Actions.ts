@@ -14,4 +14,7 @@ export const actions = {
 		message: 'message_plusplus',
 		global: 'global_plusplus',
 	},
+	message: {
+		confirmLevelUp: 'confirm_levelup',
+	},
 };

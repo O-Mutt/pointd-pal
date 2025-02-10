@@ -1,7 +1,7 @@
 import { Md } from 'slack-block-builder';
 
-import type { IUser } from '@/entities/user';
-import * as userService from '@/lib/services/userService';
+import type { IUser } from '@/models/user';
+import { userService } from '@/lib/services/userService';
 import { withNamespace } from '@/logger';
 import {
 	App,
@@ -11,7 +11,6 @@ import {
 	type StringIndexed,
 } from '@slack/bolt';
 import { type ConversationsListResponse } from '@slack/web-api';
-import { type Member } from '@slack/web-api/dist/types/response/UsersListResponse';
 import type { User } from '@slack/web-api/dist/types/response/UsersInfoResponse';
 
 const logger = withNamespace('migrations');

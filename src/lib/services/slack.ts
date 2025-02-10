@@ -1,54 +1,55 @@
-import { ConversationsListResponse } from '@slack/web-api';
-import { app } from '../../../app';
 import { withNamespace } from '@/logger';
-const logger = withNamespace('slackService');
+import type { ConversationsListResponse } from '@slack/web-api';
 
-export async function findOrCreateConversation(
-	token?: string,
-	teamId?: string,
-	channelName?: string,
-): Promise<string | undefined> {
-	if (!token || !teamId || !channelName) {
-		return;
-	}
-	let result: ConversationsListResponse | undefined = undefined;
-	try {
-		result = await app.client.conversations.list({ token: token, team_id: teamId });
-	} catch (e: unknown) {
-		// logger.error(e)
-		logger.error('Error getting list of conversations', (e as Error).message);
-	}
+import { app } from '@/app';
 
-	if (!result || !result.channels) {
-		logger.info(`Could not get channels for Team ${teamId}. We were looking for ${channelName}`);
-		return;
-	}
+export class SlackService {
+	constructor(private logger = withNamespace('slackService')) {}
 
-	const foundChannel = result.channels.filter((channel) => {
-		return channel.name === channelName;
-	});
-
-	if (foundChannel && foundChannel.length === 1) {
-		// make sure we're in the channel
-		try {
-			await app.client.conversations.join({ token: token, channel: foundChannel[0].id as string });
-		} catch (e: unknown) {
-			// logger.error(e)
-			logger.error(
-				"This may be a known error and we should probably check for the e.warning === 'already_in_channel' but:",
-				(e as Error).message,
-			);
+	async findOrCreateConversation(token?: string, teamId?: string, channelName?: string): Promise<string | undefined> {
+		if (!token || !teamId || !channelName) {
 			return;
 		}
-		return foundChannel[0].id;
-	}
+		let result: ConversationsListResponse | undefined = undefined;
+		try {
+			result = await app.client.conversations.list({ token: token, team_id: teamId });
+		} catch (e: unknown) {
+			this.logger.error('Error getting list of conversations', (e as Error).message);
+		}
 
-	try {
-		const { channel } = await app.client.conversations.create({ token: token, team_id: teamId, name: channelName });
-		return channel?.id;
-	} catch (e: unknown) {
-		// logger.error(e)
-		logger.error('Error creating the conversation for notifications', (e as Error).message);
-		return;
+		if (!result || !result.channels) {
+			this.logger.info(`Could not get channels for Team ${teamId}. We were looking for ${channelName}`);
+			return;
+		}
+
+		const foundChannel = result.channels.filter((channel) => {
+			return channel.name === channelName;
+		});
+
+		if (foundChannel && foundChannel.length === 1) {
+			// make sure we're in the channel
+			try {
+				await app.client.conversations.join({ token: token, channel: foundChannel[0].id as string });
+			} catch (e: unknown) {
+				// logger.error(e)
+				this.logger.error(
+					"This may be a known error and we should probably check for the e.warning === 'already_in_channel' but:",
+					(e as Error).message,
+				);
+				return;
+			}
+			return foundChannel[0].id;
+		}
+
+		try {
+			const { channel } = await app.client.conversations.create({ token: token, team_id: teamId, name: channelName });
+			return channel?.id;
+		} catch (e: unknown) {
+			// logger.error(e)
+			this.logger.error('Error creating the conversation for notifications', (e as Error).message);
+			return;
+		}
 	}
 }
+
+export const slackService = new SlackService();

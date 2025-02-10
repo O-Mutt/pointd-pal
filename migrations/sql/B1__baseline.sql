@@ -17,7 +17,8 @@ CREATE TABLE installations (
   updated_by VARCHAR(255) NULL
 );
 
-CREATE INDEX idx_installations_team_id ON installations(team_id);
+-- team_id must be unique
+CREATE UNIQUE INDEX idx_installations_unique_team_id ON installations(team_id);
 
 CREATE INDEX idx_installations_customer_id ON installations(customer_id);
 
