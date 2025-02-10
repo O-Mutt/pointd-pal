@@ -10,7 +10,7 @@ const namedGiversRegexp = '(?:point givers?|point senders?|givers?|senders?)';
 export const topGiversRegexp = getTopOrBottomRegexp(namedTopRegexp, namedGiversRegexp);
 export const bottomGiversRegexp = getTopOrBottomRegexp(namedBottomRegexp, namedGiversRegexp);
 
-function getTopOrBottomRegexp(topOrBottom: string, typeToFind?: string) {
+function getTopOrBottomRegexp(topOrBottom: string, typeToFind = '') {
 	if (typeToFind) {
 		typeToFind = `${typeToFind}${allowSpacesAfterObject}`;
 	}

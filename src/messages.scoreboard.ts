@@ -95,6 +95,7 @@ async function respondWithLeaderLoserBoard({
 	logger,
 	say,
 }: AllMiddlewareArgs & SlackEventMiddlewareArgs<'message'> & StringIndexed) {
+	logger.error('respond with leaderboard');
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 	const { topOrBottom, digits }: { topOrBottom: string; digits: number } = context.matches.groups;
 	const teamId = context.teamId as string;
@@ -102,6 +103,7 @@ async function respondWithLeaderLoserBoard({
 	const methodName = `get${topOrBottomString}Scores` as 'getTopScores' | 'getBottomScores';
 	const tops = await scoreboardService[methodName](teamId, digits);
 
+	logger.info('retrieved', digits, 'scores from db', tops);
 	const messages: string[] = [];
 	if (tops.length > 0) {
 		for (let i = 0, end = tops.length - 1, asc = end >= 0; asc ? i <= end : i >= end; asc ? i++ : i--) {
@@ -122,10 +124,11 @@ async function respondWithLeaderLoserBoard({
 	const chartText = `PointdPal ${topOrBottomString} ${digits} Score(s)`;
 	const graphSize = Math.min(tops.length, Math.min(digits, 20));
 	const topNNames = take(map(tops, 'name'), graphSize).join('|');
-	const topNScores = take(map(tops, 'scores'), graphSize).join(',');
+	const topNScores = take(map(tops, 'score'), graphSize).join(',');
+	logger.info('found top n scores and names', topNNames, topNScores);
 	const chartUrl = new ImageCharts()
 		.cht('bvg')
-		.chs('999x200')
+		.chs('999x300')
 		.chtt(chartText)
 		.chxt('x,y')
 		.chxl(`0:|${topNNames}`)

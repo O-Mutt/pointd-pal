@@ -2,8 +2,6 @@ import type { IUser, IScoreLog } from '@/models';
 import { withNamespace } from '@/logger';
 import { databaseService } from '@/lib/services';
 
-const logger = withNamespace('scoreboardService');
-
 export class ScoreboardService {
 	constructor(private logger = withNamespace('scoreboardService')) {}
 
@@ -12,16 +10,22 @@ export class ScoreboardService {
 		const connection = await databaseService.getConnection(teamId);
 		const result = await connection.query<Pick<IUser, 'id' | 'score' | 'token' | 'slackId' | 'accountLevel'>>(
 			`
-    SELECT id, score, token, slack_id, account_level
-      FROM users
-      ORDER BY
-        score DESC
-        account_level DESC
-        LIMIT $1`,
+			SELECT
+				id,
+				name,
+				score,
+				token,
+				slack_id as "slackId",
+				account_level as "accountLevel"
+			FROM users
+			ORDER BY
+				score DESC,
+				"accountLevel" DESC
+			LIMIT $1`,
 			[amount],
 		);
 
-		logger.debug('Trying to find top scores');
+		this.logger.debug('Trying to find top scores');
 
 		return result.rows;
 	}
@@ -31,16 +35,22 @@ export class ScoreboardService {
 		const connection = await databaseService.getConnection(teamId);
 		const result = await connection.query<Pick<IUser, 'id' | 'score' | 'token' | 'slackId' | 'accountLevel'>>(
 			`
-    SELECT id, score, token, slack_id, account_level
-      FROM users
-      ORDER BY
-        score ASC
-        account_level DESC
-        LIMIT $1`,
+			SELECT
+					id,
+					name,
+					score,
+					token,
+					slack_id as "slackId",
+					account_level as "accountLevel"
+				FROM users
+				ORDER BY
+					score ASC,
+					"accountLevel" DESC
+					LIMIT $1`,
 			[amount],
 		);
 
-		logger.debug('Trying to find bottom ${amount} scores');
+		this.logger.debug('Trying to find bottom ${amount} scores');
 
 		return result.rows;
 	}
@@ -50,17 +60,23 @@ export class ScoreboardService {
 		const connection = await databaseService.getConnection(teamId);
 		const result = await connection.query<Pick<IUser, 'id' | 'score' | 'token' | 'slackId' | 'accountLevel'>>(
 			`
-    SELECT id, score, token, slack_id, account_level
-      FROM users
-      WHERE account_level >= 2
-      ORDER BY
-        token DESC
-        score DESC
-        LIMIT $1`,
+			SELECT
+					id,
+					name,
+					score,
+					token,
+					slack_id as "slackId",
+					account_level as "accountLevel"
+				FROM users
+				WHERE "accountLevel" >= 2
+				ORDER BY
+					token DESC,
+					score DESC
+				LIMIT $1`,
 			[amount],
 		);
 
-		logger.debug('Trying to find top ${amount} tokens');
+		this.logger.debug('Trying to find top ${amount} tokens');
 
 		return result.rows;
 	}
@@ -70,17 +86,23 @@ export class ScoreboardService {
 		const connection = await databaseService.getConnection(teamId);
 		const result = await connection.query<Pick<IUser, 'id' | 'score' | 'token' | 'slackId' | 'accountLevel'>>(
 			`
-    SELECT id, score, token, slack_id, account_level
-      FROM users
-      WHERE account_level >= 2
-      ORDER BY
-        token ASC
-        score ASC
-        LIMIT $1`,
+			SELECT
+				id,
+				name,
+				score,
+				token,
+				slack_id as "slackId",
+				account_level as "accountLevel"
+			FROM users
+			WHERE "accountLevel" >= 2
+			ORDER BY
+				token ASC,
+				score ASC
+			LIMIT $1`,
 			[amount],
 		);
 
-		logger.debug('Trying to find top ${amount} tokens');
+		this.logger.debug('Trying to find top ${amount} tokens');
 
 		return result.rows;
 	}
@@ -90,16 +112,20 @@ export class ScoreboardService {
 		const connection = await databaseService.getConnection(teamId);
 		const result = await connection.query<Pick<IUser, 'id' | 'totalPointsGiven' | 'slackId'>>(
 			`
-    SELECT id, slack_id, total_points_given
+    	SELECT
+				id,
+				name,
+				slack_id as "slackId",
+				total_points_given as "totalPointsGiven"
       FROM users
       ORDER BY
-        total_points_given DESC
-        account_level DESC
-        LIMIT $1`,
+        "totalPointsGiven" DESC,
+        "accountLevel" DESC
+			LIMIT $1`,
 			[amount],
 		);
 
-		logger.debug('Trying to find top scores');
+		this.logger.debug('Trying to find top scores');
 
 		return result.rows;
 	}
@@ -109,16 +135,20 @@ export class ScoreboardService {
 		const connection = await databaseService.getConnection(teamId);
 		const result = await connection.query<Pick<IUser, 'id' | 'totalPointsGiven' | 'slackId'>>(
 			`
-    SELECT slack_id, total_points_given
+    	SELECT
+				id,
+				name,
+				slack_id as "slackId",
+				total_points_given as "totalPointsGiven"
       FROM users
       ORDER BY
-        total_points_given ASC
-        account_level DESC
-        LIMIT $1`,
+        "totalPointsGiven" ASC,
+        "accountLevel" DESC
+			LIMIT $1`,
 			[amount],
 		);
 
-		logger.debug('Trying to find top scores');
+		this.logger.debug('Trying to find top scores');
 
 		return result.rows;
 	}
@@ -128,19 +158,21 @@ export class ScoreboardService {
 		const connection = await databaseService.getConnection(teamId);
 		const result = await connection.query<Pick<IScoreLog, 'from'> & { sumOfScoreChange: number }>(
 			`
-    SELECT from, sum(score_change) as total_points_given
+    	SELECT
+				"from",
+				sum(score_change) as "sumOfScoreChange"
       FROM score_logs
       WHERE
         date > NOW() - INTERVAL '$1 days'
       GROUP BY
-        from
+        "from"
       ORDER BY
-        total_points_given desc
-        LIMIT $2`,
+        "sumOfScoreChange" DESC
+			LIMIT $2`,
 			[days, amount],
 		);
 
-		logger.debug('Trying to find top scores');
+		this.logger.debug('Trying to find top scores');
 
 		return result.rows;
 	}
@@ -150,19 +182,21 @@ export class ScoreboardService {
 		const connection = await databaseService.getConnection(teamId);
 		const result = await connection.query<Pick<IScoreLog, 'to'> & { sumOfScoreChange: number }>(
 			`
-    SELECT to, sum(score_change) as total_points_given
+    	SELECT
+				"to",
+				sum(score_change) as "sumOfScoreChange"
       FROM score_logs
       WHERE
         date > NOW() - INTERVAL '$1 days'
       GROUP BY
-        to
+        "to"
       ORDER BY
-        total_points_given desc
-        LIMIT $2`,
+        "sumOfScoreChange" DESC
+			LIMIT $2`,
 			[days, amount],
 		);
 
-		logger.debug('Trying to find top scores');
+		this.logger.debug('Trying to find top scores');
 
 		return result.rows;
 	}
@@ -173,15 +207,18 @@ export class ScoreboardService {
 		const connection = await databaseService.getConnection(teamId);
 		const result = await connection.query<Pick<IScoreLog, 'channelId' | 'channelName'> & { sumOfScoreChange: number }>(
 			`
-    SELECT channel_id, channel_name, sum(score_change) as total_points_given
+    	SELECT
+				channel_id as "channelId",
+				channel_name as "channelName",
+				sum(score_change) as "sumOfScoreChange"
       FROM score_logs
       WHERE
         date > NOW() - INTERVAL '$1 days'
       GROUP BY
         channel_id
       ORDER BY
-        total_points_given desc
-        LIMIT $2`,
+        "sumOfScoreChange" DESC
+			LIMIT $2`,
 			[days, amount],
 		);
 		return result.rows;
