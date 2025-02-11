@@ -16,7 +16,7 @@
 		"migrate": "do the thing",
 		"start:dev": "tsx watch app.ts",
 		"start": "tsx app.ts",
-		"test": "tsx --test **/*.test.ts --experimental-test-coverage",
+		"test": "tsx --import ./test/setup-env.ts --test --experimental-test-coverage **/*.test.ts",
 		"prepare": "husky"
 	},
 	"license": "MIT",
