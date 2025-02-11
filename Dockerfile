@@ -1,14 +1,11 @@
-FROM node:latest
+FROM node:lts-bullseye-slim as build-stage
 
-ARG HOME=/home/node/app
 ARG PORT="3000"
-ARG NODE_ENV="development"
+ARG NODE_ENV="production"
 
-RUN mkdir -p $HOME/node_modules
-WORKDIR $HOME
-
-COPY package*.json $HOME
-COPY . $HOME
+WORKDIR /app
+COPY package*.json .
+COPY . .
 
 RUN npm ci
 

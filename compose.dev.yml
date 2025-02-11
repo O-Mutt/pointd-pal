@@ -1,19 +1,19 @@
 services:
   pointd-pal:
     container_name: pointd-pal
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: node:lts-slim
+    working_dir: /app
     ports:
       - 3000:3000
     volumes:
-      - ./:/home/node/app
-      - /home/node/app/node_modules
+      - ./:/app
+      - /app/node_modules
     environment:
       - CHOKIDAR_USEPOLLING=true
     depends_on:
       - pointd-pal-db
       - migration
+    command: bash -c "npm ci && npm run start:dev"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 10s
