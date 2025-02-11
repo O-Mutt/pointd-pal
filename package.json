@@ -17,7 +17,7 @@
 		"start:dev": "tsx watch app.ts",
 		"start": "tsx app.ts",
 		"test": "tsx --import ./test/setup-env.ts --test --experimental-test-coverage **/*.test.ts",
-		"prepare": "husky"
+		"prepare": "husky || true"
 	},
 	"license": "MIT",
 	"dependencies": {
