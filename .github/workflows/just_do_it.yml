@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  checkout_and_install:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,21 +19,35 @@ jobs:
       - name: Clean Install
         run: npm ci
 
-  lint:
-    needs: checkout_and_install
-    runs-on: ubuntu-latest
-    steps:
       - name: Lint
         run: npm run lint
+
   test:
-    needs: checkout_and_install
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Clean Install
+        run: npm ci
+
       - name: Test
         run: npm run test
+
   build:
-    needs: checkout_and_install
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: Clean Install
+        run: npm ci
+
       - name: Build
         run: npm run build
