@@ -1,0 +1,66 @@
+services:
+  pointd-pal:
+    container_name: pointd-pal
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
+    volumes:
+      - ./:/home/node/app
+      - /home/node/app/node_modules
+    env_file:
+      - .bot.env
+    depends_on:
+      - pointd-pal-db
+      - migration
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pointd-pal-db:
+    container_name: pointd-pal-db
+    image: postgres:latest
+    env_file:
+      - .psql.env
+    ports:
+      - 5432:5432
+    volumes:
+      - pointdpal:/home/postgres/pgdata/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pointdpal"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  migration:
+    image: flyway/flyway:latest
+    volumes:
+      - ./migrations/sql/:/flyway/sql
+    env_file:
+      - .flyway.env
+    command: "migrate -X"
+    depends_on:
+      - pointd-pal-db
+
+  migration-info:
+    image: redgate/flyway:latest
+    volumes:
+      - ./migrations/sql/:/flyway/sql
+    environment:
+      - FLYWAY_URL=jdbc:postgresql://pointd-pal-db:5432/pointdpal
+      - FLYWAY_USER=pointdpal
+      - FLYWAY_PASSWORD=pointdpal
+      - FLYWAY_BASELINE_ON_MIGRATE=true
+    command: "info"
+    depends_on:
+      pointd-pal-db:
+        condition: service_started
+      migration:
+        condition: service_completed_successfully
+
+volumes:
+  pointdpal:
+    driver: local

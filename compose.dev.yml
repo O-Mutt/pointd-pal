@@ -1,9 +1,14 @@
 services:
   pointd-pal:
     container_name: pointd-pal
-    image: ghcr.io/o-mutt/pointd-pal:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - 3000:3000
+    volumes:
+      - ./:/home/node/app
+      - /home/node/app/node_modules
     environment:
       - CHOKIDAR_USEPOLLING=true
     depends_on:
