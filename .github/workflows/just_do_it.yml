@@ -16,9 +16,24 @@ jobs:
         with:
           node-version: lts/*
 
-      - name: Install dependencies
-        run: |
-          npm ci
-          npm run lint
-          npm run test
-          npm run build
+      - name: Clean Install
+        run: npm ci
+
+  lint:
+    needs: checkout_and_install
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lint
+        run: npm run lint
+  test:
+    needs: checkout_and_install
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test
+        run: npm run test
+  build:
+    needs: checkout_and_install
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build
+        run: npm run build
