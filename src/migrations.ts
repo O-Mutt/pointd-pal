@@ -44,7 +44,7 @@ async function mapUsersToDb({
 		return;
 	}
 
-	const members = (await client.users.list({})).members;
+	const members = (await client.users.list({})).members ?? [];
 
 	const mappings: string[] = [];
 	for (const member of members ?? []) {

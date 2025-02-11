@@ -1,11 +1,9 @@
-import { installStore } from '@/lib/services';
-
 import { App } from '@slack/bolt';
 import { LogLevel } from '@slack/logger';
 
 import { config } from '@/config';
 import { healthEndpoint } from '@/lib/routes/health';
-import { logger as customLogger } from '@/logger';
+import { withNamespace } from '@/logger';
 
 import '@/lib/stringExtensions';
 import '@/lib/dateExtensions';
@@ -36,6 +34,7 @@ import { register as shortcutsRegister } from '@/shortcuts';
 import { installService } from '@/lib/services';
 import { pointdPalInstallationStore } from '@/lib/installationStore';
 
+const appLogger = withNamespace('pointd-pal');
 const app = new App({
 	signingSecret: config.get('slack.signingSecret'),
 	clientId: config.get('slack.clientId'),
@@ -78,23 +77,23 @@ const app = new App({
 	logger: {
 		getLevel: () => config.get('logLevel') as LogLevel,
 		setLevel: (level: LogLevel) => config.set('logLevel', level),
-		debug: (...msg) => customLogger.debug(msg),
-		info: (...msg) => customLogger.info(msg),
-		warn: (...msg) => customLogger.warn(msg),
-		error: (...msg) => customLogger.error(msg),
-		setName: (name: string) => customLogger.label(name),
+		debug: (...msg) => appLogger.debug(msg),
+		info: (...msg) => appLogger.info(msg),
+		warn: (...msg) => appLogger.warn(msg),
+		error: (...msg) => appLogger.error(msg),
+		setName: (name: string) => appLogger.label(name),
 	},
 });
 
 void (async () => {
-	customLogger.info(
+	appLogger.info(
 		'Before we start the apps we will validate that all installations are up to date by running migrations. Please hold on...',
 	);
 	await installService.migrateAll();
 	// Start your app
 	await app.start({ port: config.get('port') });
 
-	customLogger.info(`⚡️ Bolt app is running at localhost:${config.get('port')}!`);
+	appLogger.info(`⚡️ Bolt app is running at localhost:${config.get('port')}!`);
 })();
 
 messagesCryptoRegister(app);

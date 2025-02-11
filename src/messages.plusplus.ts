@@ -1,20 +1,6 @@
 import { Md } from 'slack-block-builder';
 import tokenBuddy from 'token-buddy';
-
-import type { IUser } from '@/models/user';
-import { MessageBuilder as Builder } from '@/lib/messageBuilder';
-import { multiUserVoteRegexp, regExpCreator } from '@/lib/messageMatchers/multiUserUpVote';
-import { botTokenService } from '@/lib/services/botTokenService';
-import { decrypt } from '@/lib/services/decrypt';
-import { eventBus } from '@/lib/services/eventBus';
-import { scorekeeperService } from '@/lib/services/scorekeeperService';
-import { userService } from '@/lib/services/userService';
-import { SlackMessage } from '@/lib/slackMessage';
-// this may need to move or be generic...er
-import * as token from '@/lib/token.json';
-import { type PPEvent, PPEventName, type PPFailureEvent, PPFailureEventName, DirectionEnum } from '@/lib/types';
-import { withNamespace } from '@/logger';
-import config from '@config';
+import { type ChatPostMessageResponse } from '@slack/web-api';
 import {
 	type AllMiddlewareArgs,
 	App,
@@ -22,22 +8,33 @@ import {
 	type SlackEventMiddlewareArgs,
 	type StringIndexed,
 } from '@slack/bolt';
-import { type ChatPostMessageResponse } from '@slack/web-api';
-import { downVoteRegexp, upVoteRegexp } from './lib/messageMatchers/upOrDownVote';
+
+import type { IUser } from '@/models';
+import { MessageBuilder as Builder } from '@/lib/messageBuilder';
 import {
+	multiUserVoteRegexp,
+	downVoteRegexp,
+	upVoteRegexp,
 	eraseScoreRegexp,
 	giveTokenRegexp,
 	multiUserSeparator,
 	positiveOperatorsRegexp,
 	userObject,
-} from './lib/messageMatchers';
+} from '@/lib/messageMatchers';
+import { userService, scorekeeperService, eventBus, decryptService, botTokenService } from '@/lib/services';
+import { SlackMessage } from '@/lib/slackMessage';
+// this may need to move or be generic...er
+import * as token from '@/lib/token.json';
+import { type PPEvent, PPEventName, type PPFailureEvent, PPFailureEventName, DirectionEnum } from '@/lib/types';
+import { withNamespace } from '@/logger';
+import config from '@config';
 
 const logger = withNamespace('messages.plusplus');
 const cryptoConfig = config.get('crypto');
 if (cryptoConfig?.magicIv && cryptoConfig?.magicNumber) {
 	void (async () => {
 		const dbMagicString = await botTokenService.getMagicSecretStringNumberValue();
-		const magicMnumber = decrypt(cryptoConfig.magicIv!, cryptoConfig.magicNumber!, dbMagicString);
+		const magicMnumber = decryptService.decrypt(cryptoConfig.magicIv!, cryptoConfig.magicNumber!, dbMagicString);
 		if (magicMnumber) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 			await tokenBuddy.init({

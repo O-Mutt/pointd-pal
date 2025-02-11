@@ -1,10 +1,7 @@
 import { Md } from 'slack-block-builder';
 
-import { app } from '../app';
-import { eventBus } from '@/lib/services/eventBus';
-import { configService } from '@/lib/services/configService';
-import { installService } from '@/lib/services/installService';
-import { slackService } from '@/lib/services/slack';
+import { app } from '@/app';
+import { eventBus, configService, installService, slackService } from '@/lib/services';
 import {
 	type PPEvent,
 	PPEventName,
@@ -12,7 +9,7 @@ import {
 	PPFailureEventName,
 	type PPSpamEvent,
 	PPSpamEventName,
-} from '@/models';
+} from '@/lib/types';
 import { withNamespace } from '@/logger';
 
 const logger = withNamespace('events');
