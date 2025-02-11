@@ -2,6 +2,7 @@ import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 import jestPlugin from 'eslint-plugin-jest';
 import tseslint from 'typescript-eslint';
 import eslint from '@eslint/js';
+import globals from 'globals';
 
 export default tseslint.config(
 	{
@@ -30,8 +31,16 @@ export default tseslint.config(
 	},
 	{
 		// enable jest rules on test files
-		files: ['test/**', '**/*.test.ts', '**/*.spec.ts'],
+		files: ['test/**', '**/*.test.*', '**/*.spec.*'],
 		extends: [jestPlugin.configs['flat/recommended']],
+		rules: {
+			'@typescript-eslint/no-floating-promises': 'off',
+		},
+		languageOptions: {
+			globals: {
+				...globals.node,
+			},
+		},
 	},
 	{
 		// ignore unused vars if they are prefixed with _
