@@ -10,11 +10,10 @@ WORKDIR $HOME
 COPY package*.json $HOME
 COPY . $HOME
 
-
-RUN npm install
+RUN npm ci
 
 EXPOSE $PORT
 ENV NODE_ENV=${NODE_ENV}
 ENV PORT=${PORT}
 
-CMD ["npm", "run" "ngrok", "&&", "npm", "run", "start"]
+CMD ["npm", "run", "start"]
