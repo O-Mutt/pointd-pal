@@ -4,5 +4,5 @@
 	"files.trimTrailingWhitespace": true,
 	"editor.formatOnSave": true,
 	"typescript.tsdk": "node_modules/typescript/lib",
-	"cSpell.words": ["Pointd", "pointdPal", "PointdPal", "samplesize", "Subdocument", "tselint", "Unobfuscated"]
+	"cSpell.words": ["Pointd", "pointdPal", "PointdPal", "porque", "samplesize", "Subdocument", "tselint", "Unobfuscated"]
 }

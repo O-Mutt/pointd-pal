@@ -1,5 +1,5 @@
 import { config } from '../config';
-import adze, { setup, Level } from 'adze';
+import adze, { setup, type Level } from 'adze';
 
 setup({
 	activeLevel: config.get('logLevel') as Level | number,
