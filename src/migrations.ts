@@ -267,7 +267,7 @@ async function joinAllPointdPalChannels({
 	const { isAdmin } = await userService.findOneBySlackIdOrCreate(teamId, userId);
 	if (!isAdmin) {
 		logger.error("sorry, can't do that", message, context);
-		await say(`Sorry, can\'t do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(userId)}`);
+		await say(`Sorry, can't do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(userId)}`);
 		return;
 	}
 
