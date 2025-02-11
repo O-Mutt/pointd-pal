@@ -8,9 +8,6 @@ import {
 	userObject,
 } from './constants';
 
-import { withNamespace } from '@/logger';
-
-const logger = withNamespace('upOrDownVote');
 /**
  * user1++ for being dope
  * billy @bob++
@@ -26,11 +23,6 @@ export const downVoteRegexp = getUpOrDownVoteRegexp(namedNegativeOperatorRegexp)
 export const upANDDownVoteRegexp = getUpOrDownVoteRegexp(namedOperatorRegexp);
 
 function getUpOrDownVoteRegexp(operator: string) {
-	logger.error(
-		'getUpOrDown',
-		operator,
-		`(?<premessage>.*)?${userObject}${allowSpacesAfterObject}${operator}${namedConjunctionAndReasonsRegexp}${eol}`,
-	);
 	return new RegExp(
 		`(?<premessage>.*)?${userObject}${allowSpacesAfterObject}${operator}${namedConjunctionAndReasonsRegexp}${eol}`,
 		'i',

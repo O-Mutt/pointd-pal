@@ -109,9 +109,9 @@ nohup.out
 
 
 src/config/*
-!src/config/example.ts
+!src/config/example.*
 !src/config/index.ts
 !src/config/config.schema.ts
-!src/config/example.jsonreport.*
+!src/config/example.json
 
 report.*

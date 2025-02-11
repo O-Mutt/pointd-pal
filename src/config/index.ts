@@ -192,14 +192,8 @@ const env = config.get('env');
 try {
 	config.loadFile('./src/config/' + env + '.json');
 } catch (e: unknown) {
-	console.warn('No config file found for environment:[', env, ']\n', (e as Error).message, '\n');
+	console.warn('No config file found for environment:[', env, ']', `\n${(e as Error).message}`, '\n');
 }
-import { config as devConfig } from './development';
-// import { config as testConfig } from './test';
-// import { config as prodConfig } from './production';
-config.load(devConfig);
-// config.load(testConfig);
-// config.load(prodConfig);
 
 // Perform validation
 config.validate({ allowed: 'strict' });
