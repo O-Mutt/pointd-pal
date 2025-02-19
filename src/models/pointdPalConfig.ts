@@ -1,17 +1,20 @@
+/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 import type { AuditTags } from './auditTags';
+import type { DBObjectConvertible } from './dbObjectToTypescript';
 
-export interface IPointdPalConfig extends AuditTags {
+export interface IPointdPalConfig extends AuditTags, DBObjectConvertible {
 	id: string;
-	notificationRoom?: string;
-	falsePositiveRoom?: string;
-	scoreboardRoom?: string;
-	formalFeedbackUrl?: string;
-	formalFeedbackModulo: number;
 	companyName?: string;
-	// pointdPalAdmins?: string[];
+	isAprilFoolsDayEnabled: boolean;
+	formalFeedbackModulo: number;
+	formalFeedbackUrl?: string;
+	notificationChannel: 'pointd-notifications' | string;
+	falsePositiveChannel?: 'pointd-false-positive' | string;
+	scoreboardChannel: 'pointd-scoreboard' | string;
+	scoreboardCron?: string;
 	tokenLedgerBalance: number;
-	enableAprilFoolsDay: boolean;
 }
+// pointdPalAdmins?: string[];
 
 export interface IPointdPalAdmins {
 	id: string;

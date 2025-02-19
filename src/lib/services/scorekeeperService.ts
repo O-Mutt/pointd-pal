@@ -39,10 +39,10 @@ export class ScorekeeperService {
 		reason?: string,
 	): Promise<{ toUser: IUser; fromUser: IUser }> {
 		try {
-			const toUser = await userService.findOneBySlackIdOrCreate(teamId, toId);
-			const fromUser = await userService.findOneBySlackIdOrCreate(teamId, fromId);
+			const toUser = await userService.getOrCreateBySlackId(teamId, toId);
+			const fromUser = await userService.getOrCreateBySlackId(teamId, fromId);
 			const bot = await botTokenService.find();
-			const pointdPalConfig = await configService.findOneOrCreate(teamId);
+			const pointdPalConfig = await configService.getOrCreate(teamId);
 			const install = await installService.findOne(teamId);
 
 			if (fromUser.isBot === true) {
@@ -126,8 +126,8 @@ export class ScorekeeperService {
 		reason?: string,
 	): Promise<{ toUser: IUser; fromUser: IUser }> {
 		try {
-			const toUser = await userService.findOneBySlackIdOrCreate(teamId, toId);
-			const fromUser = await userService.findOneBySlackIdOrCreate(teamId, fromId);
+			const toUser = await userService.getOrCreateBySlackId(teamId, toId);
+			const fromUser = await userService.getOrCreateBySlackId(teamId, fromId);
 			if (toUser.accountLevel < 2 && fromUser.accountLevel < 2) {
 				// to or from is not level 2
 				throw new Error(`In order to send tokens to ${Md.user(toUser.slackId)} you both must be, at least, level 2.`);

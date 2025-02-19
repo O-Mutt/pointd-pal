@@ -53,7 +53,7 @@ if (cryptoConfig?.magicIv && cryptoConfig?.magicNumber) {
 	logger.debug('magicIv and magicNumber not set skipping init');
 }
 
-export function register(app: App): void {
+export function registerPlusPlus(app: App): void {
 	// listen to everything
 	app.message(upVoteRegexp, (rest) => upOrDownVote({ poop: 'up_poop', ...rest }));
 	app.message(downVoteRegexp, (rest) => upOrDownVote({ poop: 'down_poop', ...rest }));
@@ -151,7 +151,7 @@ async function upOrDownVote({
 		const sentOrRemovedStr = operator.match(positiveOperatorsRegexp) ? 'sent' : 'removed';
 		const toOrFromStf = operator.match(positiveOperatorsRegexp) ? 'to' : 'from';
 		const plusPlusEvent: PPEvent = {
-			notificationMessage: `${Md.user(fromUser.slackId)} ${sentOrRemovedStr} a PointdPal point ${toOrFromStf} ${Md.user(
+			notificationMessage: `${Md.user(fromUser.slackId)} ${sentOrRemovedStr} a Pointd point ${toOrFromStf} ${Md.user(
 				toUser.slackId,
 			)} in ${Md.channel(channel)}`,
 			sender: fromUser,
@@ -224,7 +224,7 @@ async function giveTokenBetweenUsers({
 		const sayArgs = SlackMessage.getSayMessageArgs(message, theMessage);
 		const sayResponse = await say(sayArgs);
 		const plusPlusEvent: PPEvent = {
-			notificationMessage: `${Md.user(response.fromUser.slackId)} sent ${amount} PointdPal ${'point'.pluralize(amount)} to ${Md.user(response.toUser.slackId)} in ${Md.channel(channel)}`,
+			notificationMessage: `${Md.user(response.fromUser.slackId)} sent ${amount} Pointd ${'point'.pluralize(amount)} to ${Md.user(response.toUser.slackId)} in ${Md.channel(channel)}`,
 			recipients: [response.toUser],
 			sender: response.fromUser,
 			direction: DirectionEnum.PLUS,
@@ -325,7 +325,7 @@ async function multipleUsersVote({
 			notificationMessage.push(
 				`${Md.user(response.fromUser.slackId)} ${
 					operator.match(positiveOperatorsRegexp) ? 'sent' : 'removed'
-				} a PointdPal point ${operator.match(positiveOperatorsRegexp) ? 'to' : 'from'} ${Md.user(
+				} a Pointd point ${operator.match(positiveOperatorsRegexp) ? 'to' : 'from'} ${Md.user(
 					response.toUser.slackId,
 				)} in ${Md.channel(channel)} `,
 			);
@@ -367,8 +367,8 @@ async function eraseUserScore({
 	const from = context.userId!;
 	const { channel } = message;
 
-	const fromUser = await userService.findOneBySlackIdOrCreate(teamId, from);
-	const toBeErased = await userService.findOneBySlackIdOrCreate(teamId, userId);
+	const fromUser = await userService.getOrCreateBySlackId(teamId, from);
+	const toBeErased = await userService.getOrCreateBySlackId(teamId, userId);
 
 	if (fromUser.isAdmin !== true) {
 		await say("Sorry, you don't have authorization to do that.");

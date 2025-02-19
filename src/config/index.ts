@@ -26,6 +26,18 @@ const config = convict<PointdPalConfig>({
 		default: 'info',
 		env: 'LOG_LEVEL',
 	},
+	notificationsChannel: {
+		doc: 'The name of the room to post notifications.',
+		format: String,
+		default: 'pointd-notifications',
+		env: 'NOTIFICATIONS_CHANNEL',
+	},
+	formalFeedbackModulo: {
+		doc: 'Modulo for formal feedback.',
+		format: Number,
+		default: 5,
+		env: 'FORMAL_FEEDBACK_MODULO',
+	},
 	scoreKeywords: {
 		doc: 'Keywords to trigger score changes.',
 		format: Array,
@@ -68,14 +80,14 @@ const config = convict<PointdPalConfig>({
 		username: {
 			doc: 'Postgres user.',
 			format: String,
-			default: 'postgres',
+			default: 'pointdpal',
 			env: 'POSTGRES_USERNAME',
 		},
 		password: {
 			doc: 'Postgres password.',
 			format: String,
 			sensitive: true,
-			default: 'password',
+			default: 'pointdpal',
 			env: 'POSTGRES_PASSWORD',
 		},
 		database: {
@@ -87,7 +99,7 @@ const config = convict<PointdPalConfig>({
 		schema: {
 			doc: 'Postgres schema.',
 			format: String,
-			default: 'pointd_pal',
+			default: 'pointdpal',
 			env: 'POSTGRES_SCHEMA',
 		},
 	},
@@ -95,21 +107,24 @@ const config = convict<PointdPalConfig>({
 		rpcProvider: {
 			doc: 'Crypto RPC provider.',
 			format: String,
-			default: '',
+			nullable: true,
+			default: null,
 			env: 'CRYPTO_RPC_PROVIDER',
 		},
 		magicNumber: {
 			doc: 'Magic number.',
 			format: String,
 			sensitive: true,
-			default: '',
+			nullable: true,
+			default: null,
 			env: 'CRYPTO_MAGIC_NUMBER',
 		},
 		magicIv: {
 			doc: 'Magic IV.',
 			format: String,
 			sensitive: true,
-			default: '',
+			nullable: true,
+			default: null,
 			env: 'CRYPTO_MAGIC_IV',
 		},
 		helpUrl: {
@@ -132,21 +147,23 @@ const config = convict<PointdPalConfig>({
 		env: 'FURTHER_HELP_URL',
 	},
 	scoreboard: {
-		default: {
-			cron: '0 10 1-7 * *',
-			dayOfWeek: 1,
-		},
 		cron: {
 			doc: 'Monthly scoreboard cron.',
 			format: String,
 			default: '0 10 1-7 * *',
-			env: 'MONTHLY_SCOREBOARD_CRON',
+			env: 'SCOREBOARD_CRON',
 		},
 		dayOfWeek: {
 			doc: 'Monthly scoreboard day of week.',
 			format: Number,
 			default: 1,
-			env: 'MONTHLY_SCOREBOARD_DAY_OF_WEEK',
+			env: 'SCOREBOARD_DAY_OF_WEEK',
+		},
+		channel: {
+			doc: 'The name of the room to post the scoreboard.',
+			format: String,
+			default: 'pointd-scoreboard',
+			env: 'SCOREBOARD_CHANNEL',
 		},
 	},
 	slack: {

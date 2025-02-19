@@ -31,8 +31,8 @@ eventBus.on(PPSpamEventName, (eve: PPSpamEvent) => {
 });
 
 async function sendPlusPlusNotification(ppEvent: PPEvent) {
-	const config = await configService.findOneOrCreate(ppEvent.teamId);
-	if (!config?.notificationRoom) {
+	const config = await configService.getOrCreate(ppEvent.teamId);
+	if (!config?.notificationChannel) {
 		return;
 	}
 	const teamInstallConfig = await installService.findOne(ppEvent.teamId);
@@ -40,12 +40,12 @@ async function sendPlusPlusNotification(ppEvent: PPEvent) {
 		return;
 	}
 	const botToken = teamInstallConfig.installation.bot.token;
-	const channelId = await slackService.findOrCreateConversation(botToken, ppEvent.teamId, config.notificationRoom);
+	const channelId = await slackService.getOrCreateConversation(botToken, ppEvent.teamId, config.notificationChannel);
 	if (!channelId) {
 		return;
 	}
 
-	const permalink = await getPermalinkToMessage(botToken, ppEvent.channel, ppEvent.originalMessageTs);
+	const permalink = await slackService.getPermalinkToMessage(botToken, ppEvent.channel, ppEvent.originalMessageTs);
 	if (permalink) {
 		ppEvent.notificationMessage = `${ppEvent.notificationMessage} ${Md.link(permalink, 'view here')}`;
 	}
@@ -63,9 +63,9 @@ async function sendPlusPlusNotification(ppEvent: PPEvent) {
 }
 
 async function sendPlusPlusFalsePositiveNotification(ppEvent: PPFailureEvent) {
-	const config = await configService.findOneOrCreate(ppEvent.teamId);
+	const config = await configService.getOrCreate(ppEvent.teamId);
 
-	if (!config?.falsePositiveRoom) {
+	if (!config?.falsePositiveChannel) {
 		return;
 	}
 	const teamInstallConfig = await installService.findOne(ppEvent.teamId);
@@ -74,7 +74,7 @@ async function sendPlusPlusFalsePositiveNotification(ppEvent: PPFailureEvent) {
 		return;
 	}
 	const botToken = teamInstallConfig.installation.bot.token;
-	const channelId = await slackService.findOrCreateConversation(botToken, ppEvent.teamId, config.falsePositiveRoom);
+	const channelId = await slackService.getOrCreateConversation(botToken, ppEvent.teamId, config.falsePositiveChannel);
 	if (!channelId) {
 		return;
 	}
@@ -110,19 +110,5 @@ async function logAndNotifySpam({ sender, notificationMessage, reason, teamId }:
 		});
 	} catch (e: unknown) {
 		logger.error('There was an error when posting the `++` event to the notifications room', (e as Error).message);
-	}
-}
-
-async function getPermalinkToMessage(botToken: string, channelId: string, ts: string): Promise<string | undefined> {
-	try {
-		logger.info('look up the permalink', channelId, ts);
-		const { permalink } = await app.client.chat.getPermalink({
-			token: botToken,
-			channel: channelId,
-			message_ts: ts,
-		});
-		return permalink;
-	} catch (e: unknown) {
-		logger.error('There was an error getting the permalink', (e as Error).message);
 	}
 }

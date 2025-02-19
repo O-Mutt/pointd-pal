@@ -15,10 +15,10 @@ import { levelUpAccountRegexp, botWalletRegexp } from '@/lib/messageMatchers';
 import { ConfirmOrCancel, actions } from '@/lib/types';
 import { userService } from '@/lib/services/userService';
 import { databaseService } from '@/lib/services/databaseService';
-import { SlackMessage } from './lib/slackMessage';
+import { SlackMessage } from '@/lib/slackMessage';
 import { botTokenService } from '@/lib/services/botTokenService';
 
-export function register(app: App) {
+export function registerCrypto(app: App) {
 	app.message(botWalletRegexp, directMention, botWalletCount);
 
 	// DM only
@@ -39,7 +39,7 @@ async function levelUpAccount({
 	}
 	const teamId = context.teamId as string;
 
-	const user = await userService.findOneBySlackIdOrCreate(teamId, context.userId!);
+	const user = await userService.getOrCreateBySlackId(teamId, context.userId!);
 	if (user.accountLevel === 2) {
 		const theBlocks = Message({ channel: message.channel, text: "Let's level you up!" })
 			.blocks(

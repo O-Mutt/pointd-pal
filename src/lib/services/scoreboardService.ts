@@ -119,8 +119,8 @@ export class ScoreboardService {
 				total_points_given as "totalPointsGiven"
       FROM users
       ORDER BY
-        "totalPointsGiven" DESC,
-        "accountLevel" DESC
+        total_points_given DESC,
+        account_level DESC
 			LIMIT $1`,
 			[amount],
 		);
@@ -142,8 +142,8 @@ export class ScoreboardService {
 				total_points_given as "totalPointsGiven"
       FROM users
       ORDER BY
-        "totalPointsGiven" ASC,
-        "accountLevel" DESC
+        total_points_given ASC,
+        account_level DESC
 			LIMIT $1`,
 			[amount],
 		);

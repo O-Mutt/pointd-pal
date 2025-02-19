@@ -37,7 +37,7 @@ async function mapUsersToDb({
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const userId: string = message.user;
 
-	const { isAdmin } = await userService.findOneBySlackIdOrCreate(teamId, userId);
+	const { isAdmin } = await userService.getOrCreateBySlackId(teamId, userId);
 	if (!isAdmin) {
 		logger.error("sorry, can't do that", message, context);
 		await say(`Sorry, can't do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(userId)}`);
@@ -50,7 +50,7 @@ async function mapUsersToDb({
 	for (const member of members ?? []) {
 		try {
 			logger.debug('Map this member', JSON.stringify(member));
-			const localMember = await userService.findOneBySlackIdOrCreate(teamId, member.id as string);
+			const localMember = await userService.getOrCreateBySlackId(teamId, member.id as string);
 			mappings.push(`\`{ name: ${localMember.name}, slackId: ${localMember.slackId}, id: ${localMember.id} }\``);
 			logger.debug(`Save the new member ${JSON.stringify(localMember)}`);
 		} catch (er) {
@@ -73,7 +73,7 @@ async function mapMoreUserFieldsBySlackId({
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const userId: string = message.user;
 
-	const { isAdmin } = await userService.findOneBySlackIdOrCreate(teamId, userId);
+	const { isAdmin } = await userService.getOrCreateBySlackId(teamId, userId);
 	if (!isAdmin) {
 		logger.error("sorry, can't do that", message, context);
 		await say(`Sorry, can't do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(userId)}`);
@@ -85,7 +85,7 @@ async function mapMoreUserFieldsBySlackId({
 		if (member?.profile?.email) {
 			try {
 				logger.debug('Map this member', JSON.stringify(member));
-				const localMember = await userService.findOneBySlackIdOrCreate(teamId, member.id as string);
+				const localMember = await userService.getOrCreateBySlackId(teamId, member.id as string);
 				localMember.slackId = member.id as string;
 				localMember.email = member.profile.email;
 				await userService.update(teamId, localMember);
@@ -110,7 +110,7 @@ async function mapSingleUserToDb({
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const userId: string = message.user;
 
-	const { isAdmin } = await userService.findOneBySlackIdOrCreate(teamId, userId);
+	const { isAdmin } = await userService.getOrCreateBySlackId(teamId, userId);
 	if (!isAdmin) {
 		logger.error("sorry, can't do that", message, context);
 		await say(`Sorry, can't do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(userId)}`);
@@ -125,7 +125,7 @@ async function mapSingleUserToDb({
 	const { user } = await client.users.info({ user: to.slackId });
 	try {
 		logger.debug('Map this member', JSON.stringify(user));
-		const localMember = await userService.findOneBySlackIdOrCreate(teamId, to.slackId);
+		const localMember = await userService.getOrCreateBySlackId(teamId, to.slackId);
 		localMember.slackId = to.slackId;
 
 		if (localMember.id) {
@@ -174,7 +174,7 @@ async function mapSlackIdToEmail({
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const userId: string = message.user;
 
-	const { isAdmin } = await userService.findOneBySlackIdOrCreate(teamId, userId);
+	const { isAdmin } = await userService.getOrCreateBySlackId(teamId, userId);
 	if (!isAdmin) {
 		logger.error("sorry, can't do that", message, context);
 		await say(`Sorry, can't do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(userId)}`);
@@ -182,7 +182,7 @@ async function mapSlackIdToEmail({
 	}
 
 	try {
-		const missingEmailUsers: IUser[] = await userService.getAllByPredicate(teamId, 'id IS NOT NULL and email IS NULL');
+		const missingEmailUsers: IUser[] = await userService.getByPredicate(teamId, 'id IS NOT NULL and email IS NULL');
 
 		for (const user of missingEmailUsers) {
 			logger.debug('Map this member', user.slackId, user.name);
@@ -264,7 +264,7 @@ async function joinAllPointdPalChannels({
 	// @ts-expect-error just stawp
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const userId: string = message.user;
-	const { isAdmin } = await userService.findOneBySlackIdOrCreate(teamId, userId);
+	const { isAdmin } = await userService.getOrCreateBySlackId(teamId, userId);
 	if (!isAdmin) {
 		logger.error("sorry, can't do that", message, context);
 		await say(`Sorry, can't do that https://i.imgur.com/Gp6wNZr.gif ${Md.user(userId)}`);

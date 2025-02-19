@@ -41,9 +41,9 @@ export class PointdPalInstallationStore implements InstallationStore {
 			install = await installService.findOne(teamId);
 			if (install) {
 				await installService.deleteOne(teamId);
+			} else {
+				install = await installService.create(teamId, storeInstall, email ?? `someRando@${teamName}.com`);
 			}
-
-			await installService.create(teamId, storeInstall, email ?? `someRando@${teamName}.com`);
 
 			return;
 		}
@@ -63,12 +63,12 @@ export class PointdPalInstallationStore implements InstallationStore {
 		}
 
 		if (teamId) {
-			logger?.info(`found team id, find an install now by team id ${teamId}`);
+			logger?.info('found team id, find an install now by team id', teamId);
 			const result = await installService.findOne(teamId);
 			if (!result) {
 				throw new Error('Failed fetching installation');
 			}
-			logger?.info(`Found installation for ${teamId}.`, result);
+			logger?.info('Found installation for', teamId, result);
 			if (!result.isEnabled) {
 				throw new Error(
 					`This instance of pointdPal is not enabled for team [${result.teamId}], customer [${result.customerId}]`, //, Subscription [${result.subscriptionId}], Status [${result.subscriptionStatus}]`,
