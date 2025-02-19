@@ -8,13 +8,11 @@ import { app } from '@/app';
 import { type IInstallation } from '@/models/installation';
 import { type IScoreLog } from '@/models/scoreLog';
 import { DateExtensions } from '@/lib/dateExtensions';
-import { configService } from '@/lib/services/configService';
-import { scoreboardService } from '@/lib/services/scoreboardService';
-import { slackService } from '@/services/slackService';
 import { withNamespace } from '@/logger';
 import config from '@config';
 import { type ChatPostMessageArguments } from '@slack/web-api';
 import type { CronWorkerEntry } from './types/CronWorkerEntry';
+import { configService, scoreboardService, slackService } from '@/lib/services';
 
 const logger = withNamespace('cron/job');
 
