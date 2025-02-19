@@ -42,7 +42,7 @@ services:
     volumes:
       - ./migrations/sql/:/flyway/sql
     environment:
-      - FLYWAY_URL=jdbc:postgresql://pointd-pal-db:5432/pointdpal_t02mq4u7dgt
+      - FLYWAY_URL=jdbc:postgresql://pointd-pal-db:5432/pointdpal
       - FLYWAY_USER=pointdpal
       - FLYWAY_PASSWORD=pointdpal
       - FLYWAY_BASELINE_ON_MIGRATE=true
