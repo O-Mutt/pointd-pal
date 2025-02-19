@@ -10,11 +10,11 @@ import {
 } from '@slack/bolt';
 import type { ChatPostMessageArguments } from '@slack/web-api';
 
-import * as pjson from '../package.json';
+import * as pjson from '../../package.json';
 import config from '@config';
-import { helpRegexp, howMuchArePtsWorthRegexp, versionRegexp } from './lib/messageMatchers';
+import { helpRegexp, howMuchArePtsWorthRegexp, versionRegexp } from '../lib/messageMatchers';
 
-export function register(app: App): void {
+export function registerHelp(app: App): void {
 	app.message(helpRegexp, directMention, respondWithHelpGuidance);
 
 	app.message(versionRegexp, directMention, async ({ say }: SlackEventMiddlewareArgs<'message'>) => {
@@ -33,7 +33,6 @@ async function respondWithHelpGuidance({
 		.concat('`< name > ++[<reason>]` - Increment score for a name (for a reason)\n')
 		.concat('`< name > --[<reason>]` - Decrement score for a name (for a reason)\n')
 		.concat('`{ name1, name2, name3 } ++[<reason>]` - Increment score for all names (for a reason)\n')
-		.concat('`{ name1, name2, name3 } --[<reason>]` - Decrement score for all names (for a reason) \n')
 		.concat('`{ name1, name2, name3 } --[<reason>]` - Decrement score for all names (for a reason) \n')
 		.concat(`\`@Pointd Pal score <name>\` - Display the score for a name and some of the reasons\n`)
 		.concat(`\`@Pointd Pal top <amount>\` - Display the top scoring <amount>\n`)
@@ -68,31 +67,25 @@ async function tellHowMuchPointsAreWorth({
 	context,
 	say,
 }: AllMiddlewareArgs & SlackEventMiddlewareArgs<'message'> & StringIndexed) {
-	logger.error(message, context, payload);
+	logger.debug(message, context, payload);
+	const pointdWorth = `Pointd points are worth nothing`;
 	try {
-		const ethRes = await axios({
-			url: 'https://api.coinbase.com/v2/exchange-rates?currency=ETH',
-		});
+		const cryptoResponses = await axios('https://api.coinbase.com/v2/exchange-rates');
 
-		const btcRes = await axios({
-			url: 'https://api.coinbase.com/v2/exchange-rates?currency=BTC',
-		});
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		const rates = cryptoResponses.data.data.rates as Record<string, number>;
+		// invert usd / crypto and round
+		const ethInUsd = (1 / rates.ETH).toFixed(2);
+		const btcInUsd = (1 / rates.BTC).toFixed(2);
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-		const ethInUsd = ethRes.data.eth.data.rates.USD;
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-		const btcInUsd = btcRes.data.btc.data.rates.USD;
+		logger.debug('cryptoResponses', rates);
 		await say(
-			`A Bitcoin is worth $${btcInUsd} USD right now, Ethereum is $${ethInUsd} USD, and ${Md.bold(
-				'PointdPal points are worth nothing',
-			)}!`,
+			`A Bitcoin is worth approx. $${btcInUsd} USD, Ethereum is approx. $${ethInUsd} USD, and ${Md.bold(pointdWorth)}!`,
 		);
 		return;
 	} catch (e: unknown) {
 		logger.error('Error with how much points worth -_-', e);
-		await say(
-			"Seems like we are having trouble getting some data... Don't worry, though, your Pointd Pal points are still worth nothing!",
-		);
+		await say(`Seems like we are having trouble getting some data... Don't worry, though, your ${pointdWorth}, still!`);
 		return;
 	}
 }

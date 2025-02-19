@@ -48,9 +48,10 @@ export class BotTokenService {
 		this.logger.info('Update bot token');
 		const connection = await databaseService.getConnection();
 
-		const fields = Object.keys(botToken)
-			.map((key, index) => `${key} = $${index + 2}`)
-			.join(', ');
+		let fields = '';
+		if (botToken.getCamelToSnakeFields) {
+			fields = botToken.getCamelToSnakeFields();
+		}
 		const values = Object.values(botToken);
 		const result = await connection.query<IBotToken>(
 			`

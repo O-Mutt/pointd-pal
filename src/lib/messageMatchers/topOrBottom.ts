@@ -6,7 +6,7 @@ export const bottomRegexp = getTopOrBottomRegexp(namedBottomRegexp);
 export const topTokensRegexp = getTopOrBottomRegexp(namedTopRegexp, 'tokens');
 export const bottomTokensRegexp = getTopOrBottomRegexp(namedBottomRegexp, 'tokens');
 
-const namedGiversRegexp = '(?:point givers?|point senders?|givers?|senders?)';
+const namedGiversRegexp = '(?<givers>point givers|point senders|givers|senders)';
 export const topGiversRegexp = getTopOrBottomRegexp(namedTopRegexp, namedGiversRegexp);
 export const bottomGiversRegexp = getTopOrBottomRegexp(namedBottomRegexp, namedGiversRegexp);
 

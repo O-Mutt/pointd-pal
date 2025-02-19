@@ -2,19 +2,20 @@ import { app } from '@/app';
 import type { IUser } from '@/models/user';
 
 import { installService, databaseService } from '@/lib/services';
+import type { Member } from '@slack/web-api/dist/types/response/UsersListResponse';
 
 export class UserService {
 	/**
 	 * Get all users in a team
 	 * @param teamId
 	 */
-	async getAllUsersByTeam(teamId: string): Promise<IUser[]> {
+	async getTeamId(teamId: string): Promise<IUser[]> {
 		const connection = await databaseService.getConnection(teamId);
 		const result = await connection.query<IUser>(`SELECT ${this.getAliasedFieldsAsCamelCase()} FROM users`);
 		return result.rows;
 	}
 
-	async findOneBySlackIdOrCreate(teamId: string, slackId: string): Promise<IUser> {
+	async getOrCreateBySlackId(teamId: string, slackId: string): Promise<IUser> {
 		const connection = await databaseService.getConnection(teamId);
 		const result = await connection.query<IUser>(
 			`SELECT
@@ -40,35 +41,27 @@ export class UserService {
 			`INSERT INTO users
 			(
 				slack_id,
-				score,
-				reasons,
-				points_given,
-				pointd_pal_day,
-				account_level,
-				total_points_given,
 				email,
 				name,
 				is_admin,
 				is_bot,
-				updated_by,
-				updated_at)
-		VALUES
-			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+				updated_by)
+			VALUES
+				(
+					$1,
+					$2,
+					$3,
+					$4,
+					$5,
+					$6)
 		RETURNING ${this.getAliasedFieldsAsCamelCase()}`,
 			[
 				slackId,
-				0,
-				{},
-				{},
-				new Date(),
-				1,
-				0,
 				response.user?.profile?.email ?? `unknownEmail@${teamId}.com`,
 				response.user?.name ?? `unknownUser@${teamId}`,
 				response.user?.is_admin ?? false,
-				response.user?.is_bot ?? true,
+				response.user?.is_bot ?? false,
 				slackId,
-				new Date(),
 			],
 		);
 		return createdUser.rows[0];
@@ -85,15 +78,15 @@ export class UserService {
 
 	async update(teamId: string, user: IUser) {
 		const connection = await databaseService.getConnection(teamId);
-		const fields = Object.keys(user)
+		const snakeFields = Object.keys(user)
 			// this could break if the key has something like isURL
-			.map((key, index) => `${key.replace(/([A-Z])/g, '_$1').toLowerCase()} = $${index + 2}`)
+			.map((key, index) => `${key.camelToSnakeCase()} = $${index + 2}`)
 			.join(', ');
 		const values = Object.values(user);
 		const result = await connection.query<IUser>(
 			`
 		UPDATE users
-			SET ${fields}
+			SET ${snakeFields}
 			WHERE id = $1
 			RETURNING ${this.getAliasedFieldsAsCamelCase()}`,
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -102,7 +95,57 @@ export class UserService {
 		return result.rows[0];
 	}
 
-	async getAllByPredicate(teamId: string, predicate: string): Promise<IUser[]> {
+	async upsert(teamId: string, users: Member[]) {
+		const connection = await databaseService.getConnection(teamId);
+
+		// lookup all the users by users.id, if it doesn't exist, insert it
+		const result = await connection.query<IUser>(
+			`
+			SELECT
+				id,
+				slack_id as "slackId"
+			FROM users
+			WHERE slack_id = ANY($1)`,
+			[users.map((user) => user.id)],
+		);
+
+		const existingUsers = result.rows;
+		const existingUserIds = existingUsers.map((user) => user.slackId);
+		const newUsers = users.filter((user) => !existingUserIds.includes(user.id!));
+
+		const newUsersResult = await connection.query<IUser>(
+			`
+			INSERT INTO users
+				(
+					slack_id,
+					email,
+					name,
+					is_admin,
+					is_bot,
+					updated_by)
+			VALUES
+				(
+					$1,
+					$2,
+					$3,
+					$4,
+					$5,
+					$6)
+			RETURNING ${this.getAliasedFieldsAsCamelCase()}`,
+			newUsers.flatMap((user: Member) => [
+				user.id,
+				user.profile?.email ?? `unknownEmail@${teamId}.com`,
+				user.name ?? `unknownUser@${teamId}`,
+				user.is_admin ?? false,
+				user.is_bot ?? false,
+				user.id,
+			]),
+		);
+
+		return [...existingUsers, ...newUsersResult.rows];
+	}
+
+	async getByPredicate(teamId: string, predicate: string): Promise<IUser[]> {
 		const connection = await databaseService.getConnection(teamId);
 		const result = await connection.query<IUser>(`
 		SELECT

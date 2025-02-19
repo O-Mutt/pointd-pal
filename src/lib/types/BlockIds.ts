@@ -9,6 +9,7 @@ export const blocks = {
 				scoreboardChannel: 'hometab-a-scoreboard-channel',
 				formalPraiseUrl: 'hometab-a-formal-url',
 				formalPraiseMod: 'hometab-a-formal-mod',
+				isAprilFoolsEnabled: 'hometab-a-april-fools',
 			},
 			crypto: {},
 		},

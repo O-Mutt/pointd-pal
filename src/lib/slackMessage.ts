@@ -2,8 +2,11 @@ import { Md } from 'slack-block-builder';
 import type { IUser } from '../models/user';
 import type { KnownEventFromType } from '@slack/bolt';
 import { negativeOperatorsRegexp } from './messageMatchers';
+import { withNamespace } from '@/logger';
 
 export class SlackMessage {
+	constructor(private logger = withNamespace('slackMessage')) {}
+
 	static getMessageForTokenTransfer(to: IUser, from: IUser, number: number, reason: string | undefined) {
 		if (!to) {
 			return '';
@@ -81,3 +84,5 @@ export class SlackMessage {
 		return false;
 	}
 }
+
+export const slackMessage = new SlackMessage();

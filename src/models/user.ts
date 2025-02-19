@@ -1,6 +1,7 @@
 import type { AuditTags } from './auditTags';
+import type { DBObjectConvertible } from './dbObjectToTypescript';
 
-export interface IUser extends AuditTags {
+export interface IUser extends AuditTags, DBObjectConvertible {
 	id: string;
 	teamId: string;
 	slackId: string;

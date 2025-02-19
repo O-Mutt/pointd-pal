@@ -7,6 +7,7 @@ import { DatabaseService, databaseService } from '@/lib/services';
 
 import type { Installation } from '@slack/oauth';
 import type { Client } from 'pg';
+import type { FlywayMigrateResponse, NodeFlywayResponse } from 'node-flyway/dist/response/responses';
 
 export class InstallService {
 	constructor(private logger = withNamespace('installService')) {}
@@ -90,6 +91,8 @@ export class InstallService {
 			this.logger.info('New database has been created, running baseline migrations now');
 			const flywayResult = await new Flyway(DatabaseService.getFlywayConnectionConfig(teamId)).migrate();
 			this.logger.info(`Migration result`, flywayResult, '\n\n');
+
+			this.logger.info('We will now create the needed rooms for notifications, false positives, and scoreboards');
 			return newInstall;
 		} catch (e: unknown) {
 			this.logger.error(
@@ -113,12 +116,26 @@ export class InstallService {
 	}
 
 	async migrateAll(): Promise<void> {
-		const allInstallations = await this.findAll();
-		this.logger.info(`We found ${allInstallations.length} installations to migrate`);
-		for (const install of allInstallations) {
-			this.logger.info(`Migrating ${install.teamId}`);
-			const result = await new Flyway(DatabaseService.getFlywayConnectionConfig(install.teamId)).migrate();
-			this.logger.info(`Migration result`, result, '\n\n');
+		try {
+			const allInstallations = await this.findAll();
+			this.logger.info(`We found ${allInstallations.length} installations to migrate`);
+			const installPromises: Promise<NodeFlywayResponse<FlywayMigrateResponse>>[] = [];
+			for (const install of allInstallations) {
+				this.logger.info(`Migrating ${install.teamId}`);
+				installPromises.push(new Flyway(DatabaseService.getFlywayConnectionConfig(install.teamId)).migrate());
+			}
+
+			const installs = await Promise.allSettled(installPromises);
+
+			for (const install of installs) {
+				this.logger.info(
+					`\n\nMigration result`,
+					install.status === 'fulfilled' ? 'Successful' : 'Failed',
+					install.status === 'fulfilled' && install.value,
+				);
+			}
+		} catch (e: unknown) {
+			this.logger.error('Error migrating installations', (e as Error).message);
 		}
 	}
 

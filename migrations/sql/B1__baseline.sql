@@ -41,18 +41,22 @@ CREATE TABLE bot_tokens (
 -- configs
 CREATE TABLE configs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  -- should these be room id or name?
+  -- these can be either room id or name
   notification_room VARCHAR(255) NULL,
-  -- should these be room id or name?
   false_positive_room VARCHAR(255) NULL,
   scoreboard_room VARCHAR(255) NULL,
+  -- end of rooms
   formal_feedback_url VARCHAR(255) NULL,
   formal_feedback_modulo INTEGER NOT NULL DEFAULT 10,
   reasons_keyword VARCHAR(255) NULL,
   company_name VARCHAR(255) NULL,
   -- admins used to be here
   -- pointd_pal_admins
-  token_ledger_balance INTEGER NOT NULL DEFAULT 0
+  token_ledger_balance INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_by VARCHAR(255) NULL,
+  updated_at TIMESTAMPTZ NOT NULL default now(),
+  updated_by VARCHAR(255) NULL
 );
 
 --
@@ -105,3 +109,11 @@ CREATE TABLE users (
 );
 
 CREATE INDEX idx_slack_id ON users(slack_id);
+
+CREATE INDEX idx_score ON users(score);
+
+CREATE INDEX idx_account_level ON users(account_level);
+
+CREATE INDEX idx_total_points_given ON users(total_points_given);
+
+CREATE INDEX idx_token ON users(token);

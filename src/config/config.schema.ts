@@ -2,18 +2,17 @@
 import { LogLevel } from '@slack/web-api';
 
 export class PointdPalConfig {
-	baseUrl: string | 'https://pointdpal.okeefe.dev' = 'https://pointdpal.okeefe.dev';
-	port: number | 3000 = 3000;
-	env: 'development' | 'test' | 'production' = 'development';
-	logLevel: `${LogLevel}` = 'info';
-	scoreKeywords: string[] = ['score', 'scores', 'karma'];
-	reasonConjunctions: string[] = ['for', 'because', 'cause', 'cuz', 'as', 'porque', 'just', 'thanks for', 'since'];
+	baseUrl: string | 'https://pointdpal.okeefe.dev';
+	port: number | 3000;
+	env: 'development' | 'test' | 'production';
+	logLevel: `${LogLevel}` | 'info';
+	notificationsChannel: string | 'pointd-notifications';
+	formalFeedbackModulo: number | 5;
+	scoreKeywords: string[];
+	reasonConjunctions: string[];
 	spam: {
 		responseMessage: string | 'Looks like you hit the spam filter. Please slow your roll.';
 		timeout: number | 5;
-	} = {
-		responseMessage: 'Looks like you hit the spam filter. Please slow your roll.',
-		timeout: 5,
 	};
 	postgres: {
 		host: string | 'localhost';
@@ -22,13 +21,6 @@ export class PointdPalConfig {
 		password: string | 'password';
 		database: string | 'pointdpal';
 		schema: string | 'pointdpal';
-	} = {
-		host: 'localhost',
-		port: 5432,
-		username: 'postgres',
-		password: 'password',
-		database: 'pointdpal',
-		schema: 'pointdpal',
 	};
 	crypto?: {
 		rpcProvider?: string | null;
@@ -36,14 +28,12 @@ export class PointdPalConfig {
 		magicIv?: string | null;
 		exchangeFactoryAddress?: string | null;
 		helpUrl: string | 'https://pointdpal.com/crypto/help';
-	} = undefined;
-	helpUrl: string | 'https://pointdpal.com/help' = 'https://pointdpal.com/help';
+	};
+	helpUrl: string | 'https://pointdpal.com/help';
 	scoreboard: {
 		cron: string;
-		dayOfWeek: number;
-	} = {
-		cron: '0 10 1-7 * *',
-		dayOfWeek: 1,
+		dayOfWeek: number | 1;
+		channel: string | 'pointd-scoreboard';
 	};
 	slack: {
 		signingSecret: string;

@@ -10,24 +10,26 @@ import '@/lib/dateExtensions';
 import '@/lib/numberExtensions';
 
 // messages
-import { register as messagesCryptoRegister } from '@/messages.crypto';
-import { register as messagesScoreboardRegister } from '@/messages.scoreboard';
-import { register as messagesHelpRegister } from '@/messages.help';
-import { register as messagesPlusPlusRegister } from '@/messages.plusplus';
+import { registerCrypto, registerHelp, registerPlusPlus, registerScoreboard } from '@/messages';
 
 // etc
 import { register as migrationsRegister } from '@/migrations';
 
-// cron job
-import './src/monthlyScoreboardCron';
+// workers
+import { scoreboardWorker } from '@/workers/scoreboard';
 
 // event handlers
 import './src/events';
 
 // hometab
-import { register as hometabRegister } from '@/hometab';
-import { register as hometabActionsRegister } from '@/hometab.actions';
-import { register as hometabViewsRegister } from '@/hometab.views';
+import { register as hometabRegister } from '@/hometabs/hometab';
+import { register as hometabActionsRegister } from '@/hometabs/hometab.actions';
+import { register as adminHometabActionsRegister } from '@/hometabs/hometab.actions.admin';
+import { register as hometabViewsRegister } from '@/hometabs/hometab.views';
+import { register as adminHometabViewsRegister } from '@/hometabs/hometab.views.admin';
+
+// slash commands
+import { register as slashPlusPlusRegister } from '@/commands';
 
 //shortcuts
 import { register as shortcutsRegister } from '@/shortcuts';
@@ -90,20 +92,25 @@ void (async () => {
 		'Before we start the apps we will validate that all installations are up to date by running migrations. Please hold on...',
 	);
 	await installService.migrateAll();
+
+	await scoreboardWorker.startAllWorkers();
 	// Start your app
 	await app.start({ port: config.get('port') });
 
 	appLogger.info(`⚡️ Bolt app is running at localhost:${config.get('port')}!`);
 })();
 
-messagesCryptoRegister(app);
-messagesScoreboardRegister(app);
-messagesHelpRegister(app);
-messagesPlusPlusRegister(app);
+registerCrypto(app);
+registerScoreboard(app);
+registerHelp(app);
+registerPlusPlus(app);
 migrationsRegister(app);
 shortcutsRegister(app);
 hometabRegister(app);
 hometabActionsRegister(app);
+adminHometabActionsRegister(app);
 hometabViewsRegister(app);
+adminHometabViewsRegister(app);
+slashPlusPlusRegister(app);
 
 export { app };

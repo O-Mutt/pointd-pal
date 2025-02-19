@@ -5,8 +5,6 @@ import { type AllMiddlewareArgs, App, type SlackViewMiddlewareArgs, type ViewSub
 
 export function register(app: App): void {
 	app.view(actions.hometab.admin_settings_submit, adminSettingSubmit);
-
-	app.view(actions.hometab.user_settings_submit, userSettingSubmit);
 }
 
 async function adminSettingSubmit({
@@ -20,7 +18,7 @@ async function adminSettingSubmit({
 	const teamId = context.teamId as string;
 	const userId = body.user.id;
 
-	const pointdPal = await configService.findOneOrCreate(teamId);
+	const pointdPal = await configService.getOrCreate(teamId);
 
 	const errors: Record<string, string> = {};
 	for (const option in view.state.values) {
@@ -33,7 +31,7 @@ async function adminSettingSubmit({
 					// pointdPal.pointdPalAdmins = selectedUsers;
 					for (const newAdminId of selectedUsers) {
 						logger.info(newAdminId);
-						const user = await userService.findOneBySlackIdOrCreate(teamId, newAdminId);
+						const user = await userService.getOrCreateBySlackId(teamId, newAdminId);
 						user.isAdmin = true;
 						await userService.update(teamId, user);
 					}
@@ -50,7 +48,7 @@ async function adminSettingSubmit({
 							lowerCaseRoomName.substring(1, lowerCaseRoomName.length);
 						}
 					}
-					pointdPal.notificationRoom = textInputValue;
+					pointdPal.notificationChannel = textInputValue;
 					break;
 				}
 				case blocks.hometab.admin.basic.falsePositiveNotificationChannel: {
@@ -60,7 +58,7 @@ async function adminSettingSubmit({
 							lowerCaseRoomName.substring(1, lowerCaseRoomName.length);
 						}
 					}
-					pointdPal.falsePositiveRoom = textInputValue;
+					pointdPal.falsePositiveChannel = textInputValue;
 					break;
 				}
 				case blocks.hometab.admin.basic.scoreboardChannel: {
@@ -70,7 +68,7 @@ async function adminSettingSubmit({
 							lowerCaseRoomName.substring(1, lowerCaseRoomName.length);
 						}
 					}
-					pointdPal.scoreboardRoom = textInputValue;
+					pointdPal.scoreboardChannel = textInputValue;
 					break;
 				}
 				case blocks.hometab.admin.basic.formalPraiseUrl: {
@@ -108,53 +106,4 @@ async function adminSettingSubmit({
 	pointdPal.updatedAt = new Date();
 	logger.debug(`Updating admin configs for ${teamId} by ${userId}`);
 	await configService.update(teamId, pointdPal);
-}
-
-async function userSettingSubmit({
-	ack,
-	context,
-	body,
-	logger,
-	view,
-}: SlackViewMiddlewareArgs<ViewSubmitAction> & AllMiddlewareArgs) {
-	logger.debug('hometab.views: userSettingSubmit');
-	const teamId = context.teamId as string;
-	const userId = body.user.id;
-
-	const user = await userService.findOneBySlackIdOrCreate(teamId, userId);
-
-	const errors: Record<string, string> = {};
-	for (const option in view.state.values) {
-		for (const key in view.state.values[option]) {
-			const value: string = (view.state.values[option][key].value ||
-				view.state.values[option][key].selected_option?.value) as string;
-			switch (key) {
-				case blocks.hometab.user.crypto.walletAddress: {
-					if (value && !/^0x[a-fA-F0-9]{40}$/.test(value)) {
-						errors[blocks.hometab.user.crypto.walletAddress] = 'Your wallet address is invalid.';
-					}
-					user.walletAddress = value;
-					break;
-				}
-				default: {
-					logger.debug(`key not recognized: ${key}`);
-					break;
-				}
-			}
-		}
-	}
-
-	if (Object.keys(errors).length > 0) {
-		await ack({
-			response_action: 'errors',
-			errors: errors,
-		});
-		return;
-	} else {
-		await ack();
-	}
-	user.updatedAt = new Date();
-	user.updatedBy = user.slackId;
-	logger.debug(`Updating user configs for ${teamId} by ${userId}`);
-	await userService.update(teamId, user);
 }

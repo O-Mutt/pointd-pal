@@ -43,6 +43,14 @@ export class StringExtensions {
 		}
 		return str.charAt(0).toUpperCase() + str.slice(1);
 	}
+
+	static camelToSnakeCase(str: string): string {
+		return str.replace(/([a-z])([A-Z])/g, (matches) => `${matches[0]}_${matches[1].toLowerCase()}`);
+	}
+
+	static snakeToCamelCase(str: string): string {
+		return str.replace(/(_\w)/g, (matches) => matches[1].toUpperCase());
+	}
 }
 
 declare global {
@@ -52,6 +60,8 @@ declare global {
 		reverse(): string;
 		endsWithPunctuation(): boolean;
 		capitalizeFirstLetter(): string;
+		camelToSnakeCase(): string;
+		snakeToCamelCase(): string;
 	}
 }
 
@@ -73,4 +83,12 @@ String.prototype.endsWithPunctuation = function (): boolean {
 
 String.prototype.capitalizeFirstLetter = function (): string {
 	return StringExtensions.capitalizeFirstLetter(this.toString());
+};
+
+String.prototype.camelToSnakeCase = function (): string {
+	return StringExtensions.camelToSnakeCase(this.toString());
+};
+
+String.prototype.snakeToCamelCase = function (): string {
+	return StringExtensions.snakeToCamelCase(this.toString());
 };
