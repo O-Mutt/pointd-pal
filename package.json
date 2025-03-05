@@ -35,7 +35,7 @@
 		"lodash.take": "^4.1.1",
 		"newrelic": "^12.11.3",
 		"node-flyway": "^0.0.12",
-		"pg": "^8.13.1",
+		"pg": "^8.13.2",
 		"pluralize": "^8.0.0",
 		"reflect-metadata": "^0.2.2",
 		"slack-block-builder": "^2.8.0",
