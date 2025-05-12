@@ -54,7 +54,7 @@
 		"@types/pluralize": "^0.0.33",
 		"concurrently": "^9.1.2",
 		"eslint": "^9.19.0",
-		"eslint-config-prettier": "^10.0.1",
+		"eslint-config-prettier": "^10.1.5",
 		"eslint-plugin-jest": "^28.11.0",
 		"eslint-plugin-prettier": "^5.2.3",
 		"globals": "^15.14.0",
