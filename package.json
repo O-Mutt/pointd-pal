@@ -23,7 +23,7 @@
 	"dependencies": {
 		"@slack/bolt": "^4.2.0",
 		"@slack/web-api": "^7.9.1",
-		"@types/pg": "^8.11.11",
+		"@types/pg": "^8.11.14",
 		"adze": "^2.2.0",
 		"clark": "0.0.6",
 		"convict": "^6.2.4",
