@@ -23,7 +23,7 @@
 	"dependencies": {
 		"@slack/bolt": "^4.2.0",
 		"@slack/web-api": "^7.9.1",
-		"@types/pg": "^8.11.11",
+		"@types/pg": "^8.15.2",
 		"adze": "^2.2.0",
 		"clark": "0.0.6",
 		"convict": "^6.2.4",
@@ -35,7 +35,7 @@
 		"lodash.take": "^4.1.1",
 		"newrelic": "^12.11.3",
 		"node-flyway": "^0.0.12",
-		"pg": "^8.13.1",
+		"pg": "^8.16.0",
 		"pluralize": "^8.0.0",
 		"reflect-metadata": "^0.2.2",
 		"slack-block-builder": "^2.8.0",
