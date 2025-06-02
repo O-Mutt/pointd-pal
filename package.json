@@ -33,7 +33,7 @@
 		"lodash.map": "^4.6.0",
 		"lodash.samplesize": "^4.2.0",
 		"lodash.take": "^4.1.1",
-		"newrelic": "^12.11.3",
+		"newrelic": "^12.20.0",
 		"node-flyway": "^0.0.12",
 		"pg": "^8.13.1",
 		"pluralize": "^8.0.0",
